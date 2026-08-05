@@ -1,0 +1,53 @@
+const navToggle = document.querySelector('.nav-toggle');
+const nav = document.querySelector('.nav');
+
+navToggle?.addEventListener('click', () => {
+  const open = nav.classList.toggle('is-open');
+  navToggle.setAttribute('aria-expanded', String(open));
+});
+
+document.querySelectorAll('.nav a').forEach((link) => {
+  link.addEventListener('click', () => {
+    nav.classList.remove('is-open');
+    navToggle?.setAttribute('aria-expanded', 'false');
+  });
+});
+
+document.querySelectorAll('.product-select').forEach((button) => {
+  button.addEventListener('click', () => {
+    const product = button.dataset.product;
+    const select = document.querySelector('#produto');
+    if (select && [...select.options].some((option) => option.value === product)) {
+      select.value = product;
+    }
+    document.querySelector('#orcamento')?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+const form = document.querySelector('#quote-form');
+form?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+
+  const data = new FormData(form);
+  const lines = [
+    'Olá! Vim pelo site da Center Cúpulas e gostaria de solicitar um orçamento.',
+    '',
+    `Nome: ${data.get('nome')}`,
+    `Empresa: ${data.get('empresa') || 'Não informado'}`,
+    `WhatsApp: ${data.get('telefone')}`,
+    `Cidade: ${data.get('cidade')}`,
+    `Perfil: ${data.get('perfil')}`,
+    `Produto: ${data.get('produto')}`,
+    `Quantidade: ${data.get('quantidade')}`,
+    `Prazo desejado: ${data.get('prazo') || 'A combinar'}`,
+    `Detalhes: ${data.get('detalhes')}`,
+    '',
+    'Vou anexar fotos, desenhos ou referências nesta conversa, quando necessário.'
+  ];
+
+  const url = `https://wa.me/5511996179323?text=${encodeURIComponent(lines.join('\n'))}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+});
+
+document.querySelector('#year').textContent = new Date().getFullYear();
