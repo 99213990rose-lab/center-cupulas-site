@@ -3,53 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Todos os modelos | Catálogo Center Cúpulas</title>
-  <meta name="description" content="Consulte 40 referências de medidas em versões redonda e quadrada ou retangular. Configure formato, referência, medida e cor para solicitar orçamento atacadista.">
+  <title>Modelos e configurador | Center Cúpulas</title>
+  <meta name="description" content="Explore medidas sugeridas e configure cúpulas sob encomenda para atacado por formato, material, cor e dimensões. Projetos sujeitos à avaliação da fábrica.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#221711">
   <meta name="color-scheme" content="light">
-  <meta property="og:title" content="Todos os modelos | Center Cúpulas">
-  <meta property="og:description" content="Catálogo de cúpulas sob encomenda para atacado com 40 referências e dois formatos.">
+  <meta property="og:title" content="Modelos e configurador | Center Cúpulas">
+  <meta property="og:description" content="Configure uma cúpula sob encomenda com formato, material, cor e medidas para avaliação da fábrica.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:site_name" content="Center Cúpulas">
+  <meta property="og:url" content="https://center-cupulas-site.vercel.app/modelos.html">
+  <link rel="canonical" href="https://center-cupulas-site.vercel.app/modelos.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="catalog-page">
   <a class="skip-link" href="#catalogo">Ir para o catálogo</a>
-
   <div class="topbar" aria-label="Informações comerciais">
     <div class="container topbar__inner">
-      <span>40 referências de medidas</span>
-      <span>Versões redondas e quadradas ou retangulares</span>
+      <span>Medidas sugeridas ou personalizadas</span>
+      <span>Formatos e cores variados</span>
       <span>Fabricação exclusiva para atacado</span>
     </div>
   </div>
-
   <header class="site-header" data-header>
     <div class="container header__inner">
-      <a class="brand" href="index.html" aria-label="Center Cúpulas — página inicial">
+      <a class="brand" href="index.html" aria-label="Center Cúpulas - página inicial">
         <svg class="brand__mark" viewBox="0 0 120 54" aria-hidden="true"><path d="M10 44h100M18 42c4-24 20-35 42-35s38 11 42 35M38 42C41 21 48 9 60 7M82 42C79 21 72 9 60 7M60 7v35"/></svg>
         <span><strong>CENTER</strong><small>CÚPULAS</small></span>
       </a>
-
-      <button class="nav-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="site-nav">
-        <span></span><span></span><span></span>
-      </button>
-
+      <button class="nav-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
       <nav class="nav" id="site-nav" aria-label="Navegação principal">
-        <a href="modelos.html" aria-current="page">Todos os modelos</a>
-        <a href="index.html#capacidade">Fabricação</a>
-        <a href="index.html#processo">Como funciona</a>
+        <a href="#modelos" aria-current="page">Modelos sugeridos</a>
+        <a href="#medidas">Como medir</a>
+        <a href="#monte">Monte sua cúpula</a>
         <a href="index.html#empresa">A Center</a>
         <a href="index.html#contato">Contato</a>
       </nav>
-
-      <a class="button button--sm button--gold header__cta" href="https://wa.me/5512983216069?text=Ol%C3%A1%21%20Vim%20pelo%20cat%C3%A1logo%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20um%20or%C3%A7amento%20para%20atacado." target="_blank" rel="noopener noreferrer">Falar com a Center</a>
+      <a class="button button--sm button--gold header__cta" href="#monte">Configurar cúpula</a>
     </div>
   </header>
-
   <main id="catalogo">
     <section class="catalog-hero">
       <div class="catalog-hero__line" aria-hidden="true"></div>
@@ -57,28 +51,52 @@
         <div data-reveal="up">
           <a class="breadcrumb" href="index.html"><span aria-hidden="true">←</span> Voltar para a página inicial</a>
           <p class="eyebrow eyebrow--light">Catálogo configurável</p>
-          <h1>Todos os modelos,<br><em>prontos para configurar.</em></h1>
-          <p>Escolha uma das 40 referências, defina o formato e a cor. Cada combinação é fabricada sob encomenda para atacado.</p>
+          <h1>Uma medida-base,<br><em>muitas possibilidades.</em></h1>
+          <p>Use as referências como ponto de partida ou informe suas próprias medidas. Formato, material, cor e viabilidade são avaliados para cada projeto sob encomenda.</p>
         </div>
-        <div class="catalog-hero__aside" data-reveal="scale">
-          <div><strong>80</strong><span>combinações-base</span></div>
-          <p>As representações visuais deste catálogo são ilustrativas e estão separadas dos dados para facilitar a troca futura por fotos reais.</p>
-        </div>
+        <aside class="catalog-hero__aside" data-reveal="scale">
+          <p class="catalog-hero__kicker">Exclusivo para atacado</p>
+          <strong>Seu projeto começa aqui.</strong>
+          <p>Monte uma configuração inicial e envie as especificações organizadas para a avaliação da fábrica.</p>
+          <a href="#modelos">Explorar medidas <span aria-hidden="true">↓</span></a>
+        </aside>
       </div>
     </section>
-
-    <section class="catalog-section" aria-labelledby="catalog-title">
+    <section class="measure-guide section--soft" id="medidas" aria-labelledby="measure-title">
+      <div class="container measure-guide__grid">
+        <div class="measure-guide__copy" data-reveal="left">
+          <p class="eyebrow">Como ler as medidas</p>
+          <h2 id="measure-title">Superior × Inferior × Altura</h2>
+          <p>Todas as medidas são apresentadas em centímetros e seguem exatamente essa ordem.</p>
+          <dl class="measure-legend">
+            <div><dt>A</dt><dd>Medida superior</dd></div>
+            <div><dt>B</dt><dd>Medida inferior</dd></div>
+            <div><dt>C</dt><dd>Altura</dd></div>
+          </dl>
+          <p class="measure-guide__note">As referências são sugestões para orientar a escolha. Elas não limitam a fabricação: outras dimensões e formatos podem ser informados e passam por avaliação técnica.</p>
+        </div>
+        <figure class="measure-diagram" data-reveal="scale">
+          <div class="measure-diagram__shape" aria-hidden="true">
+            <span class="measure-line measure-line--top"><b>A</b></span>
+            <span class="measure-line measure-line--bottom"><b>B</b></span>
+            <span class="measure-line measure-line--height"><b>C</b></span>
+          </div>
+          <figcaption>Esquema ilustrativo para leitura das dimensões</figcaption>
+        </figure>
+      </div>
+    </section>
+    <section class="catalog-section" id="modelos" aria-labelledby="catalog-title">
       <div class="container">
         <div class="catalog-intro" data-reveal="up">
-          <div><p class="eyebrow">Encontre sua referência</p><h2 id="catalog-title">Catálogo de medidas</h2></div>
-          <p>Clique em um modelo para abrir a ficha, selecionar a cor e preparar a mensagem de orçamento.</p>
+          <div><p class="eyebrow">Modelos sugeridos</p><h2 id="catalog-title">Escolha uma medida-base</h2></div>
+          <p>Cada card representa uma única referência. Abra "Personalizar" para ajustar rapidamente formato, material e cor, ou use "Configurar" para completar a ficha.</p>
         </div>
-
         <div class="catalog-toolbar" data-catalog-toolbar data-reveal="up">
-          <div class="filter-group" role="group" aria-label="Filtrar por formato">
-            <button type="button" class="filter-button is-active" data-filter="todos" aria-pressed="true">Todos</button>
-            <button type="button" class="filter-button" data-filter="redonda" aria-pressed="false">Redondas</button>
-            <button type="button" class="filter-button" data-filter="quadrada" aria-pressed="false">Quadradas/Retangulares</button>
+          <div class="filter-group" role="group" aria-label="Filtrar por faixa da medida inferior">
+            <button type="button" class="filter-button is-active" data-filter="todos" aria-pressed="true">Todas</button>
+            <button type="button" class="filter-button" data-filter="compacta" aria-pressed="false">Compactas</button>
+            <button type="button" class="filter-button" data-filter="intermediaria" aria-pressed="false">Intermediárias</button>
+            <button type="button" class="filter-button" data-filter="ampla" aria-pressed="false">Amplas</button>
           </div>
           <label class="search-field" for="catalog-search">
             <span class="sr-only">Buscar por referência ou medida</span>
@@ -86,107 +104,77 @@
             <input id="catalog-search" type="search" inputmode="search" autocomplete="off" placeholder="Buscar referência ou medida" aria-describedby="catalog-count">
           </label>
         </div>
-
         <div class="catalog-status">
-          <p id="catalog-count" role="status" aria-live="polite">Carregando modelos…</p>
-          <span>Medidas em centímetros</span>
+          <p id="catalog-count" role="status" aria-live="polite">Carregando referências.</p>
+          <span>Faixas baseadas na medida inferior</span>
         </div>
-
         <div class="catalog-grid" id="catalog-grid" aria-busy="true"></div>
         <div class="empty-state" id="empty-state" hidden>
           <span aria-hidden="true">⌕</span>
-          <h3>Nenhum modelo encontrado</h3>
-          <p>Tente outra referência ou medida.</p>
+          <h3>Nenhuma referência encontrada</h3>
+          <p>Tente outra referência ou combinação de medidas.</p>
           <button class="text-button" type="button" data-clear-catalog>Limpar busca e filtros</button>
         </div>
-        <noscript><p class="noscript-note">Ative o JavaScript para consultar e configurar os 80 modelos deste catálogo.</p></noscript>
+        <noscript><p class="noscript-note">Ative o JavaScript para consultar as referências e utilizar o configurador.</p></noscript>
       </div>
     </section>
-
+    <section class="builder-section" id="monte" aria-labelledby="builder-title">
+      <div class="container">
+        <div class="builder-heading" data-reveal="up">
+          <div><p class="eyebrow eyebrow--light">Do seu jeito</p><h2 id="builder-title">Monte sua cúpula</h2></div>
+          <p>Defina os detalhes do projeto em uma ficha clara. A configuração será analisada pela fábrica antes de qualquer confirmação.</p>
+        </div>
+        <div class="builder-layout" data-reveal="up">
+          <aside class="product-preview product-preview--page" data-product-preview aria-live="polite">
+            <div class="product-preview__media">
+              <img src="assets/catalogo/conica-tricoline-bege.png" alt="Imagem-base de cúpula cônica em perspectiva" width="1122" height="1402" loading="lazy" data-preview-image>
+              <span>Imagem-base</span>
+            </div>
+            <div class="product-preview__meta"><span data-preview-format>Cônica / Empire</span><span data-preview-material>Juta · Natural / Juta</span></div>
+            <p>Quando não houver uma combinação específica, exibimos a imagem-base do formato.</p>
+          </aside>
+          <div class="configurator-host" data-configurator-host data-mode="custom"></div>
+        </div>
+      </div>
+    </section>
     <section class="catalog-help">
       <div class="container catalog-help__grid" data-reveal="up">
         <div><p class="eyebrow">Precisa de orientação?</p><h2>Fale diretamente com a Center.</h2></div>
-        <div><p>A equipe pode ajudar a identificar a referência mais adequada para o seu projeto atacadista.</p><a class="button button--dark" href="https://wa.me/5512983216069?text=Ol%C3%A1%21%20Vim%20pelo%20cat%C3%A1logo%20da%20Center%20C%C3%BApulas%20e%20preciso%20de%20ajuda%20para%20escolher%20uma%20refer%C3%AAncia." target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a></div>
+        <div><p>A equipe pode ajudar a organizar a especificação do seu projeto para avaliação da fábrica.</p><a class="button button--dark" href="https://wa.me/5512983216069?text=Ol%C3%A1%21%20Vim%20pelo%20cat%C3%A1logo%20da%20Center%20C%C3%BApulas%20e%20preciso%20de%20orienta%C3%A7%C3%A3o%20para%20configurar%20uma%20c%C3%BApula%20para%20atacado." target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a></div>
       </div>
     </section>
   </main>
-
-  <dialog class="configurator" id="configurator" aria-labelledby="configurator-title" aria-describedby="configurator-description">
+  <dialog class="configurator" id="configurator" aria-labelledby="configurator-title">
     <div class="configurator__shell">
       <button class="dialog-close" type="button" data-dialog-close aria-label="Fechar configurador">×</button>
-      <div class="configurator__visual">
-        <div class="configurator__preview" data-config-preview aria-hidden="true"></div>
-        <p>Representação ilustrativa</p>
-      </div>
-      <form class="configurator__form" id="configurator-form">
-        <p class="eyebrow">Ficha do modelo</p>
-        <h2 id="configurator-title">Configure sua cúpula</h2>
-        <p id="configurator-description">Selecione uma cor e confira o resumo antes de continuar.</p>
-
-        <div class="selected-model">
-          <span data-selected-format>Formato</span>
-          <strong>Ref. <span data-selected-ref>01</span></strong>
-          <b data-selected-measure>10 × 20 × 11 cm</b>
+      <aside class="product-preview product-preview--dialog" data-product-preview aria-live="polite">
+        <div class="product-preview__media">
+          <img src="assets/catalogo/conica-tricoline-bege.png" alt="Imagem-base do formato selecionado" width="1122" height="1402" data-preview-image>
+          <span>Imagem-base</span>
         </div>
-
-        <fieldset class="color-fieldset">
-          <legend>Escolha a cor</legend>
-          <div class="color-options">
-            <label><input type="radio" name="cor" value="Preto" checked><span class="color-swatch swatch--black"></span><b>Preto</b></label>
-            <label><input type="radio" name="cor" value="Branco"><span class="color-swatch swatch--white"></span><b>Branco</b></label>
-            <label><input type="radio" name="cor" value="Bege"><span class="color-swatch swatch--beige"></span><b>Bege</b></label>
-            <label><input type="radio" name="cor" value="Off White"><span class="color-swatch swatch--offwhite"></span><b>Off White</b></label>
-            <label><input type="radio" name="cor" value="Gelo"><span class="color-swatch swatch--ice"></span><b>Gelo</b></label>
-            <label><input type="radio" name="cor" value="Cinza"><span class="color-swatch swatch--gray"></span><b>Cinza</b></label>
-            <label><input type="radio" name="cor" value="Colorido"><span class="color-swatch swatch--colorful"></span><b>Colorido</b></label>
-          </div>
-        </fieldset>
-
-        <label class="form-field custom-color-field" for="custom-color" hidden>
-          <span>Qual cor você deseja?</span>
-          <input id="custom-color" name="cor-personalizada" type="text" maxlength="60" placeholder="Ex.: azul petróleo">
-        </label>
-
-        <label class="form-field" for="observations">
-          <span>Observações <small>(opcional)</small></span>
-          <textarea id="observations" name="observacoes" rows="3" maxlength="500" placeholder="Inclua detalhes que ajudem a identificar sua necessidade."></textarea>
-        </label>
-
-        <div class="config-summary" aria-live="polite">
-          <p>Resumo da configuração</p>
-          <dl>
-            <div><dt>Formato</dt><dd data-summary-format>Redonda</dd></div>
-            <div><dt>Referência</dt><dd data-summary-ref>01</dd></div>
-            <div><dt>Medida</dt><dd data-summary-measure>10 × 20 × 11 cm</dd></div>
-            <div><dt>Cor</dt><dd data-summary-color>Preto</dd></div>
-          </dl>
-        </div>
-
-        <button class="button button--whatsapp button--full" type="submit">Solicitar orçamento pelo WhatsApp <span aria-hidden="true">↗</span></button>
-        <p class="form-note">Envio, logística, quantidade, prazo, preço e demais condições comerciais serão tratados diretamente no WhatsApp durante o orçamento.</p>
-      </form>
+        <div class="product-preview__meta"><span data-preview-format>Cônica / Empire</span><span data-preview-material>Juta · Natural / Juta</span></div>
+        <p>Quando não houver uma combinação específica, exibimos a imagem-base do formato.</p>
+      </aside>
+      <div class="configurator-host configurator-host--dialog" data-configurator-host data-mode="reference"></div>
     </div>
   </dialog>
-
   <footer class="footer">
     <div class="container footer__grid">
       <div class="footer__brand">
-        <a class="brand brand--footer" href="index.html" aria-label="Center Cúpulas — página inicial">
+        <a class="brand brand--footer" href="index.html" aria-label="Center Cúpulas - página inicial">
           <svg class="brand__mark" viewBox="0 0 120 54" aria-hidden="true"><path d="M10 44h100M18 42c4-24 20-35 42-35s38 11 42 35M38 42C41 21 48 9 60 7M82 42C79 21 72 9 60 7M60 7v35"/></svg>
           <span><strong>CENTER</strong><small>CÚPULAS</small></span>
         </a>
         <p>Fabricação sob encomenda<br>exclusivamente para atacado.</p>
       </div>
-      <div><h3>Navegação</h3><a href="index.html">Página inicial</a><a href="modelos.html">Todos os modelos</a><a href="index.html#processo">Como funciona</a></div>
+      <div><h3>Navegação</h3><a href="index.html">Página inicial</a><a href="#modelos">Modelos sugeridos</a><a href="#monte">Monte sua cúpula</a></div>
       <div><h3>Atendimento</h3><a href="https://wa.me/5512983216069" target="_blank" rel="noopener noreferrer">+55 12 98321-6069</a><a href="mailto:centercupulas@gmail.com">centercupulas@gmail.com</a></div>
     </div>
-    <div class="container footer__bottom"><span>© <span data-current-year></span> Center Cúpulas.</span><span>Fabricação B2B sob encomenda.</span></div>
+    <div class="container footer__bottom"><span>© <span data-current-year></span> Center Cúpulas.</span><span>Fabricação sob encomenda para atacado.</span></div>
   </footer>
-
-  <a class="floating-whatsapp" href="https://wa.me/5512983216069?text=Ol%C3%A1%21%20Vim%20pelo%20cat%C3%A1logo%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20um%20or%C3%A7amento%20para%20atacado." target="_blank" rel="noopener noreferrer" aria-label="Falar com a Center Cúpulas pelo WhatsApp">
+  <a class="floating-whatsapp" href="https://wa.me/5512983216069?text=Ol%C3%A1%21%20Vim%20pelo%20cat%C3%A1logo%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20uma%20configura%C3%A7%C3%A3o%20para%20avalia%C3%A7%C3%A3o." target="_blank" rel="noopener noreferrer" aria-label="Falar com a Center Cúpulas pelo WhatsApp">
     <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4a11.6 11.6 0 0 0-10 17.4L4.4 27.7l6.4-1.6A11.6 11.6 0 1 0 16 4Zm0 2.3a9.3 9.3 0 1 1-4.7 17.4l-.8-.5-3.1.8.8-3-.5-.8A9.3 9.3 0 0 1 16 6.3Zm-4.4 4.6c-.2 0-.5.1-.7.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2.1 3.3 5.2 4.5 2.6 1 3.1.8 3.7.8.6 0 1.8-.7 2.1-1.5.2-.7.2-1.4.2-1.5-.1-.1-.3-.2-.6-.4l-2.2-1c-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.5-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2.1-.4 0-.6l-1-2.2c-.2-.5-.5-.5-.7-.5h-.5Z"/></svg>
   </a>
-
   <script src="script.js" defer></script>
   <script src="catalogo.js" defer></script>
 </body>

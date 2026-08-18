@@ -5,14 +5,15 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 ## Páginas
 
 - `index.html`: homepage institucional para fabricação sob encomenda no atacado.
-- `modelos.html`: catálogo com 40 referências, disponíveis nos formatos redondo e quadrado/retangular.
+- `modelos.html`: catálogo de medidas sugeridas e configuradores para formato, material, cor e dimensões personalizadas.
 
 ## Estrutura
 
 - `styles.css`: identidade visual, componentes, animações e responsividade compartilhados.
 - `script.js`: navegação, scroll reveal e carrosséis.
-- `catalogo.js`: referências, filtros, busca, configurador e integração com WhatsApp.
-- `assets/`: imagens existentes recuperadas e organizadas, com derivados JPEG otimizados para uso na homepage.
+- `catalogo.js`: referências, filtros, busca, controles rápidos, configuradores e integração com WhatsApp.
+- `assets/`: imagens existentes recuperadas e organizadas.
+- `assets/catalogo/`: imagens-base oficiais provisórias, separadas por formato.
 - `robots.txt` e `sitemap.xml`: arquivos de rastreamento.
 
 ## Contatos oficiais
@@ -20,9 +21,9 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 - WhatsApp: +55 12 98321-6069
 - E-mail: centercupulas@gmail.com
 
-## Troca futura das imagens
+## Imagens do catálogo
 
-As representações do catálogo são geradas por classes CSS e não estão acopladas aos dados das referências. Fotos reais podem ser incorporadas alterando a função `createCard` em `catalogo.js`, sem mudar filtros, busca ou configurador.
+Os cards e configuradores resolvem as imagens por formato, material e cor a partir do registro `catalogImages` em `catalogo.js`. Cada formato possui uma imagem-base; futuras fotografias específicas podem ser adicionadas ao mapa `variants` sem alterar filtros, busca ou regras do configurador.
 
 ## Execução local
 
@@ -36,4 +37,4 @@ Depois acesse `http://localhost:8000/`.
 
 ## URL pública
 
-O `sitemap.xml` e o `robots.txt` usam provisoriamente a URL esperada do GitHub Pages deste repositório. Se a publicação usar um domínio próprio, substitua essa base nos dois arquivos e inclua URLs canônicas nas páginas antes de publicar.
+O endereço oficial utilizado em URLs canônicas, `robots.txt` e `sitemap.xml` é `https://center-cupulas-site.vercel.app/`.

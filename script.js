@@ -97,6 +97,8 @@
     let current = 0;
     let autoplay = 0;
     let isPaused = false;
+    let pointerStartX = null;
+    let pointerStartY = null;
 
     const loadSlide = (index) => {
       const image = slides[index]?.querySelector('img[data-src]');
@@ -125,14 +127,17 @@
     };
 
     const stopAutoplay = () => {
-      if (autoplay) window.clearInterval(autoplay);
+      if (autoplay) window.clearTimeout(autoplay);
       autoplay = 0;
     };
 
     const startAutoplay = () => {
       stopAutoplay();
       if (reducedMotion.matches || isPaused || document.hidden) return;
-      autoplay = window.setInterval(() => showSlide(current + 1), 6500);
+      autoplay = window.setTimeout(() => {
+        showSlide(current + 1);
+        startAutoplay();
+      }, 4800);
     };
 
     previous?.addEventListener('click', () => { showSlide(current - 1); startAutoplay(); });
@@ -150,6 +155,25 @@
       isPaused = false;
       startAutoplay();
     });
+    heroCarousel.addEventListener('pointerdown', (event) => {
+      if (!event.isPrimary) return;
+      pointerStartX = event.clientX;
+      pointerStartY = event.clientY;
+    });
+    heroCarousel.addEventListener('pointerup', (event) => {
+      if (pointerStartX === null || pointerStartY === null) return;
+      const distanceX = event.clientX - pointerStartX;
+      const distanceY = event.clientY - pointerStartY;
+      pointerStartX = null;
+      pointerStartY = null;
+      if (Math.abs(distanceX) < 44 || Math.abs(distanceX) < Math.abs(distanceY)) return;
+      showSlide(current + (distanceX < 0 ? 1 : -1));
+      startAutoplay();
+    });
+    heroCarousel.addEventListener('pointercancel', () => {
+      pointerStartX = null;
+      pointerStartY = null;
+    });
     document.addEventListener('visibilitychange', startAutoplay);
     reducedMotion.addEventListener?.('change', startAutoplay);
 
@@ -166,13 +190,119 @@
     const next = carousel.querySelector('[data-carousel-next]');
     if (!track) return;
 
-    const scroll = (direction) => {
-      const firstCard = track.firstElementChild;
-      const amount = firstCard ? firstCard.getBoundingClientRect().width + 22 : track.clientWidth * .8;
-      track.scrollBy({ left: amount * direction, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    const cards = [...track.children];
+    let autoplay = 0;
+    let isHovered = false;
+    let hasFocus = false;
+    let dragStartX = null;
+    let dragScrollLeft = 0;
+    let hasDragged = false;
+    let suppressClick = false;
+
+    const stopAutoplay = () => {
+      if (autoplay) window.clearTimeout(autoplay);
+      autoplay = 0;
     };
 
-    previous?.addEventListener('click', () => scroll(-1));
-    next?.addEventListener('click', () => scroll(1));
+    const canAutoplay = () => !reducedMotion.matches && !document.hidden && !isHovered && !hasFocus && dragStartX === null;
+
+    const scheduleAutoplay = () => {
+      stopAutoplay();
+      if (!canAutoplay()) return;
+      autoplay = window.setTimeout(() => {
+        scroll(1);
+        scheduleAutoplay();
+      }, 4700);
+    };
+    const scroll = (direction) => {
+      if (!cards.length) return;
+      const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 22;
+      const step = cards[0].getBoundingClientRect().width + gap;
+      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+      const target = direction > 0
+        ? (track.scrollLeft >= maxScroll - 2 ? 0 : Math.min(track.scrollLeft + step, maxScroll))
+        : (track.scrollLeft <= 2 ? maxScroll : Math.max(track.scrollLeft - step, 0));
+      track.scrollTo({ left: target, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    };
+
+    const interact = (direction) => {
+      stopAutoplay();
+      scroll(direction);
+      scheduleAutoplay();
+    };
+
+    previous?.addEventListener('click', () => interact(-1));
+    next?.addEventListener('click', () => interact(1));
+    carousel.addEventListener('mouseenter', () => {
+      isHovered = true;
+      stopAutoplay();
+    });
+    carousel.addEventListener('mouseleave', () => {
+      isHovered = false;
+      scheduleAutoplay();
+    });
+    carousel.addEventListener('focusin', () => {
+      hasFocus = true;
+      stopAutoplay();
+    });
+    carousel.addEventListener('focusout', (event) => {
+      if (carousel.contains(event.relatedTarget)) return;
+      hasFocus = false;
+      scheduleAutoplay();
+    });
+    track.addEventListener('touchstart', stopAutoplay, { passive: true });
+    track.addEventListener('touchend', scheduleAutoplay, { passive: true });
+    document.addEventListener('visibilitychange', scheduleAutoplay);
+    reducedMotion.addEventListener?.('change', scheduleAutoplay);
+    track.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      dragStartX = event.clientX;
+      dragScrollLeft = track.scrollLeft;
+      hasDragged = false;
+      stopAutoplay();
+      track.setPointerCapture?.(event.pointerId);
+    });
+    track.addEventListener('pointermove', (event) => {
+      if (dragStartX === null) return;
+      const distance = event.clientX - dragStartX;
+      if (Math.abs(distance) > 5) hasDragged = true;
+      if (hasDragged) track.scrollLeft = dragScrollLeft - distance;
+    });
+    const finishDrag = (event) => {
+      if (dragStartX === null) return;
+      suppressClick = hasDragged;
+      dragStartX = null;
+      if (track.hasPointerCapture?.(event.pointerId)) track.releasePointerCapture(event.pointerId);
+      scheduleAutoplay();
+    };
+    track.addEventListener('pointerup', finishDrag);
+    track.addEventListener('pointercancel', finishDrag);
+    track.addEventListener('dragstart', (event) => event.preventDefault());
+    track.addEventListener('mousedown', (event) => {
+      if (event.button !== 0) return;
+      dragStartX = event.clientX;
+      dragScrollLeft = track.scrollLeft;
+      hasDragged = false;
+      stopAutoplay();
+    });
+    window.addEventListener('mousemove', (event) => {
+      if (dragStartX === null) return;
+      const distance = event.clientX - dragStartX;
+      if (Math.abs(distance) > 5) hasDragged = true;
+      if (hasDragged) {
+        event.preventDefault();
+        track.scrollLeft = dragScrollLeft - distance;
+      }
+    });
+    window.addEventListener('mouseup', finishDrag);
+    track.addEventListener('click', (event) => {
+      if (suppressClick) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      suppressClick = false;
+    }, { capture: true });
+
+    scheduleAutoplay();
   });
 })();
