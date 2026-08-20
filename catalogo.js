@@ -20,12 +20,10 @@
     ['40', '50 × 50 × 35']
   ].map(([reference, measure]) => {
     const dimensions = measure.split('×').map((value) => Number.parseFloat(value.trim()));
-    const lower = dimensions[1];
     return {
       reference,
       measure,
-      dimensions,
-      range: lower <= 25 ? 'compacta' : lower <= 45 ? 'intermediaria' : 'ampla'
+      dimensions
     };
   });
 
@@ -76,6 +74,7 @@
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[×X]/g, 'x')
+    .replace(/[.,;:]/g, '')
     .replace(/\s+/g, '')
     .toLowerCase();
 
@@ -99,7 +98,6 @@
   const count = document.querySelector('#catalog-count');
   const emptyState = document.querySelector('#empty-state');
   const search = document.querySelector('#catalog-search');
-  const filterButtons = [...document.querySelectorAll('[data-filter]')];
   const clearButton = document.querySelector('[data-clear-catalog]');
   const dialog = document.querySelector('#configurator');
   const closeDialogButton = document.querySelector('[data-dialog-close]');
@@ -107,75 +105,32 @@
   if (!grid || !count || !search) return;
 
   const state = {
-    filter: 'todos',
     search: '',
     trigger: null
   };
 
-  const updateCardVisual = (card) => {
-    const formatSelect = card.querySelector('[data-quick-format]');
-    const materialSelect = card.querySelector('[data-quick-material]');
-    const colorSelect = card.querySelector('[data-quick-color]');
-    const image = card.querySelector('[data-card-image]');
-    const status = card.querySelector('[data-quick-status]');
-    const swatch = card.querySelector('[data-quick-swatch]');
-    const format = getFormat(formatSelect.value);
-    const isJuta = materialSelect.value === 'Juta';
-    const color = isJuta ? 'Natural / Juta' : colorSelect.value;
-
-    colorSelect.disabled = isJuta;
-    const visual = getCatalogVisual(format, materialSelect.value, color);
-    image.src = visual.image;
-    image.alt = visual.alt;
-    card.style.setProperty('--selected-color', colorValues[color] || colorValues.Colorido);
-    card.dataset.material = isJuta ? 'juta' : 'tricoline';
-    status.textContent = materialSelect.value + ' · ' + color;
-    swatch.style.background = colorValues[color] || colorValues.Colorido;
-  };
-
   const createCard = (item, index) => {
     const card = document.createElement('article');
-    const defaultFormat = formats[index % formats.length];
-    const defaultMaterial = index % 4 === 0 ? 'Juta' : 'Tricoline';
-    const defaultColor = colors[index % colors.length];
-    const colorOptions = colors.map((color) => '<option value="' + color + '"' + (color === defaultColor ? ' selected' : '') + '>' + color + '</option>').join('');
 
     card.className = 'model-card';
     card.dataset.reference = item.reference;
-    card.dataset.range = item.range;
     card.dataset.search = normalize(item.reference + ' ref ' + item.reference + ' ' + item.measure);
     card.dataset.reveal = 'up';
     card.style.setProperty('--reveal-delay', String((index % 6) * 45) + 'ms');
     card.innerHTML = [
-      '<button class="model-card__main" type="button" data-card-open aria-label="Abrir ficha da referência ' + item.reference + ', medida ' + item.measure + ' centímetros">',
-        '<span class="model-card__media">',
-          '<img src="' + getCatalogVisual(defaultFormat, defaultMaterial, defaultColor).image + '" alt="' + defaultFormat.alt + '" width="1122" height="1402" loading="lazy" data-card-image>',
-          '<span class="model-card__provisional">Imagem-base</span>',
-          '<span class="model-card__ref">REF. ' + item.reference + '</span>',
+      '<button class="model-card__main" type="button" data-card-open aria-label="Configurar referência ' + item.reference + ', medida ' + item.measure + ' centímetros">',
+        '<span class="model-card__technical" data-reference="' + item.reference + '" aria-hidden="true">',
+          '<span class="measure-mark"><i></i><i></i><i></i></span>',
         '</span>',
         '<span class="model-card__body">',
-          '<span class="model-card__eyebrow">Medida-base sugerida</span>',
+          '<span class="model-card__eyebrow">REF. ' + item.reference + '</span>',
           '<strong>' + item.measure + ' <small>cm</small></strong>',
           '<span class="model-card__order">Superior × Inferior × Altura</span>',
-          '<span class="model-card__link">Configurar ficha <span aria-hidden="true">↗</span></span>',
+          '<span class="model-card__link">Configurar esta medida <span aria-hidden="true">↗</span></span>',
         '</span>',
-      '</button>',
-      '<details class="quick-config">',
-        '<summary>Personalizar <span aria-hidden="true">+</span></summary>',
-        '<div class="quick-config__panel">',
-          '<label><span>Formato</span><select data-quick-format>' + formatOptions + '</select></label>',
-          '<div class="quick-config__row">',
-            '<label><span>Material</span><select data-quick-material><option value="Juta"' + (defaultMaterial === 'Juta' ? ' selected' : '') + '>Juta</option><option value="Tricoline"' + (defaultMaterial === 'Tricoline' ? ' selected' : '') + '>Tricoline</option></select></label>',
-            '<label><span>Cor</span><select data-quick-color>' + colorOptions + '</select></label>',
-          '</div>',
-          '<div class="quick-config__status"><span data-quick-swatch></span><b data-quick-status></b></div>',
-          '<button class="button button--dark button--full" type="button" data-configure>Completar configuração</button>',
-        '</div>',
-      '</details>'
+      '</button>'
     ].join('');
 
-    card.querySelector('[data-quick-format]').value = defaultFormat.key;
-    updateCardVisual(card);
     return card;
   };
 
@@ -185,52 +140,33 @@
   grid.setAttribute('aria-busy', 'false');
   window.CenterCupulas?.observeReveals(grid);
 
-  const applyFilters = () => {
+  const applySearch = () => {
     const query = normalize(state.search);
     let visible = 0;
 
     [...grid.children].forEach((card) => {
-      const matchesRange = state.filter === 'todos' || card.dataset.range === state.filter;
       const matchesSearch = !query || card.dataset.search.includes(query);
-      const show = matchesRange && matchesSearch;
+      const show = matchesSearch;
       card.hidden = !show;
       card.setAttribute('aria-hidden', String(!show));
       if (show) visible += 1;
     });
 
-    if (visible === 0) count.textContent = 'Nenhuma referência corresponde à busca.';
-    else if (query || state.filter !== 'todos') count.textContent = visible === 1 ? 'Uma referência corresponde à busca.' : 'Referências correspondentes à busca.';
-    else count.textContent = 'Referências sugeridas disponíveis.';
+    if (visible === 0) count.textContent = 'Nenhuma referência corresponde à busca';
+    else if (query) count.textContent = visible === 1 ? '1 referência encontrada' : visible + ' referências encontradas';
+    else count.textContent = references.length + ' referências sugeridas';
     emptyState.hidden = visible !== 0;
   };
 
-  filterButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      state.filter = button.dataset.filter;
-      filterButtons.forEach((item) => {
-        const active = item === button;
-        item.classList.toggle('is-active', active);
-        item.setAttribute('aria-pressed', String(active));
-      });
-      applyFilters();
-    });
-  });
-
   search.addEventListener('input', () => {
     state.search = search.value;
-    applyFilters();
+    applySearch();
   });
 
   clearButton?.addEventListener('click', () => {
-    state.filter = 'todos';
     state.search = '';
     search.value = '';
-    filterButtons.forEach((button) => {
-      const active = button.dataset.filter === 'todos';
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
-    applyFilters();
+    applySearch();
     search.focus();
   });
 
@@ -498,21 +434,12 @@
     }
   };
 
-  grid.addEventListener('change', (event) => {
-    const card = event.target.closest('.model-card');
-    if (card && event.target.matches('[data-quick-format], [data-quick-material], [data-quick-color]')) updateCardVisual(card);
-  });
-
   grid.addEventListener('click', (event) => {
     const card = event.target.closest('.model-card');
     if (!card) return;
-    if (!event.target.closest('[data-card-open], [data-configure]')) return;
+    if (!event.target.closest('[data-card-open]')) return;
     const reference = getReference(card.dataset.reference);
-    openConfigurator(reference, event.target.closest('button'), {
-      format: card.querySelector('[data-quick-format]').value,
-      material: card.querySelector('[data-quick-material]').value,
-      color: card.querySelector('[data-quick-color]').value
-    });
+    openConfigurator(reference, event.target.closest('button'));
   });
 
   closeDialogButton?.addEventListener('click', closeConfigurator);
@@ -524,7 +451,7 @@
     if (event.target === dialog) closeConfigurator();
   });
 
-  applyFilters();
+  applySearch();
 
   const requestedReference = new URLSearchParams(window.location.search).get('ref');
   if (requestedReference) {
