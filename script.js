@@ -217,7 +217,7 @@
     let offset = 0;
     let previousTimestamp = 0;
     let isHovered = false;
-    let hasFocus = false;
+    let hasKeyboardFocus = false;
     let isDragging = false;
     let isInViewport = true;
     let dragStartX = 0;
@@ -246,7 +246,7 @@
       && !reducedMotion.matches
       && !document.hidden
       && !isHovered
-      && !hasFocus
+      && !hasKeyboardFocus
       && !isDragging
       && isInViewport
     );
@@ -277,10 +277,22 @@
       isHovered = false;
       previousTimestamp = performance.now();
     });
-    carousel.addEventListener('focusin', () => { hasFocus = true; });
+    carousel.addEventListener('pointerdown', () => {
+      hasKeyboardFocus = false;
+    }, { capture: true });
+    carousel.addEventListener('keydown', () => {
+      hasKeyboardFocus = true;
+    });
+    carousel.addEventListener('focusin', (event) => {
+      try {
+        hasKeyboardFocus = event.target.matches(':focus-visible');
+      } catch {
+        hasKeyboardFocus = false;
+      }
+    });
     carousel.addEventListener('focusout', (event) => {
       if (carousel.contains(event.relatedTarget)) return;
-      hasFocus = false;
+      hasKeyboardFocus = false;
       previousTimestamp = performance.now();
     });
 

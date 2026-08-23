@@ -11,9 +11,10 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 
 - `styles.css`: identidade visual, componentes, animações e responsividade compartilhados.
 - `script.js`: navegação, scroll reveal e carrosséis.
-- `catalogo.js`: referências, filtros, busca, controles rápidos, configuradores e integração com WhatsApp.
+- `catalogo.js`: referências, busca, cards, configuradores e integração com WhatsApp.
 - `assets/`: imagens existentes recuperadas e organizadas.
-- `assets/catalogo/`: imagens-base oficiais provisórias, separadas por formato.
+- `assets/catalogo/`: fotografias de apresentação dos formatos e futuras imagens exclusivas das referências.
+- `catalogo-assets.json`: manifesto técnico das imagens exclusivas planejadas para as 40 referências.
 - `robots.txt` e `sitemap.xml`: arquivos de rastreamento.
 
 ## Contatos oficiais
@@ -23,7 +24,7 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 
 ## Imagens do catálogo
 
-Os cards e configuradores resolvem as imagens por formato, material e cor a partir do registro `catalogImages` em `catalogo.js`. Cada formato possui uma imagem-base; futuras fotografias específicas podem ser adicionadas ao mapa `variants` sem alterar filtros, busca ou regras do configurador.
+O configurador resolve fotografias por formato, material e cor a partir do registro `catalogImages` em `catalogo.js`. Os cards das medidas aceitam um arquivo próprio por referência no campo `image`; quando ele estiver ausente, exibem somente um tratamento gráfico neutro. O planejamento e o status desses arquivos ficam registrados em `catalogo-assets.json`.
 
 ## Execução local
 

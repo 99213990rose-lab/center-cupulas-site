@@ -3,6 +3,8 @@
 
   const WHATSAPP_NUMBER = '5512983216069';
 
+  // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "ref-01.png".
+  // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
   const references = [
     ['01', '10 × 20 × 11'], ['02', '08 × 12 × 11'], ['03', '10 × 20 × 15'],
     ['04', '16 × 28 × 19'], ['05', '17 × 43 × 27'], ['06', '18 × 45 × 31'],
@@ -18,43 +20,45 @@
     ['34', '27 × 45 × 33'], ['35', '30 × 40 × 25'], ['36', '25 × 25 × 15'],
     ['37', '30 × 30 × 20'], ['38', '40 × 40 × 25'], ['39', '45 × 45 × 30'],
     ['40', '50 × 50 × 35']
-  ].map(([reference, measure]) => {
+  ].map(([reference, measure, image = null]) => {
     const dimensions = measure.split('×').map((value) => Number.parseFloat(value.trim()));
     return {
       reference,
       measure,
-      dimensions
+      dimensions,
+      image,
+      expectedImage: 'ref-' + reference + '.png'
     };
   });
 
   const CATALOG_IMAGE_ROOT = 'assets/catalogo/';
 
-  // Cada formato possui uma imagem-base e pode receber variantes específicas no futuro.
+  // Cada formato possui uma fotografia de apresentação e pode receber variantes específicas no futuro.
   // Use chaves no padrão "material__cor" normalizado, por exemplo:
   // variants: { tricoline__preto: 'conica-tricoline-preto.png' }
   const catalogImages = {
-    conica: { base: 'conica-tricoline-bege.png', variants: {} },
-    drum: { base: 'drum-tricoline-offwhite.png', variants: {} },
-    bell: { base: 'bell-tricoline-gelo.png', variants: {} },
-    oval: { base: 'oval-tricoline-cinza.png', variants: {} },
-    'piramidal-quadrada': { base: 'piramidal-quadrada-juta.png', variants: {} },
-    'piramidal-retangular': { base: 'piramidal-retangular-branca.png', variants: {} },
-    cubo: { base: 'box-reto-preto.png', variants: {} },
-    hexagonal: { base: 'hexagonal-juta.png', variants: {} },
-    octogonal: { base: 'octogonal-offwhite.png', variants: {} },
-    personalizado: { base: '../hero-workshop.jpg', variants: {} }
+    conica: { fallback: 'conica-tricoline-bege.png', variants: {} },
+    drum: { fallback: 'drum-tricoline-offwhite.png', variants: {} },
+    bell: { fallback: 'bell-tricoline-gelo.png', variants: {} },
+    oval: { fallback: 'oval-tricoline-cinza.png', variants: {} },
+    'piramidal-quadrada': { fallback: 'piramidal-quadrada-juta.png', variants: {} },
+    'piramidal-retangular': { fallback: 'piramidal-retangular-branca.png', variants: {} },
+    cubo: { fallback: 'box-reto-preto.png', variants: {} },
+    hexagonal: { fallback: 'hexagonal-juta.png', variants: {} },
+    octogonal: { fallback: 'octogonal-offwhite.png', variants: {} },
+    personalizado: { fallback: '../hero-workshop.jpg', variants: {} }
   };
 
   const formats = [
-    { key: 'conica', label: 'Cônica / Empire', alt: 'Imagem-base de cúpula cônica em perspectiva' },
-    { key: 'drum', label: 'Drum / Cilíndrica', alt: 'Imagem-base de cúpula cilíndrica em perspectiva' },
-    { key: 'bell', label: 'Bell / Sino', alt: 'Imagem-base de cúpula estilo sino em perspectiva' },
-    { key: 'oval', label: 'Oval', alt: 'Imagem-base de cúpula oval em perspectiva' },
-    { key: 'piramidal-quadrada', label: 'Piramidal quadrada', alt: 'Imagem-base de cúpula piramidal quadrada em perspectiva' },
-    { key: 'piramidal-retangular', label: 'Piramidal retangular', alt: 'Imagem-base de cúpula piramidal retangular em perspectiva' },
-    { key: 'cubo', label: 'Cubo / Box reto', alt: 'Imagem-base de cúpula box reta em perspectiva' },
-    { key: 'hexagonal', label: 'Hexagonal', alt: 'Imagem-base de cúpula hexagonal em perspectiva' },
-    { key: 'octogonal', label: 'Octogonal', alt: 'Imagem-base de cúpula octogonal em perspectiva' },
+    { key: 'conica', label: 'Cônica / Empire', alt: 'Cúpula cônica em perspectiva' },
+    { key: 'drum', label: 'Drum / Cilíndrica', alt: 'Cúpula cilíndrica em perspectiva' },
+    { key: 'bell', label: 'Bell / Sino', alt: 'Cúpula estilo sino em perspectiva' },
+    { key: 'oval', label: 'Oval', alt: 'Cúpula oval em perspectiva' },
+    { key: 'piramidal-quadrada', label: 'Piramidal quadrada', alt: 'Cúpula piramidal quadrada em perspectiva' },
+    { key: 'piramidal-retangular', label: 'Piramidal retangular', alt: 'Cúpula piramidal retangular em perspectiva' },
+    { key: 'cubo', label: 'Cubo / Box reto', alt: 'Cúpula box reta em perspectiva' },
+    { key: 'hexagonal', label: 'Hexagonal', alt: 'Cúpula hexagonal em perspectiva' },
+    { key: 'octogonal', label: 'Octogonal', alt: 'Cúpula octogonal em perspectiva' },
     { key: 'personalizado', label: 'Projeto personalizado', alt: 'Referência visual de projeto personalizado' }
   ];
 
@@ -82,11 +86,10 @@
   const getCatalogVisual = (format, material = 'Tricoline', color = '') => {
     const imageSet = catalogImages[format.key] || catalogImages.conica;
     const variantKey = normalize(material) + '__' + normalize(color);
-    const filename = imageSet.variants[variantKey] || imageSet.base;
+    const filename = imageSet.variants[variantKey] || imageSet.fallback;
     return {
       image: CATALOG_IMAGE_ROOT + filename,
-      alt: format.alt,
-      isSpecificVariant: Boolean(imageSet.variants[variantKey])
+      alt: format.alt
     };
   };
   const getReference = (value) => references.find((item) => item.reference === String(value).padStart(2, '0')) || references[0];
@@ -111,6 +114,17 @@
 
   const createCard = (item, index) => {
     const card = document.createElement('article');
+    const visual = item.image
+      ? [
+          '<span class="model-card__media" data-asset-status="existing">',
+            '<img src="' + CATALOG_IMAGE_ROOT + item.image + '" alt="Cúpula correspondente à referência ' + item.reference + ', medida ' + item.measure + ' centímetros" loading="lazy" decoding="async">',
+          '</span>'
+        ].join('')
+      : [
+          '<span class="model-card__media model-card__media--pending" data-asset-status="pending" data-expected-image="' + item.expectedImage + '" data-reference="' + item.reference + '" aria-hidden="true">',
+            '<span class="reference-placeholder"><i></i><i></i><i></i></span>',
+          '</span>'
+        ].join('');
 
     card.className = 'model-card';
     card.dataset.reference = item.reference;
@@ -119,9 +133,7 @@
     card.style.setProperty('--reveal-delay', String((index % 6) * 45) + 'ms');
     card.innerHTML = [
       '<button class="model-card__main" type="button" data-card-open aria-label="Configurar referência ' + item.reference + ', medida ' + item.measure + ' centímetros">',
-        '<span class="model-card__technical" data-reference="' + item.reference + '" aria-hidden="true">',
-          '<span class="measure-mark"><i></i><i></i><i></i></span>',
-        '</span>',
+        visual,
         '<span class="model-card__body">',
           '<span class="model-card__eyebrow">REF. ' + item.reference + '</span>',
           '<strong>' + item.measure + ' <small>cm</small></strong>',
