@@ -2344,6 +2344,27 @@ p { text-wrap: pretty; }
   object-position: 50% 46%;
 }
 
+.hero-slide--diamond {
+  background: #f2eee8;
+}
+
+.hero-slide--diamond img {
+  object-fit: contain;
+  object-position: center;
+}
+
+.hero-slide--scene img {
+  object-fit: cover;
+}
+
+.hero-slide--workshop img {
+  object-position: 44% 50%;
+}
+
+.hero-slide--showroom img {
+  object-position: 48% 50%;
+}
+
 .hero-slide--product {
   background:
     radial-gradient(circle at 50% 34%, rgba(255,255,255,.9), transparent 36%),
@@ -2386,13 +2407,20 @@ p { text-wrap: pretty; }
 
 .about-production-media {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 2 / 1;
   overflow: hidden;
   border-radius: 30px;
   background:
     linear-gradient(145deg, rgba(216,173,105,.14), transparent 48%),
     var(--ink);
   box-shadow: var(--shadow-lg);
+}
+
+.about-production-media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 36% center;
 }
 
 .about-production-media::before,
@@ -2464,6 +2492,18 @@ p { text-wrap: pretty; }
     radial-gradient(circle at 76% 27%, rgba(255,255,255,.92), transparent 34%),
     #eee6da;
   background-size: 24px 24px, 24px 24px, auto, auto;
+}
+
+.model-card__media {
+  aspect-ratio: 16 / 9;
+}
+
+.model-card__media::after {
+  display: none;
+}
+
+.model-card__media img {
+  object-fit: cover;
 }
 
 .model-card__body {
@@ -2916,6 +2956,11 @@ p { text-wrap: pretty; }
     font-size: clamp(2.75rem, 6vw, 3.7rem);
   }
 
+  .hero-carousel {
+    min-height: 0;
+    aspect-ratio: 3 / 2;
+  }
+
   .about-layout {
     grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr);
     gap: 44px;
@@ -2979,8 +3024,34 @@ p { text-wrap: pretty; }
     display: inline;
   }
 
+  .hero-carousel {
+    aspect-ratio: 4 / 3;
+  }
+
   .hero-slide--product img {
     padding: 20px 20px 105px;
+  }
+
+  .hero-slide--workshop img {
+    object-position: 42% 50%;
+  }
+
+  .hero-slide--showroom img {
+    object-position: 46% 50%;
+  }
+
+  .model-card__main {
+    display: block;
+    min-height: 0;
+  }
+
+  .model-card__media,
+  .model-card__media.model-card__media--pending {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 
   .process-grid li {

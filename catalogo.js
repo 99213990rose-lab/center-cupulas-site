@@ -3,13 +3,13 @@
 
   const WHATSAPP_NUMBER = '5512983216069';
 
-  // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "ref-01.png".
+  // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
   const references = [
-    ['01', '10 × 20 × 11'], ['02', '08 × 12 × 11'], ['03', '10 × 20 × 15'],
-    ['04', '16 × 28 × 19'], ['05', '17 × 43 × 27'], ['06', '18 × 45 × 31'],
-    ['07', '20 × 50 × 31'], ['08', '25 × 60 × 35'], ['09', '10 × 26 × 17'],
-    ['10', '11 × 30 × 20'], ['11', '13 × 35 × 23'], ['12', '20 × 35 × 25'],
+    ['01', '10 × 20 × 11', 'referencias/ref-01.webp', 1185, 639], ['02', '08 × 12 × 11', 'referencias/ref-02.webp', 1168, 617], ['03', '10 × 20 × 15', 'referencias/ref-03.webp', 1131, 642],
+    ['04', '16 × 28 × 19', 'referencias/ref-04.webp', 1116, 595], ['05', '17 × 43 × 27', 'referencias/ref-05.webp', 1082, 626], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1054, 632],
+    ['07', '20 × 50 × 31', 'referencias/ref-07.webp', 1081, 631], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1007, 633], ['09', '10 × 26 × 17', 'referencias/ref-09.webp', 1071, 632],
+    ['10', '11 × 30 × 20', 'referencias/ref-10.webp', 987, 632], ['11', '13 × 35 × 23'], ['12', '20 × 35 × 25'],
     ['13', '10 × 30 × 15'], ['14', '10 × 35 × 23'], ['15', '30 × 40 × 35'],
     ['16', '30 × 40 × 30'], ['17', '35 × 50 × 40'], ['18', '15 × 50 × 33'],
     ['19', '11 × 50 × 27'], ['20', '25 × 45 × 33'], ['21', '20 × 40 × 30'],
@@ -20,13 +20,15 @@
     ['34', '27 × 45 × 33'], ['35', '30 × 40 × 25'], ['36', '25 × 25 × 15'],
     ['37', '30 × 30 × 20'], ['38', '40 × 40 × 25'], ['39', '45 × 45 × 30'],
     ['40', '50 × 50 × 35']
-  ].map(([reference, measure, image = null]) => {
+  ].map(([reference, measure, image = null, imageWidth = 1200, imageHeight = 675]) => {
     const dimensions = measure.split('×').map((value) => Number.parseFloat(value.trim()));
     return {
       reference,
       measure,
       dimensions,
       image,
+      imageWidth,
+      imageHeight,
       expectedImage: 'ref-' + reference + '.png'
     };
   });
@@ -116,7 +118,7 @@
     const visual = item.image
       ? [
           '<span class="model-card__media" data-asset-status="existing">',
-            '<img src="' + CATALOG_IMAGE_ROOT + item.image + '" alt="Cúpula correspondente à referência ' + item.reference + ', medida ' + item.measure + ' centímetros" loading="lazy" decoding="async">',
+            '<img src="' + CATALOG_IMAGE_ROOT + item.image + '" alt="Cúpula ilustrativa da REF. ' + item.reference + '" width="' + item.imageWidth + '" height="' + item.imageHeight + '" loading="lazy" decoding="async">',
           '</span>'
         ].join('')
       : [
