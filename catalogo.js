@@ -93,7 +93,6 @@
     };
   };
   const getReference = (value) => references.find((item) => item.reference === String(value).padStart(2, '0')) || references[0];
-  const formatOptions = formats.map((format) => '<option value="' + format.key + '">' + format.label + '</option>').join('');
   const referenceOptions = references.map((item) => '<option value="' + item.reference + '">REF. ' + item.reference + ' - ' + item.measure + ' cm</option>').join('');
   const swatchClass = (color) => 'swatch--' + normalize(color).replace('/', '-');
 
@@ -184,73 +183,101 @@
 
   const formMarkup = (prefix, mode) => {
     const isDialog = mode === 'reference';
+    const formatMarkup = formats.map((format, index) => {
+      const visual = getCatalogVisual(format);
+      const media = format.key === 'personalizado'
+        ? '<span class="format-choice__placeholder" aria-hidden="true"><i></i><i></i><i></i></span>'
+        : '<img src="' + visual.image + '" alt="" loading="lazy" decoding="async">';
+
+      return [
+        '<label class="format-choice">',
+          '<input type="radio" name="' + prefix + '-format" value="' + format.key + '" data-field="format"' + (index === 0 ? ' checked' : '') + '>',
+          '<span class="format-choice__card">', media, '<b>' + format.label + '</b></span>',
+        '</label>'
+      ].join('');
+    }).join('');
+
     const colorMarkup = colors.map((color, index) => [
-      '<label>',
+      '<label class="color-choice">',
         '<input type="radio" name="' + prefix + '-color" value="' + color + '" data-field="color"' + (index === 0 ? ' checked' : '') + '>',
-        '<span class="color-swatch ' + swatchClass(color) + '"></span>',
-        '<b>' + color + '</b>',
+        '<span><i class="color-swatch ' + swatchClass(color) + '"></i><b>' + color + '</b></span>',
       '</label>'
     ].join('')).join('');
 
     return [
-      '<form class="configuration-form" data-configuration-form novalidate>',
+      '<form class="configuration-form configuration-wizard" data-configuration-form novalidate>',
         '<div class="configuration-form__heading">',
-          '<p class="eyebrow">' + (isDialog ? 'Ficha da referência' : 'Configurador completo') + '</p>',
-          '<h2' + (isDialog ? ' id="configurator-title"' : '') + '>' + (isDialog ? 'Configure este modelo' : 'Defina sua configuração') + '</h2>',
-          '<p>Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.</p>',
+          '<p class="eyebrow">' + (isDialog ? 'Configuração da referência' : 'Configurador de produto') + '</p>',
+          '<h2' + (isDialog ? ' id="configurator-title"' : '') + '>' + (isDialog ? 'Configure esta medida' : 'Defina sua cúpula') + '</h2>',
         '</div>',
-        '<fieldset class="config-step">',
-          '<legend><span>01</span> Formato</legend>',
-          '<label class="select-field"><span>Geometria / formato</span><select data-field="format">' + formatOptions + '</select></label>',
-          '<label class="form-field custom-format-field" hidden><span>Descreva o formato desejado</span><input type="text" maxlength="100" data-field="custom-format" placeholder="Ex.: formato orgânico assimétrico"></label>',
-        '</fieldset>',
-        '<fieldset class="config-step">',
-          '<legend><span>02</span> Material</legend>',
-          '<div class="segmented-options">',
-            '<label><input type="radio" name="' + prefix + '-material" value="Juta" data-field="material" checked><span><b>Juta</b><small>Natural e rústica</small></span></label>',
-            '<label><input type="radio" name="' + prefix + '-material" value="Tricoline" data-field="material"><span><b>Tricoline</b><small>Tecido em cores variadas</small></span></label>',
-          '</div>',
-          '<p class="material-note" data-material-note>Juta possui cor natural única e trama aberta.</p>',
-        '</fieldset>',
-        '<fieldset class="config-step color-fieldset" data-color-step>',
-          '<legend><span>03</span> Cor</legend>',
-          '<div class="juta-color" data-juta-color><span class="color-swatch swatch--natural-juta"></span><b>Natural / Juta</b></div>',
-          '<div class="color-options" data-tricoline-colors hidden>' + colorMarkup + '</div>',
-          '<label class="form-field custom-color-field" hidden><span>Qual cor você procura?</span><input type="text" maxlength="60" data-field="custom-color" placeholder="Ex.: azul petróleo"></label>',
-        '</fieldset>',
-        '<fieldset class="config-step">',
-          '<legend><span>04</span> Medidas</legend>',
-          '<div class="measure-mode">',
-            '<label><input type="radio" name="' + prefix + '-measure-mode" value="suggested" data-field="measure-mode" checked><span>Usar medida sugerida</span></label>',
-            '<label><input type="radio" name="' + prefix + '-measure-mode" value="custom" data-field="measure-mode"><span>Informar minhas medidas</span></label>',
-          '</div>',
-          '<label class="select-field suggested-measure-field"><span>Referência sugerida</span><select data-field="reference">' + referenceOptions + '</select></label>',
-          '<div class="custom-measures" hidden>',
-            '<label><span>Medida superior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="upper" placeholder="Ex.: 20"></label>',
-            '<label><span>Medida inferior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="lower" placeholder="Ex.: 40"></label>',
-            '<label><span>Altura <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="height" placeholder="Ex.: 30"></label>',
-          '</div>',
-          '<p class="field-help">As medidas seguem a ordem: superior × inferior × altura.</p>',
-        '</fieldset>',
-        '<fieldset class="config-step">',
-          '<legend><span>05</span> Observações</legend>',
-          '<label class="form-field"><span>Detalhes adicionais <small>(opcional)</small></span><textarea rows="4" maxlength="500" data-field="observations" placeholder="Descreva detalhes importantes para a avaliação."></textarea></label>',
-        '</fieldset>',
-        '<section class="config-summary" aria-label="Resumo da configuração" aria-live="polite">',
-          '<p><span>06</span> Resumo</p>',
-          '<dl>',
-            '<div><dt>Formato</dt><dd data-summary="format"></dd></div>',
-            '<div><dt>Material</dt><dd data-summary="material"></dd></div>',
-            '<div><dt>Cor</dt><dd data-summary="color"></dd></div>',
-            '<div><dt>Referência</dt><dd data-summary="reference"></dd></div>',
-            '<div><dt>Medida superior</dt><dd data-summary="upper"></dd></div>',
-            '<div><dt>Medida inferior</dt><dd data-summary="lower"></dd></div>',
-            '<div><dt>Altura</dt><dd data-summary="height"></dd></div>',
-            '<div class="summary-observations"><dt>Observações</dt><dd data-summary="observations"></dd></div>',
-          '</dl>',
-        '</section>',
-        '<p class="viability-notice"><strong>Atenção:</strong> a configuração será analisada pela fábrica para confirmação da viabilidade de produção.</p>',
-        '<button class="button button--whatsapp button--full" type="submit">Solicitar avaliação pelo WhatsApp <span aria-hidden="true">↗</span></button>',
+        '<ol class="config-progress" aria-label="Etapas da configuração">',
+          '<li class="is-current" data-step-indicator="0" aria-current="step"><span>1</span><b>Formato</b></li>',
+          '<li data-step-indicator="1"><span>2</span><b>Material e cor</b></li>',
+          '<li data-step-indicator="2"><span>3</span><b>Medidas</b></li>',
+          '<li data-step-indicator="3"><span>4</span><b>Resumo</b></li>',
+        '</ol>',
+        '<div class="config-panels">',
+          '<section class="config-panel" data-config-panel="0">',
+            '<fieldset aria-describedby="' + prefix + '-error-0">',
+              '<legend tabindex="-1" data-step-title><span>Etapa 1</span> Escolha o formato</legend>',
+              '<div class="format-options">' + formatMarkup + '</div>',
+              '<label class="form-field custom-format-field" hidden><span>Descreva o formato desejado</span><input type="text" maxlength="100" data-field="custom-format" placeholder="Ex.: formato orgânico assimétrico"></label>',
+            '</fieldset>',
+            '<p class="config-error" id="' + prefix + '-error-0" data-step-error role="alert" hidden></p>',
+          '</section>',
+          '<section class="config-panel" data-config-panel="1" hidden>',
+            '<fieldset aria-describedby="' + prefix + '-error-1">',
+              '<legend tabindex="-1" data-step-title><span>Etapa 2</span> Escolha o material e a cor</legend>',
+              '<div class="material-options">',
+                '<label><input type="radio" name="' + prefix + '-material" value="Juta" data-field="material" checked><span><b>Juta</b><small>Acabamento natural</small></span></label>',
+                '<label><input type="radio" name="' + prefix + '-material" value="Tricoline" data-field="material"><span><b>Tricoline</b><small>Disponível em várias cores</small></span></label>',
+              '</div>',
+              '<p class="material-note" data-material-note>Juta é oferecida somente na cor natural.</p>',
+              '<div class="juta-color" data-juta-color><span class="color-swatch swatch--natural-juta"></span><b>Juta natural</b></div>',
+              '<div class="color-options" data-tricoline-colors hidden>' + colorMarkup + '</div>',
+              '<label class="form-field custom-color-field" hidden><span>Cor desejada</span><input type="text" maxlength="60" data-field="custom-color" placeholder="Ex.: azul petróleo"></label>',
+            '</fieldset>',
+            '<p class="config-error" id="' + prefix + '-error-1" data-step-error role="alert" hidden></p>',
+          '</section>',
+          '<section class="config-panel" data-config-panel="2" hidden>',
+            '<fieldset aria-describedby="' + prefix + '-error-2">',
+              '<legend tabindex="-1" data-step-title><span>Etapa 3</span> Informe as medidas</legend>',
+              '<div class="measure-mode">',
+                '<label><input type="radio" name="' + prefix + '-measure-mode" value="suggested" data-field="measure-mode" checked><span><b>Usar referência sugerida</b><small>Escolha uma das 40 medidas</small></span></label>',
+                '<label><input type="radio" name="' + prefix + '-measure-mode" value="custom" data-field="measure-mode"><span><b>Medidas personalizadas</b><small>Informe as três dimensões</small></span></label>',
+              '</div>',
+              '<label class="select-field suggested-measure-field"><span>Referência sugerida</span><select data-field="reference">' + referenceOptions + '</select></label>',
+              '<div class="custom-measures" hidden>',
+                '<label><span>Superior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="upper" placeholder="Ex.: 20"></label>',
+                '<label><span>Inferior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="lower" placeholder="Ex.: 40"></label>',
+                '<label><span>Altura <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="height" placeholder="Ex.: 30"></label>',
+              '</div>',
+              '<p class="field-help"><strong>Ordem obrigatória:</strong> Superior × Inferior × Altura, em centímetros.</p>',
+              '<label class="form-field observations-field"><span>Observações <small>(opcional)</small></span><textarea rows="3" maxlength="500" data-field="observations" placeholder="Inclua somente detalhes relevantes para a avaliação."></textarea></label>',
+            '</fieldset>',
+            '<p class="config-error" id="' + prefix + '-error-2" data-step-error role="alert" hidden></p>',
+          '</section>',
+          '<section class="config-panel" data-config-panel="3" hidden>',
+            '<div class="config-summary" aria-label="Resumo da configuração" aria-live="polite">',
+              '<div class="config-summary__heading" tabindex="-1" data-step-title><span>Etapa 4</span><h3>Revise sua configuração</h3></div>',
+              '<dl>',
+                '<div><dt>Formato</dt><dd data-summary="format"></dd></div>',
+                '<div><dt>Material</dt><dd data-summary="material"></dd></div>',
+                '<div><dt>Cor</dt><dd data-summary="color"></dd></div>',
+                '<div data-reference-summary><dt>Referência</dt><dd data-summary="reference"></dd></div>',
+                '<div><dt>Medida</dt><dd data-summary="measure"></dd></div>',
+                '<div class="summary-observations"><dt>Observações</dt><dd data-summary="observations"></dd></div>',
+              '</dl>',
+              '<p class="viability-notice">Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.</p>',
+            '</div>',
+          '</section>',
+        '</div>',
+        '<div class="config-navigation">',
+          '<button class="button button--secondary" type="button" data-step-previous hidden>Anterior</button>',
+          '<span data-step-status aria-live="polite">Etapa 1 de 4</span>',
+          '<button class="button button--dark" type="button" data-step-next>Continuar <span aria-hidden="true">→</span></button>',
+          '<button class="button button--whatsapp" type="submit" data-step-submit hidden>Solicitar avaliação pelo WhatsApp <span aria-hidden="true">↗</span></button>',
+        '</div>',
       '</form>'
     ].join('');
   };
@@ -262,8 +289,14 @@
 
     const form = host.querySelector('[data-configuration-form]');
     const preview = host.closest('.builder-layout, .configurator__shell')?.querySelector('[data-product-preview]');
+    const panels = [...form.querySelectorAll('[data-config-panel]')];
+    const indicators = [...form.querySelectorAll('[data-step-indicator]')];
+    const previousButton = form.querySelector('[data-step-previous]');
+    const nextButton = form.querySelector('[data-step-next]');
+    const submitButton = form.querySelector('[data-step-submit]');
+    const stepStatus = form.querySelector('[data-step-status]');
     const fields = {
-      format: form.querySelector('[data-field="format"]'),
+      format: [...form.querySelectorAll('[data-field="format"]')],
       customFormat: form.querySelector('[data-field="custom-format"]'),
       customFormatField: form.querySelector('.custom-format-field'),
       material: [...form.querySelectorAll('[data-field="material"]')],
@@ -282,6 +315,7 @@
       height: form.querySelector('[data-field="height"]'),
       observations: form.querySelector('[data-field="observations"]')
     };
+    let currentStep = 0;
 
     const checkedValue = (items) => items.find((item) => item.checked)?.value;
     const summary = (key, value) => {
@@ -290,11 +324,12 @@
     };
 
     const getConfiguration = () => {
-      const selectedFormat = getFormat(fields.format.value);
+      const formatKey = checkedValue(fields.format) || 'conica';
+      const selectedFormat = getFormat(formatKey);
       const material = checkedValue(fields.material) || 'Juta';
       const selectedColor = checkedValue(fields.color) || 'Preto';
       const color = material === 'Juta'
-        ? 'Natural / Juta'
+        ? 'Juta natural'
         : selectedColor === 'Colorido'
           ? (fields.customColor.value.trim() || 'Colorido — cor a informar')
           : selectedColor;
@@ -305,7 +340,7 @@
         : [fields.upper.value.trim(), fields.lower.value.trim(), fields.height.value.trim()];
 
       return {
-        format: fields.format.value === 'personalizado' && fields.customFormat.value.trim()
+        format: formatKey === 'personalizado' && fields.customFormat.value.trim()
           ? 'Projeto personalizado — ' + fields.customFormat.value.trim()
           : selectedFormat.label,
         formatData: selectedFormat,
@@ -337,9 +372,10 @@
     const update = () => {
       const material = checkedValue(fields.material) || 'Juta';
       const selectedColor = checkedValue(fields.color) || 'Preto';
+      const formatKey = checkedValue(fields.format) || 'conica';
       const isJuta = material === 'Juta';
       const isColorful = !isJuta && selectedColor === 'Colorido';
-      const customFormat = fields.format.value === 'personalizado';
+      const customFormat = formatKey === 'personalizado';
       const customMeasure = checkedValue(fields.measureMode) === 'custom';
       const configuration = getConfiguration();
 
@@ -351,8 +387,8 @@
       fields.customColorField.hidden = !isColorful;
       fields.customColor.required = isColorful;
       fields.materialNote.textContent = isJuta
-        ? 'Juta possui cor natural única e trama aberta.'
-        : 'Tricoline possui trama mais fechada e permite cores variadas.';
+        ? 'Juta é oferecida somente na cor natural.'
+        : 'Tricoline permite escolher entre as cores disponíveis ou informar outra cor.';
       fields.suggestedMeasureField.hidden = customMeasure;
       fields.reference.disabled = customMeasure;
       fields.customMeasures.hidden = !customMeasure;
@@ -364,57 +400,127 @@
       summary('format', configuration.format);
       summary('material', configuration.material);
       summary('color', configuration.color);
-      summary('reference', customMeasure ? 'Não utilizada' : 'REF. ' + configuration.reference.reference);
-      summary('upper', configuration.upper + (configuration.upper === 'A informar' ? '' : ' cm'));
-      summary('lower', configuration.lower + (configuration.lower === 'A informar' ? '' : ' cm'));
-      summary('height', configuration.height + (configuration.height === 'A informar' ? '' : ' cm'));
+      summary('reference', customMeasure ? '' : 'REF. ' + configuration.reference.reference);
+      summary('measure', [configuration.upper, configuration.lower, configuration.height].join(' × ') + (configuration.upper === 'A informar' ? '' : ' cm'));
       summary('observations', configuration.observations || 'Sem observações');
+      const referenceSummary = form.querySelector('[data-reference-summary]');
+      if (referenceSummary) referenceSummary.hidden = customMeasure;
       updatePreview(configuration);
     };
 
-    form.addEventListener('input', update);
+    const clearStepError = (step) => {
+      const panel = panels[step];
+      const error = panel?.querySelector('[data-step-error]');
+      if (error) {
+        error.hidden = true;
+        error.textContent = '';
+      }
+      panel?.querySelectorAll('[aria-invalid="true"]').forEach((field) => {
+        field.removeAttribute('aria-invalid');
+        field.removeAttribute('aria-describedby');
+      });
+    };
+
+    const validateStep = (step) => {
+      update();
+      clearStepError(step);
+      const panel = panels[step];
+      const invalidField = [...panel.querySelectorAll('input:enabled, select:enabled, textarea:enabled')]
+        .find((field) => !field.checkValidity());
+      if (!invalidField) return true;
+
+      const error = panel.querySelector('[data-step-error]');
+      error.textContent = invalidField.validationMessage || 'Revise o campo indicado antes de continuar.';
+      error.hidden = false;
+      invalidField.setAttribute('aria-invalid', 'true');
+      invalidField.setAttribute('aria-describedby', error.id);
+      invalidField.focus();
+      return false;
+    };
+
+    const showStep = (step, focusHeading = true) => {
+      currentStep = Math.max(0, Math.min(step, panels.length - 1));
+      panels.forEach((panel, panelIndex) => { panel.hidden = panelIndex !== currentStep; });
+      indicators.forEach((indicator, indicatorIndex) => {
+        indicator.classList.toggle('is-current', indicatorIndex === currentStep);
+        indicator.classList.toggle('is-complete', indicatorIndex < currentStep);
+        if (indicatorIndex === currentStep) indicator.setAttribute('aria-current', 'step');
+        else indicator.removeAttribute('aria-current');
+      });
+      previousButton.hidden = currentStep === 0;
+      nextButton.hidden = currentStep === panels.length - 1;
+      submitButton.hidden = currentStep !== panels.length - 1;
+      stepStatus.textContent = 'Etapa ' + (currentStep + 1) + ' de ' + panels.length;
+      update();
+      if (focusHeading) panels[currentStep].querySelector('[data-step-title]')?.focus({ preventScroll: true });
+    };
+
+    form.addEventListener('input', (event) => {
+      if (event.target.matches('[aria-invalid="true"]')) clearStepError(currentStep);
+      update();
+    });
     form.addEventListener('change', update);
+    previousButton.addEventListener('click', () => showStep(currentStep - 1));
+    nextButton.addEventListener('click', () => {
+      if (validateStep(currentStep)) showStep(currentStep + 1);
+    });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      update();
-      if (!form.reportValidity()) return;
+      if (currentStep < panels.length - 1) {
+        if (validateStep(currentStep)) showStep(currentStep + 1);
+        return;
+      }
+
+      for (let step = 0; step < panels.length - 1; step += 1) {
+        showStep(step, false);
+        if (!validateStep(step)) {
+          return;
+        }
+      }
+      showStep(panels.length - 1, false);
 
       const configuration = getConfiguration();
       const lines = [
-        'Olá! Montei uma configuração no site da Center Cúpulas e gostaria de solicitar uma avaliação/orçamento.',
+        'Olá, vim pelo catálogo da Center Cúpulas e gostaria de solicitar a avaliação desta configuração.',
         '',
         'Formato: ' + configuration.format,
         'Material: ' + configuration.material,
-        'Cor: ' + configuration.color,
-        'Medida superior: ' + configuration.upper + ' cm',
-        'Medida inferior: ' + configuration.lower + ' cm',
-        'Altura: ' + configuration.height + ' cm'
+        'Cor: ' + configuration.color
       ];
 
       if (configuration.measureMode === 'suggested') lines.push('Referência: REF. ' + configuration.reference.reference);
+      lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
-      lines.push('', 'Estou ciente de que a configuração será avaliada pela fábrica para confirmação da viabilidade de produção.');
+      lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
 
       window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n')), '_blank', 'noopener,noreferrer');
     });
 
     const setConfiguration = (configuration = {}) => {
       const reference = getReference(configuration.reference || fields.reference.value);
+      const formatKey = getFormat(configuration.format).key;
       fields.reference.value = reference.reference;
-      fields.format.value = getFormat(configuration.format).key;
+      fields.format.forEach((input) => { input.checked = input.value === formatKey; });
       fields.material.forEach((input) => { input.checked = input.value === (configuration.material || 'Juta'); });
       fields.color.forEach((input) => { input.checked = input.value === (configuration.color || 'Preto'); });
       fields.measureMode.forEach((input) => { input.checked = input.value === (configuration.measureMode || 'suggested'); });
-      fields.customFormat.value = '';
+      fields.customFormat.value = configuration.customFormat || '';
       fields.customColor.value = configuration.customColor || '';
-      fields.upper.value = '';
-      fields.lower.value = '';
-      fields.height.value = '';
-      fields.observations.value = '';
-      update();
+      fields.upper.value = configuration.upper || '';
+      fields.lower.value = configuration.lower || '';
+      fields.height.value = configuration.height || '';
+      fields.observations.value = configuration.observations || '';
+      panels.forEach((panel, step) => clearStepError(step));
+      showStep(0, false);
     };
 
-    setConfiguration({ reference: '01', format: 'conica', material: 'Juta', color: 'Preto' });
+    setConfiguration({
+      reference: '01',
+      format: 'conica',
+      material: 'Juta',
+      color: 'Preto',
+      measureMode: mode === 'custom' ? 'custom' : 'suggested'
+    });
     return { form, setConfiguration, update };
   };
 
