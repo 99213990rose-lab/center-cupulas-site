@@ -150,7 +150,18 @@
 
     heroCarousel.addEventListener('mouseenter', () => { isHovered = true; stopAutoplay(); });
     heroCarousel.addEventListener('mouseleave', () => { isHovered = false; startAutoplay(); });
-    heroCarousel.addEventListener('focusin', () => { hasFocus = true; stopAutoplay(); });
+    heroCarousel.addEventListener('focusin', (event) => {
+      if (pointerStartX !== null) {
+        hasFocus = false;
+        return;
+      }
+      try {
+        hasFocus = event.target.matches(':focus-visible');
+      } catch {
+        hasFocus = true;
+      }
+      if (hasFocus) stopAutoplay();
+    });
     heroCarousel.addEventListener('focusout', (event) => {
       if (heroCarousel.contains(event.relatedTarget)) return;
       hasFocus = false;
@@ -220,6 +231,7 @@
     let hasKeyboardFocus = false;
     let isDragging = false;
     let isInViewport = true;
+    let pointerInitiatedFocus = false;
     let dragStartX = 0;
     let dragStartOffset = 0;
     let hasDragged = false;
@@ -278,12 +290,18 @@
       previousTimestamp = performance.now();
     });
     carousel.addEventListener('pointerdown', () => {
+      pointerInitiatedFocus = true;
       hasKeyboardFocus = false;
     }, { capture: true });
     carousel.addEventListener('keydown', () => {
+      pointerInitiatedFocus = false;
       hasKeyboardFocus = true;
     });
     carousel.addEventListener('focusin', (event) => {
+      if (pointerInitiatedFocus) {
+        hasKeyboardFocus = false;
+        return;
+      }
       try {
         hasKeyboardFocus = event.target.matches(':focus-visible');
       } catch {
@@ -292,6 +310,7 @@
     });
     carousel.addEventListener('focusout', (event) => {
       if (carousel.contains(event.relatedTarget)) return;
+      pointerInitiatedFocus = false;
       hasKeyboardFocus = false;
       previousTimestamp = performance.now();
     });
