@@ -155,7 +155,7 @@
         tricoline__colorido: 'variants/octogonal-tricoline-colorido.webp'
       }
     },
-    personalizado: { fallback: '../hero-workshop.jpg', variants: {} }
+    personalizado: { fallback: 'variants/projeto-personalizado.webp', variants: {} }
   };
 
   const formats = [
@@ -168,7 +168,7 @@
     { key: 'cubo', label: 'Cubo / Box reto', alt: 'Cúpula box reta em perspectiva' },
     { key: 'hexagonal', label: 'Hexagonal', alt: 'Cúpula hexagonal em perspectiva' },
     { key: 'octogonal', label: 'Octogonal', alt: 'Cúpula octogonal em perspectiva' },
-    { key: 'personalizado', label: 'Projeto personalizado', alt: 'Referência visual de projeto personalizado' }
+    { key: 'personalizado', label: 'Projeto personalizado', alt: 'Conceito de cúpula personalizada com geometria futurista' }
   ];
 
   const colors = ['Preto', 'Branco', 'Bege', 'Off White', 'Gelo', 'Cinza', 'Colorido'];
@@ -294,9 +294,8 @@
     const isDialog = mode === 'reference';
     const formatMarkup = formats.map((format, index) => {
       const visual = getCatalogVisual(format);
-      const media = format.key === 'personalizado'
-        ? '<span class="format-choice__placeholder" aria-hidden="true"><i></i><i></i><i></i></span>'
-        : '<img src="' + visual.image + '" alt="" loading="lazy" decoding="async">';
+      const mediaAlt = format.key === 'personalizado' ? visual.alt : '';
+      const media = '<img src="' + visual.image + '" alt="' + mediaAlt + '" loading="lazy" decoding="async">';
 
       return [
         '<label class="format-choice">',
@@ -316,8 +315,8 @@
     return [
       '<form class="configuration-form configuration-wizard" data-configuration-form novalidate>',
         '<div class="configuration-form__heading">',
-          '<p class="eyebrow">' + (isDialog ? 'Configuração da referência' : 'Configurador de produto') + '</p>',
-          '<h2' + (isDialog ? ' id="configurator-title"' : '') + '>' + (isDialog ? 'Configure esta medida' : 'Defina sua cúpula') + '</h2>',
+          '<p class="eyebrow" data-configuration-eyebrow>' + (isDialog ? 'Configuração da referência' : 'Configurador de produto') + '</p>',
+          '<h2' + (isDialog ? ' id="configurator-title"' : '') + ' data-configuration-title>' + (isDialog ? 'Configure esta medida' : 'Defina sua cúpula') + '</h2>',
         '</div>',
         '<ol class="config-progress" aria-label="Etapas da configuração">',
           '<li class="is-current" data-step-indicator="0" aria-current="step"><span>1</span><b>Formato</b></li>',
@@ -434,9 +433,13 @@
       observations: form.querySelector('[data-field="observations"]'),
       measureHelpToggle: form.querySelector('[data-measure-help-toggle]'),
       measureHelp: form.querySelector('[data-measure-help]'),
-      measureHelpClose: form.querySelector('[data-measure-help-close]')
+      measureHelpClose: form.querySelector('[data-measure-help-close]'),
+      headingEyebrow: form.querySelector('[data-configuration-eyebrow]'),
+      headingTitle: form.querySelector('[data-configuration-title]')
     };
     let currentStep = 0;
+    const defaultEyebrow = mode === 'reference' ? 'Configuração da referência' : 'Configurador de produto';
+    const defaultTitle = mode === 'reference' ? 'Configure esta medida' : 'Defina sua cúpula';
 
     const checkedValue = (items) => items.find((item) => item.checked)?.value;
     const getPositiveInteger = (input) => {
@@ -512,6 +515,8 @@
 
       fields.customFormatField.hidden = !customFormat;
       fields.customFormat.required = customFormat;
+      fields.headingEyebrow.textContent = customFormat ? 'Projeto personalizado' : defaultEyebrow;
+      fields.headingTitle.textContent = customFormat ? 'Defina seu projeto' : defaultTitle;
       fields.jutaColor.hidden = !isJuta;
       fields.tricolineColors.hidden = isJuta;
       fields.color.forEach((input) => { input.disabled = isJuta; });

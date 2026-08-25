@@ -2706,8 +2706,7 @@ p { text-wrap: pretty; }
   transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .2s ease;
 }
 
-.format-choice__card img,
-.format-choice__placeholder {
+.format-choice__card img {
   width: 66px;
   height: 62px;
   display: block;
@@ -2722,20 +2721,6 @@ p { text-wrap: pretty; }
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
-
-.format-choice__placeholder {
-  position: relative;
-}
-
-.format-choice__placeholder i {
-  position: absolute;
-  border-color: var(--gold);
-  opacity: .72;
-}
-
-.format-choice__placeholder i:nth-child(1) { top: 18px; left: 14px; width: 24px; border-top: 1px solid; }
-.format-choice__placeholder i:nth-child(2) { top: 36px; left: 14px; width: 38px; border-top: 1px solid; }
-.format-choice__placeholder i:nth-child(3) { top: 18px; right: 14px; height: 19px; border-right: 1px solid; }
 
 .format-choice input:checked + .format-choice__card,
 .material-options input:checked + span,
