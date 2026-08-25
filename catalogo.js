@@ -350,16 +350,25 @@
           '</section>',
           '<section class="config-panel" data-config-panel="2" hidden>',
             '<fieldset aria-describedby="' + prefix + '-error-2">',
-              '<legend tabindex="-1" data-step-title><span>Etapa 3</span> Informe as medidas</legend>',
+              '<legend tabindex="-1" data-step-title><span>Etapa 3</span> Informe as medidas <button class="measure-help__toggle" type="button" aria-label="Como informar as medidas" aria-expanded="false" aria-controls="' + prefix + '-measure-help" data-measure-help-toggle><span aria-hidden="true">ⓘ</span></button></legend>',
+              '<div class="measure-help" id="' + prefix + '-measure-help" data-measure-help hidden>',
+                '<div class="measure-help__header"><strong>Superior × Inferior × Altura</strong><button type="button" aria-label="Fechar ajuda sobre as medidas" data-measure-help-close>×</button></div>',
+                '<dl>',
+                  '<div><dt>Superior</dt><dd>Medida da parte superior da cúpula.</dd></div>',
+                  '<div><dt>Inferior</dt><dd>Medida da parte inferior da cúpula.</dd></div>',
+                  '<div><dt>Altura</dt><dd>Distância vertical entre a parte superior e a inferior.</dd></div>',
+                '</dl>',
+                '<p>Todas as medidas são informadas em centímetros.</p>',
+              '</div>',
               '<div class="measure-mode">',
                 '<label><input type="radio" name="' + prefix + '-measure-mode" value="suggested" data-field="measure-mode" checked><span><b>Usar referência sugerida</b><small>Escolha uma das 40 medidas</small></span></label>',
                 '<label><input type="radio" name="' + prefix + '-measure-mode" value="custom" data-field="measure-mode"><span><b>Medidas personalizadas</b><small>Informe as três dimensões</small></span></label>',
               '</div>',
               '<label class="select-field suggested-measure-field"><span>Referência sugerida</span><select data-field="reference">' + referenceOptions + '</select></label>',
               '<div class="custom-measures" hidden>',
-                '<label><span>Superior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="upper" placeholder="Ex.: 20"></label>',
-                '<label><span>Inferior <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="lower" placeholder="Ex.: 40"></label>',
-                '<label><span>Altura <small>(cm)</small></span><input type="number" min="0.1" step="0.1" inputmode="decimal" data-field="height" placeholder="Ex.: 30"></label>',
+                '<label><span>Superior <small>(cm)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="upper" placeholder="Ex.: 20"></label>',
+                '<label><span>Inferior <small>(cm)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="lower" placeholder="Ex.: 40"></label>',
+                '<label><span>Altura <small>(cm)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="height" placeholder="Ex.: 30"></label>',
               '</div>',
               '<p class="field-help"><strong>Ordem obrigatória:</strong> Superior × Inferior × Altura, em centímetros.</p>',
               '<label class="form-field observations-field"><span>Observações <small>(opcional)</small></span><textarea rows="3" maxlength="500" data-field="observations" placeholder="Inclua somente detalhes relevantes para a avaliação."></textarea></label>',
@@ -422,11 +431,20 @@
       upper: form.querySelector('[data-field="upper"]'),
       lower: form.querySelector('[data-field="lower"]'),
       height: form.querySelector('[data-field="height"]'),
-      observations: form.querySelector('[data-field="observations"]')
+      observations: form.querySelector('[data-field="observations"]'),
+      measureHelpToggle: form.querySelector('[data-measure-help-toggle]'),
+      measureHelp: form.querySelector('[data-measure-help]'),
+      measureHelpClose: form.querySelector('[data-measure-help-close]')
     };
     let currentStep = 0;
 
     const checkedValue = (items) => items.find((item) => item.checked)?.value;
+    const getPositiveInteger = (input) => {
+      const rawValue = input.value.trim();
+      if (!/^\d+$/.test(rawValue)) return null;
+      const value = Number(rawValue);
+      return Number.isInteger(value) && value > 0 ? value : null;
+    };
     const summary = (key, value) => {
       const element = form.querySelector('[data-summary="' + key + '"]');
       if (element) element.textContent = value;
@@ -446,7 +464,10 @@
       const reference = getReference(fields.reference.value);
       const dimensions = measureMode === 'suggested'
         ? reference.dimensions.map(String)
-        : [fields.upper.value.trim(), fields.lower.value.trim(), fields.height.value.trim()];
+        : [fields.upper, fields.lower, fields.height].map((input) => {
+            const value = getPositiveInteger(input);
+            return value === null ? '' : String(value);
+          });
 
       return {
         format: formatKey === 'personalizado' && fields.customFormat.value.trim()
@@ -535,6 +556,21 @@
       update();
       clearStepError(step);
       const panel = panels[step];
+      if (step === 2 && checkedValue(fields.measureMode) === 'custom') {
+        const measureFields = [fields.upper, fields.lower, fields.height];
+        const invalidMeasures = measureFields.filter((field) => getPositiveInteger(field) === null);
+        if (invalidMeasures.length) {
+          const error = panel.querySelector('[data-step-error]');
+          error.textContent = 'Informe as três medidas usando apenas números inteiros em centímetros.';
+          error.hidden = false;
+          invalidMeasures.forEach((field) => {
+            field.setAttribute('aria-invalid', 'true');
+            field.setAttribute('aria-describedby', error.id);
+          });
+          invalidMeasures[0].focus();
+          return false;
+        }
+      }
       const invalidField = [...panel.querySelectorAll('input:enabled, select:enabled, textarea:enabled')]
         .find((field) => !field.checkValidity());
       if (!invalidField) return true;
@@ -565,11 +601,39 @@
       if (focusHeading) panels[currentStep].querySelector('[data-step-title]')?.focus({ preventScroll: true });
     };
 
+    const setMeasureHelpOpen = (open, restoreFocus = false) => {
+      fields.measureHelp.hidden = !open;
+      fields.measureHelpToggle.setAttribute('aria-expanded', String(open));
+      if (!open && restoreFocus) fields.measureHelpToggle.focus();
+    };
+
     form.addEventListener('input', (event) => {
       if (event.target.matches('[aria-invalid="true"]')) clearStepError(currentStep);
       update();
     });
     form.addEventListener('change', update);
+    fields.measureHelpToggle.addEventListener('click', () => {
+      setMeasureHelpOpen(fields.measureHelp.hidden);
+    });
+    fields.measureHelpToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      setMeasureHelpOpen(fields.measureHelp.hidden);
+    });
+    fields.measureHelpClose.addEventListener('click', () => {
+      setMeasureHelpOpen(false, true);
+    });
+    fields.measureHelpClose.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      setMeasureHelpOpen(false, true);
+    });
+    form.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || fields.measureHelp.hidden) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setMeasureHelpOpen(false, true);
+    });
     previousButton.addEventListener('click', () => showStep(currentStep - 1));
     nextButton.addEventListener('click', () => {
       if (validateStep(currentStep)) showStep(currentStep + 1);
