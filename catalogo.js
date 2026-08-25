@@ -35,19 +35,126 @@
 
   const CATALOG_IMAGE_ROOT = 'assets/catalogo/';
 
-  // Cada formato possui uma fotografia de apresentação e pode receber variantes específicas no futuro.
-  // Use chaves no padrão "material__cor" normalizado, por exemplo:
-  // variants: { tricoline__preto: 'conica-tricoline-preto.png' }
+  // Cada formato possui uma fotografia de apresentação e variantes por material e cor.
+  // As chaves seguem o padrão "material__cor" normalizado.
   const catalogImages = {
-    conica: { fallback: 'conica-tricoline-bege.png', variants: {} },
-    drum: { fallback: 'drum-tricoline-offwhite.png', variants: {} },
-    bell: { fallback: 'bell-tricoline-gelo.png', variants: {} },
-    oval: { fallback: 'oval-tricoline-cinza.png', variants: {} },
-    'piramidal-quadrada': { fallback: 'piramidal-quadrada-juta.png', variants: {} },
-    'piramidal-retangular': { fallback: 'piramidal-retangular-branca.png', variants: {} },
-    cubo: { fallback: 'box-reto-preto.png', variants: {} },
-    hexagonal: { fallback: 'hexagonal-juta.png', variants: {} },
-    octogonal: { fallback: 'octogonal-offwhite.png', variants: {} },
+    conica: {
+      fallback: 'variants/conica-tricoline-bege.webp',
+      variants: {
+        juta__jutanatural: 'variants/conica-juta-natural.webp',
+        tricoline__preto: 'variants/conica-tricoline-preto.webp',
+        tricoline__branco: 'variants/conica-tricoline-branco.webp',
+        tricoline__bege: 'variants/conica-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/conica-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/conica-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/conica-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/conica-tricoline-colorido.webp'
+      }
+    },
+    drum: {
+      fallback: 'variants/drum-tricoline-offwhite.webp',
+      variants: {
+        juta__jutanatural: 'variants/drum-juta-natural.webp',
+        tricoline__preto: 'variants/drum-tricoline-preto.webp',
+        tricoline__branco: 'variants/drum-tricoline-branco.webp',
+        tricoline__bege: 'variants/drum-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/drum-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/drum-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/drum-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/drum-tricoline-colorido.webp'
+      }
+    },
+    bell: {
+      fallback: 'variants/bell-tricoline-gelo.webp',
+      variants: {
+        juta__jutanatural: 'variants/bell-juta-natural.webp',
+        tricoline__preto: 'variants/bell-tricoline-preto.webp',
+        tricoline__branco: 'variants/bell-tricoline-branco.webp',
+        tricoline__bege: 'variants/bell-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/bell-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/bell-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/bell-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/bell-tricoline-colorido.webp'
+      }
+    },
+    oval: {
+      fallback: 'variants/oval-tricoline-cinza.webp',
+      variants: {
+        juta__jutanatural: 'variants/oval-juta-natural.webp',
+        tricoline__preto: 'variants/oval-tricoline-preto.webp',
+        tricoline__branco: 'variants/oval-tricoline-branco.webp',
+        tricoline__bege: 'variants/oval-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/oval-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/oval-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/oval-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/oval-tricoline-colorido.webp'
+      }
+    },
+    'piramidal-quadrada': {
+      fallback: 'variants/piramidal-quadrada-juta-natural.webp',
+      variants: {
+        juta__jutanatural: 'variants/piramidal-quadrada-juta-natural.webp',
+        tricoline__preto: 'variants/piramidal-quadrada-tricoline-preto.webp',
+        tricoline__branco: 'variants/piramidal-quadrada-tricoline-branco.webp',
+        tricoline__bege: 'variants/piramidal-quadrada-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/piramidal-quadrada-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/piramidal-quadrada-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/piramidal-quadrada-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/piramidal-quadrada-tricoline-colorido.webp'
+      }
+    },
+    'piramidal-retangular': {
+      fallback: 'variants/piramidal-retangular-tricoline-branco.webp',
+      variants: {
+        juta__jutanatural: 'variants/piramidal-retangular-juta-natural.webp',
+        tricoline__preto: 'variants/piramidal-retangular-tricoline-preto.webp',
+        tricoline__branco: 'variants/piramidal-retangular-tricoline-branco.webp',
+        tricoline__bege: 'variants/piramidal-retangular-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/piramidal-retangular-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/piramidal-retangular-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/piramidal-retangular-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/piramidal-retangular-tricoline-colorido.webp'
+      }
+    },
+    cubo: {
+      fallback: 'variants/box-reto-tricoline-preto.webp',
+      variants: {
+        juta__jutanatural: 'variants/box-reto-juta-natural.webp',
+        tricoline__preto: 'variants/box-reto-tricoline-preto.webp',
+        tricoline__branco: 'variants/box-reto-tricoline-branco.webp',
+        tricoline__bege: 'variants/box-reto-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/box-reto-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/box-reto-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/box-reto-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/box-reto-tricoline-colorido.webp'
+      }
+    },
+    hexagonal: {
+      fallback: 'variants/hexagonal-juta-natural.webp',
+      variants: {
+        juta__jutanatural: 'variants/hexagonal-juta-natural.webp',
+        tricoline__preto: 'variants/hexagonal-tricoline-preto.webp',
+        tricoline__branco: 'variants/hexagonal-tricoline-branco.webp',
+        tricoline__bege: 'variants/hexagonal-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/hexagonal-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/hexagonal-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/hexagonal-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/hexagonal-tricoline-colorido.webp'
+      }
+    },
+    octogonal: {
+      fallback: 'variants/octogonal-tricoline-offwhite.webp',
+      variants: {
+        juta__jutanatural: 'variants/octogonal-juta-natural.webp',
+        tricoline__preto: 'variants/octogonal-tricoline-preto.webp',
+        tricoline__branco: 'variants/octogonal-tricoline-branco.webp',
+        tricoline__bege: 'variants/octogonal-tricoline-bege.webp',
+        tricoline__offwhite: 'variants/octogonal-tricoline-offwhite.webp',
+        tricoline__gelo: 'variants/octogonal-tricoline-gelo.webp',
+        tricoline__cinza: 'variants/octogonal-tricoline-cinza.webp',
+        tricoline__colorido: 'variants/octogonal-tricoline-colorido.webp'
+      }
+    },
     personalizado: { fallback: '../hero-workshop.jpg', variants: {} }
   };
 
@@ -348,6 +455,7 @@
         formatData: selectedFormat,
         material,
         color,
+        visualColor: material === 'Juta' ? 'Juta natural' : selectedColor,
         measureMode,
         reference,
         upper: dimensions[0] || 'A informar',
@@ -362,7 +470,7 @@
       const image = preview.querySelector('[data-preview-image]');
       const format = preview.querySelector('[data-preview-format]');
       const material = preview.querySelector('[data-preview-material]');
-      const visual = getCatalogVisual(configuration.formatData, configuration.material, configuration.color);
+      const visual = getCatalogVisual(configuration.formatData, configuration.material, configuration.visualColor);
       image.src = visual.image;
       image.alt = visual.alt;
       format.textContent = configuration.format;
