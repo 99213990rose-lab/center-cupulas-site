@@ -6,7 +6,7 @@
   // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
   const references = [
-    ['01', '10 × 20 × 11', 'referencias/ref-01.webp', 1185, 639], ['02', '08 × 12 × 11', 'referencias/ref-02.webp', 1168, 617], ['03', '10 × 20 × 15', 'referencias/ref-03.webp', 1131, 642],
+    ['01', '11 × 27 × 18', 'referencias/ref-01.webp', 1185, 639], ['02', '13 × 30 × 20', 'referencias/ref-02.webp', 1168, 617], ['03', '15 × 35 × 23', 'referencias/ref-03.webp', 1131, 642],
     ['04', '16 × 28 × 19', 'referencias/ref-04.webp', 1116, 595], ['05', '17 × 43 × 27', 'referencias/ref-05.webp', 1082, 626], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1054, 632],
     ['07', '20 × 50 × 31', 'referencias/ref-07.webp', 1081, 631], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1007, 633], ['09', '10 × 26 × 17', 'referencias/ref-09.webp', 1071, 632],
     ['10', '11 × 30 × 20', 'referencias/ref-10.webp', 987, 632], ['11', '13 × 35 × 23', 'referencias/ref-11.webp', 1672, 941], ['12', '20 × 35 × 25', 'referencias/ref-12.webp', 1672, 941],
