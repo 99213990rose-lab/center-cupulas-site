@@ -6,21 +6,21 @@
   // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
   const references = [
-    ['01', '11 × 27 × 18', 'referencias/ref-01.webp', 1185, 639], ['02', '13 × 30 × 20', 'referencias/ref-02.webp', 1168, 617], ['03', '15 × 35 × 23', 'referencias/ref-03.webp', 1131, 642],
-    ['04', '16 × 28 × 19', 'referencias/ref-04.webp', 1116, 595], ['05', '17 × 43 × 27', 'referencias/ref-05.webp', 1082, 626], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1054, 632],
-    ['07', '20 × 50 × 31', 'referencias/ref-07.webp', 1081, 631], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1007, 633], ['09', '10 × 26 × 17', 'referencias/ref-09.webp', 1071, 632],
-    ['10', '11 × 30 × 20', 'referencias/ref-10.webp', 987, 632], ['11', '13 × 35 × 23', 'referencias/ref-11.webp', 1672, 941], ['12', '20 × 35 × 25', 'referencias/ref-12.webp', 1672, 941],
-    ['13', '10 × 30 × 15', 'referencias/ref-13.webp', 1672, 941], ['14', '10 × 35 × 23', 'referencias/ref-14.webp', 1672, 941], ['15', '30 × 40 × 35', 'referencias/ref-15.webp', 1672, 941],
-    ['16', '30 × 40 × 30', 'referencias/ref-16.webp', 1672, 941], ['17', '35 × 50 × 40', 'referencias/ref-17.webp', 1672, 941], ['18', '15 × 50 × 33', 'referencias/ref-18.webp', 1672, 941],
-    ['19', '11 × 50 × 27', 'referencias/ref-19.webp', 1672, 941], ['20', '25 × 45 × 33', 'referencias/ref-20.webp', 1672, 941], ['21', '20 × 40 × 30', 'referencias/ref-21.webp', 1122, 1402],
-    ['22', '22 × 55 × 36', 'referencias/ref-22.webp', 1122, 1402], ['23', '22 × 50 × 34', 'referencias/ref-23.webp', 1122, 1402], ['24', '15 × 40 × 27', 'referencias/ref-24.webp', 1122, 1402],
-    ['25', '10 × 55 × 28', 'referencias/ref-25.webp', 1122, 1402], ['26', '15 × 45 × 26', 'referencias/ref-26.webp', 1122, 1402], ['27', '15 × 22 × 16', 'referencias/ref-27.webp', 1122, 1402],
-    ['28', '15 × 30 × 20', 'referencias/ref-28.webp', 1122, 1402], ['29', '08 × 19 × 14', 'referencias/ref-29.webp', 1122, 1402], ['30', '11 × 30 × 16', 'referencias/ref-30.webp', 1122, 1402],
-    ['31', '08 × 15 × 11', 'referencias/ref-31.webp', 1122, 1402], ['32', '20 × 25 × 20', 'referencias/ref-32.webp', 1122, 1402], ['33', '27 × 35 × 26', 'referencias/ref-33.webp', 1122, 1402],
-    ['34', '27 × 45 × 33', 'referencias/ref-34.webp', 1122, 1402], ['35', '30 × 40 × 25', 'referencias/ref-35.webp', 1122, 1402], ['36', '25 × 25 × 15', 'referencias/ref-36.webp', 1122, 1402],
-    ['37', '30 × 30 × 20', 'referencias/ref-37.webp', 1122, 1402], ['38', '40 × 40 × 25', 'referencias/ref-38.webp', 1122, 1402], ['39', '45 × 45 × 30', 'referencias/ref-39.webp', 1122, 1402],
-    ['40', '50 × 50 × 35', 'referencias/ref-40.webp', 1122, 1402]
-  ].map(([reference, measure, image = null, imageWidth = 1200, imageHeight = 675]) => {
+    ['01', '11 × 27 × 18', 'referencias/ref-01.webp', 1185, 639, 'conica'], ['02', '13 × 30 × 20', 'referencias/ref-02.webp', 1168, 617, 'conica'], ['03', '35 × 35 × 23', 'referencias/ref-03.webp', 1131, 642, 'drum'],
+    ['04', '28 × 28 × 19', 'referencias/ref-04.webp', 1116, 595, 'drum'], ['05', '43 × 43 × 27', 'referencias/ref-05.webp', 1082, 626, 'drum'], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1054, 632, 'bell'],
+    ['07', '50 × 50 × 31', 'referencias/ref-07.webp', 1081, 631, 'drum'], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1007, 633, 'piramidal-quadrada'], ['09', '26 × 26 × 17', 'referencias/ref-09.webp', 1071, 632, 'cubo'],
+    ['10', '30 × 30 × 20', 'referencias/ref-10.webp', 987, 632, 'octogonal'], ['11', '13 × 35 × 23', 'referencias/ref-11.webp', 1672, 941, 'conica'], ['12', '20 × 35 × 25', 'referencias/ref-12.webp', 1672, 941, 'conica'],
+    ['13', '10 × 30 × 15', 'referencias/ref-13.webp', 1672, 941, 'conica'], ['14', '10 × 35 × 23', 'referencias/ref-14.webp', 1672, 941, 'conica'], ['15', '30 × 40 × 35', 'referencias/ref-15.webp', 1672, 941, 'conica'],
+    ['16', '30 × 40 × 30', 'referencias/ref-16.webp', 1672, 941, 'conica'], ['17', '35 × 50 × 40', 'referencias/ref-17.webp', 1672, 941, 'conica'], ['18', '15 × 50 × 33', 'referencias/ref-18.webp', 1672, 941, 'conica'],
+    ['19', '11 × 50 × 27', 'referencias/ref-19.webp', 1672, 941, 'conica'], ['20', '25 × 45 × 33', 'referencias/ref-20.webp', 1672, 941, 'conica'], ['21', '20 × 40 × 30', 'referencias/ref-21.webp', 1920, 1080, 'conica'],
+    ['22', '22 × 55 × 36', 'referencias/ref-22.webp', 1920, 1080, 'piramidal-retangular'], ['23', '22 × 50 × 34', 'referencias/ref-23.webp', 1920, 1080, 'conica'], ['24', '15 × 40 × 27', 'referencias/ref-24.webp', 1920, 1080, 'piramidal-retangular'],
+    ['25', '10 × 55 × 28', 'referencias/ref-25.webp', 1920, 1080, 'conica'], ['26', '15 × 45 × 26', 'referencias/ref-26.webp', 1920, 1080, 'conica'], ['27', '22 × 22 × 16', 'referencias/ref-27.webp', 1920, 1080, 'drum'],
+    ['28', '15 × 30 × 20', 'referencias/ref-28.webp', 1920, 1080, 'piramidal-quadrada'], ['29', '08 × 19 × 14', 'referencias/ref-29.webp', 1920, 1080, 'piramidal-quadrada'], ['30', '11 × 30 × 16', 'referencias/ref-30.webp', 1920, 1080, 'conica'],
+    ['31', '08 × 15 × 11', 'referencias/ref-31.webp', 1920, 1080, 'conica'], ['32', '20 × 25 × 20', 'referencias/ref-32.webp', 1920, 1080, 'conica'], ['33', '27 × 35 × 26', 'referencias/ref-33.webp', 1920, 1080, 'conica'],
+    ['34', '27 × 45 × 33', 'referencias/ref-34.webp', 1920, 1080, 'conica'], ['35', '30 × 40 × 25', 'referencias/ref-35.webp', 1920, 1080, 'conica'], ['36', '25 × 25 × 15', 'referencias/ref-36.webp', 1920, 1080, 'drum'],
+    ['37', '26 × 30 × 20', 'referencias/ref-37.webp', 1920, 1080, 'conica'], ['38', '40 × 40 × 25', 'referencias/ref-38.webp', 1920, 1080, 'drum'], ['39', '45 × 45 × 30', 'referencias/ref-39.webp', 1920, 1080, 'drum'],
+    ['40', '40 × 50 × 35', 'referencias/ref-40.webp', 1920, 1080, 'conica']
+  ].map(([reference, measure, image = null, imageWidth = 1200, imageHeight = 675, formatKey = 'conica']) => {
     const dimensions = measure.split('×').map((value) => Number.parseFloat(value.trim()));
     return {
       reference,
@@ -29,7 +29,8 @@
       image,
       imageWidth,
       imageHeight,
-      expectedImage: 'ref-' + reference + '.png'
+      formatKey,
+      expectedImage: 'ref-' + reference + '.webp'
     };
   });
 
@@ -246,7 +247,7 @@
           '<span class="model-card__eyebrow">REF. ' + item.reference + '</span>',
           '<strong>' + item.measure + ' <small>cm</small></strong>',
           '<span class="model-card__order">Superior × Inferior × Altura</span>',
-          '<span class="model-card__link">Configurar esta medida <span aria-hidden="true">↗</span></span>',
+          '<span class="model-card__link" aria-hidden="true">↗</span>',
         '</span>',
       '</button>'
     ].join('');
@@ -466,7 +467,7 @@
       const measureMode = checkedValue(fields.measureMode) || 'suggested';
       const reference = getReference(fields.reference.value);
       const dimensions = measureMode === 'suggested'
-        ? reference.dimensions.map(String)
+        ? reference.measure.split('×').map((value) => value.trim())
         : [fields.upper, fields.lower, fields.height].map((input) => {
             const value = getPositiveInteger(input);
             return value === null ? '' : String(value);
@@ -712,7 +713,7 @@
     state.trigger = trigger;
     dialogConfigurator.setConfiguration({
       reference: reference.reference,
-      format: settings.format || 'conica',
+      format: settings.format || reference.formatKey || 'conica',
       material: settings.material || 'Juta',
       color: settings.color || 'Preto'
     });
