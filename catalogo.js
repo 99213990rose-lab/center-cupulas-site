@@ -166,7 +166,7 @@
     { key: 'oval', label: 'Oval', alt: 'Cúpula oval em perspectiva' },
     { key: 'piramidal-quadrada', label: 'Piramidal quadrada', alt: 'Cúpula piramidal quadrada em perspectiva' },
     { key: 'piramidal-retangular', label: 'Piramidal retangular', alt: 'Cúpula piramidal retangular em perspectiva' },
-    { key: 'cubo', label: 'Cubo / Box reto', alt: 'Cúpula box reta em perspectiva' },
+    { key: 'cubo', label: 'Box reto / Quadrada', alt: 'Cúpula box reta quadrada em perspectiva' },
     { key: 'hexagonal', label: 'Hexagonal', alt: 'Cúpula hexagonal em perspectiva' },
     { key: 'octogonal', label: 'Octogonal', alt: 'Cúpula octogonal em perspectiva' },
     { key: 'personalizado', label: 'Projeto personalizado', alt: 'Conceito de cúpula personalizada com geometria futurista' }
@@ -223,10 +223,12 @@
 
   const createCard = (item, index) => {
     const card = document.createElement('article');
+    const format = getFormat(item.formatKey);
+    const imageAlt = 'Cúpula ' + format.label + ' da REF. ' + item.reference + ', medida ' + item.measure + ' cm';
     const visual = item.image
       ? [
           '<span class="model-card__media" data-asset-status="existing">',
-            '<img src="' + CATALOG_IMAGE_ROOT + item.image + '" alt="Cúpula ilustrativa da REF. ' + item.reference + '" width="' + item.imageWidth + '" height="' + item.imageHeight + '" loading="lazy" decoding="async">',
+            '<img src="' + CATALOG_IMAGE_ROOT + item.image + '" alt="' + imageAlt + '" width="' + item.imageWidth + '" height="' + item.imageHeight + '" loading="lazy" decoding="async">',
           '</span>'
         ].join('')
       : [
@@ -237,11 +239,12 @@
 
     card.className = 'model-card';
     card.dataset.reference = item.reference;
-    card.dataset.search = normalize(item.reference + ' ref ' + item.reference + ' ' + item.measure);
+    card.dataset.format = format.key;
+    card.dataset.search = normalize(item.reference + ' ref ' + item.reference + ' ' + item.measure + ' ' + format.key + ' ' + format.label);
     card.dataset.reveal = 'up';
     card.style.setProperty('--reveal-delay', String((index % 6) * 45) + 'ms');
     card.innerHTML = [
-      '<button class="model-card__main" type="button" data-card-open aria-label="Configurar referência ' + item.reference + ', medida ' + item.measure + ' centímetros">',
+      '<button class="model-card__main" type="button" data-card-open aria-label="Configurar REF. ' + item.reference + ', formato ' + format.label + ', medida ' + item.measure + ' centímetros">',
         visual,
         '<span class="model-card__body">',
           '<span class="model-card__eyebrow">REF. ' + item.reference + '</span>',
