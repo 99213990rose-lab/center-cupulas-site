@@ -6,10 +6,10 @@
   // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
   const references = [
-    ['01', '11 × 27 × 18', 'referencias/ref-01.webp', 1185, 639, 'conica'], ['02', '13 × 30 × 20', 'referencias/ref-02.webp', 1168, 617, 'conica'], ['03', '35 × 35 × 23', 'referencias/ref-03.webp', 1131, 642, 'drum'],
-    ['04', '28 × 28 × 19', 'referencias/ref-04.webp', 1116, 595, 'drum'], ['05', '43 × 43 × 27', 'referencias/ref-05.webp', 1082, 626, 'drum'], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1054, 632, 'bell'],
-    ['07', '50 × 50 × 31', 'referencias/ref-07.webp', 1081, 631, 'drum'], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1007, 633, 'piramidal-quadrada'], ['09', '26 × 26 × 17', 'referencias/ref-09.webp', 1071, 632, 'cubo'],
-    ['10', '30 × 30 × 20', 'referencias/ref-10.webp', 987, 632, 'octogonal'], ['11', '13 × 35 × 23', 'referencias/ref-11.webp', 1672, 941, 'conica'], ['12', '20 × 35 × 25', 'referencias/ref-12.webp', 1672, 941, 'conica'],
+    ['01', '11 × 27 × 18', 'referencias/ref-01.webp', 1920, 1080, 'conica'], ['02', '13 × 30 × 20', 'referencias/ref-02.webp', 1920, 1080, 'conica'], ['03', '35 × 35 × 23', 'referencias/ref-03.webp', 1920, 1080, 'drum'],
+    ['04', '28 × 28 × 19', 'referencias/ref-04.webp', 1920, 1080, 'drum'], ['05', '43 × 43 × 27', 'referencias/ref-05.webp', 1920, 1080, 'drum'], ['06', '18 × 45 × 31', 'referencias/ref-06.webp', 1920, 1080, 'bell'],
+    ['07', '50 × 50 × 31', 'referencias/ref-07.webp', 1920, 1080, 'drum'], ['08', '25 × 60 × 35', 'referencias/ref-08.webp', 1920, 1080, 'piramidal-quadrada'], ['09', '26 × 26 × 17', 'referencias/ref-09.webp', 1920, 1080, 'cubo'],
+    ['10', '30 × 30 × 20', 'referencias/ref-10.webp', 1920, 1080, 'octogonal'], ['11', '13 × 35 × 23', 'referencias/ref-11.webp', 1672, 941, 'conica'], ['12', '20 × 35 × 25', 'referencias/ref-12.webp', 1672, 941, 'conica'],
     ['13', '10 × 30 × 15', 'referencias/ref-13.webp', 1672, 941, 'conica'], ['14', '10 × 35 × 23', 'referencias/ref-14.webp', 1672, 941, 'conica'], ['15', '30 × 40 × 35', 'referencias/ref-15.webp', 1672, 941, 'conica'],
     ['16', '30 × 40 × 30', 'referencias/ref-16.webp', 1672, 941, 'conica'], ['17', '35 × 50 × 40', 'referencias/ref-17.webp', 1672, 941, 'conica'], ['18', '15 × 50 × 33', 'referencias/ref-18.webp', 1672, 941, 'conica'],
     ['19', '11 × 50 × 27', 'referencias/ref-19.webp', 1672, 941, 'conica'], ['20', '25 × 45 × 33', 'referencias/ref-20.webp', 1672, 941, 'conica'], ['21', '20 × 40 × 30', 'referencias/ref-21.webp', 1920, 1080, 'conica'],

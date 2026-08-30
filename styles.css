@@ -3330,3 +3330,135 @@ p { text-wrap: pretty; }
     transition: none;
   }
 }
+
+/* V6 final mobile polish — catalog consistency and centered collection carousel */
+@media (max-width: 700px) {
+  /* On touch screens the collection behaves as a centered snap carousel, not as a free-running marquee. */
+  .product-viewport {
+    --mobile-carousel-card: min(72vw, 290px);
+    --mobile-carousel-gutter: calc((100vw - var(--mobile-carousel-card)) / 2);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 0 18px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--mobile-carousel-gutter);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    cursor: auto;
+  }
+
+  .product-viewport::-webkit-scrollbar { display: none; }
+
+  .product-track {
+    width: max-content;
+    transform: none !important;
+    will-change: auto;
+    cursor: auto;
+  }
+
+  .product-track__set[data-carousel-set="original"] {
+    gap: 14px;
+    padding-right: var(--mobile-carousel-gutter);
+    padding-left: var(--mobile-carousel-gutter);
+  }
+
+  .product-track__set[data-carousel-set="duplicate"] { display: none; }
+
+  .product-track__set .showcase-card,
+  .product-track__set .showcase-card--wide {
+    flex: 0 0 var(--mobile-carousel-card);
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+
+  .shade-stage--image { height: clamp(190px, 52vw, 220px); }
+  .shade-stage--image img {
+    top: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+  }
+
+  .showcase-card__body { padding: 16px 17px 18px; }
+  .showcase-card__body > span { font-size: .63rem; }
+  .showcase-card__body strong {
+    margin: 5px 0 12px;
+    font-size: 1.32rem;
+  }
+  .showcase-card__body small { padding-top: 11px; }
+
+  /* More compact catalog introduction on phones. */
+  .catalog-hero__grid {
+    gap: 24px;
+    padding-block: 30px 38px;
+  }
+
+  .breadcrumb { margin-bottom: 20px; }
+
+  .catalog-hero__grid > div:first-child > p:last-child {
+    margin-top: 16px;
+    font-size: .86rem;
+    line-height: 1.5;
+  }
+
+  .catalog-hero__aside {
+    padding: 16px 18px;
+    border-radius: 18px;
+  }
+
+  .catalog-hero__aside .catalog-hero__kicker { margin-bottom: 7px; }
+  .catalog-hero__aside > strong {
+    font-size: 1.55rem;
+    line-height: 1.05;
+  }
+  .catalog-hero__aside > p:not(.catalog-hero__kicker) {
+    margin: 8px 0 10px;
+    font-size: .72rem;
+    line-height: 1.45;
+  }
+  .catalog-hero__aside > a { font-size: .72rem; }
+
+  .builder-section { padding-block: 56px; }
+
+  /* Keep the format picker compact enough to avoid a very long first step. */
+  .format-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .format-choice__card {
+    min-height: 66px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 8px 6px 6px;
+  }
+
+  .format-choice__card img {
+    width: 52px;
+    height: 50px;
+  }
+
+  .format-choice__card b {
+    font-size: .67rem;
+    line-height: 1.18;
+  }
+
+  /* Smaller floating action so it does not cover catalog cards. */
+  .floating-whatsapp {
+    right: 11px;
+    bottom: 11px;
+    width: 46px;
+    height: 46px;
+  }
+  .floating-whatsapp svg { width: 23px; height: 23px; }
+}
+
+@media (max-width: 350px) {
+  .product-viewport {
+    --mobile-carousel-card: 76vw;
+    --mobile-carousel-gutter: 12vw;
+  }
+
+  .format-options { grid-template-columns: 1fr; }
+}

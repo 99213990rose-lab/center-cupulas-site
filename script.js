@@ -224,6 +224,8 @@
     track.replaceChildren(originalSet, duplicateSet);
 
     const SPEED = 36;
+    const mobileCarousel = window.matchMedia('(max-width: 700px)');
+    let mobileIndex = 0;
     let cycleWidth = 0;
     let offset = 0;
     let previousTimestamp = 0;
@@ -243,10 +245,21 @@
     };
 
     const render = () => {
+      if (mobileCarousel.matches) {
+        track.style.transform = 'none';
+        return;
+      }
       track.style.transform = 'translate3d(' + (-offset) + 'px, 0, 0)';
     };
 
     const measure = () => {
+      if (mobileCarousel.matches && cards.length) {
+        const cardWidth = cards[0].getBoundingClientRect().width;
+        const gutter = Math.max(0, (viewport.clientWidth - cardWidth) / 2);
+        viewport.style.setProperty('--mobile-carousel-gutter', gutter + 'px');
+      } else {
+        viewport.style.removeProperty('--mobile-carousel-gutter');
+      }
       const progress = cycleWidth ? offset / cycleWidth : 0;
       cycleWidth = originalSet.getBoundingClientRect().width;
       offset = cycleWidth ? progress * cycleWidth : 0;
@@ -255,6 +268,7 @@
 
     const canMove = () => (
       cycleWidth > 0
+      && !mobileCarousel.matches
       && !reducedMotion.matches
       && !document.hidden
       && !isHovered
@@ -274,7 +288,19 @@
       window.requestAnimationFrame(animate);
     };
 
+    const scrollMobileCardIntoView = (index, behavior = 'smooth') => {
+      if (!mobileCarousel.matches || !cards.length) return;
+      mobileIndex = (index + cards.length) % cards.length;
+      const card = cards[mobileIndex];
+      const left = card.offsetLeft - (viewport.clientWidth - card.clientWidth) / 2;
+      viewport.scrollTo({ left, behavior });
+    };
+
     const shiftByCard = (direction) => {
+      if (mobileCarousel.matches) {
+        scrollMobileCardIntoView(mobileIndex + direction);
+        return;
+      }
       const gap = Number.parseFloat(getComputedStyle(originalSet).columnGap) || 22;
       const step = cards[0].getBoundingClientRect().width + gap;
       offset = normalizeOffset(offset + direction * step);
@@ -316,6 +342,7 @@
     });
 
     viewport.addEventListener('pointerdown', (event) => {
+      if (mobileCarousel.matches) return;
       if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
       isDragging = true;
       dragStartX = event.clientX;
@@ -326,6 +353,7 @@
     });
 
     viewport.addEventListener('pointermove', (event) => {
+      if (mobileCarousel.matches) return;
       if (!isDragging) return;
       const distance = event.clientX - dragStartX;
       if (Math.abs(distance) > 5) hasDragged = true;
@@ -336,6 +364,7 @@
     });
 
     const finishDrag = (event) => {
+      if (mobileCarousel.matches) return;
       if (!isDragging) return;
       suppressClick = hasDragged;
       isDragging = false;
@@ -354,6 +383,37 @@
       }
       suppressClick = false;
     }, { capture: true });
+
+    let mobileScrollFrame = 0;
+    viewport.addEventListener('scroll', () => {
+      if (!mobileCarousel.matches || mobileScrollFrame) return;
+      mobileScrollFrame = window.requestAnimationFrame(() => {
+        mobileScrollFrame = 0;
+        const viewportCenter = viewport.scrollLeft + viewport.clientWidth / 2;
+        let nearestIndex = 0;
+        let nearestDistance = Infinity;
+        cards.forEach((card, index) => {
+          const center = card.offsetLeft + card.clientWidth / 2;
+          const distance = Math.abs(center - viewportCenter);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+          }
+        });
+        mobileIndex = nearestIndex;
+      });
+    }, { passive: true });
+
+    mobileCarousel.addEventListener?.('change', () => {
+      previousTimestamp = performance.now();
+      render();
+      if (mobileCarousel.matches) {
+        window.requestAnimationFrame(() => scrollMobileCardIntoView(mobileIndex, 'auto'));
+      } else {
+        viewport.scrollLeft = 0;
+        measure();
+      }
+    });
 
     document.addEventListener('visibilitychange', () => { previousTimestamp = performance.now(); });
     reducedMotion.addEventListener?.('change', () => { previousTimestamp = performance.now(); });
