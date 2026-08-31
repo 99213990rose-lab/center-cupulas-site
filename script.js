@@ -212,7 +212,7 @@
     const duplicateSet = originalSet.cloneNode(true);
     duplicateSet.dataset.carouselSet = 'duplicate';
     duplicateSet.setAttribute('aria-hidden', 'true');
-    duplicateSet.setAttribute('inert', '');
+    // Keep pointer/touch links usable in the visible copy; only originals join the Tab order.
     duplicateSet.querySelectorAll('[data-reveal]').forEach((element) => {
       element.removeAttribute('data-reveal');
       element.removeAttribute('data-reveal-observed');
@@ -224,157 +224,177 @@
     track.replaceChildren(originalSet, duplicateSet);
 
     const SPEED = 36;
-    const mobileCarousel = window.matchMedia('(max-width: 700px)');
-    let mobileIndex = 0;
+    const hoverPointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    let animation = null;
     let cycleWidth = 0;
-    let offset = 0;
-    let previousTimestamp = 0;
+    let duration = 0;
+    let buttonFrame = 0;
     let isHovered = false;
     let hasKeyboardFocus = false;
-    let isDragging = false;
     let isInViewport = true;
     let pointerInitiatedFocus = false;
-    let dragStartX = 0;
-    let dragStartOffset = 0;
-    let hasDragged = false;
+    let gesture = null;
     let suppressClick = false;
 
-    const normalizeOffset = (value) => {
-      if (!cycleWidth) return 0;
-      return ((value % cycleWidth) + cycleWidth) % cycleWidth;
+    const wrap = (value, length) => length ? ((value % length) + length) % length : 0;
+    const position = () => wrap(Number(animation?.currentTime || 0), duration) * SPEED / 1000;
+    const setPosition = (value) => {
+      if (animation) animation.currentTime = wrap(value, cycleWidth) * 1000 / SPEED;
     };
-
-    const render = () => {
-      if (mobileCarousel.matches) {
-        track.style.transform = 'none';
-        return;
-      }
-      track.style.transform = 'translate3d(' + (-offset) + 'px, 0, 0)';
+    const syncPlayback = () => {
+      if (!animation) return;
+      const paused = reducedMotion.matches || document.hidden || !isInViewport
+        || isHovered || hasKeyboardFocus || gesture?.axis === 'horizontal' || buttonFrame;
+      if (paused) animation.pause();
+      else if (animation.playState !== 'running') animation.play();
+    };
+    const cancelButtonMove = () => {
+      if (buttonFrame) window.cancelAnimationFrame(buttonFrame);
+      buttonFrame = 0;
     };
 
     const measure = () => {
-      if (mobileCarousel.matches && cards.length) {
-        const cardWidth = cards[0].getBoundingClientRect().width;
-        const gutter = Math.max(0, (viewport.clientWidth - cardWidth) / 2);
-        viewport.style.setProperty('--mobile-carousel-gutter', gutter + 'px');
-      } else {
-        viewport.style.removeProperty('--mobile-carousel-gutter');
+      const width = originalSet.getBoundingClientRect().width;
+      if (!width || Math.abs(width - cycleWidth) < .1) return;
+      const progress = cycleWidth ? position() / cycleWidth : 0;
+      cancelButtonMove();
+      animation?.cancel();
+      cycleWidth = width; // Includes the trailing gap, identical in both sets.
+      duration = cycleWidth / SPEED * 1000;
+      animation = track.animate([
+        { transform: 'translate3d(0, 0, 0)' },
+        { transform: 'translate3d(-' + cycleWidth + 'px, 0, 0)' }
+      ], { duration, iterations: Infinity, easing: 'linear' });
+      animation.pause();
+      setPosition(progress * cycleWidth);
+      if (gesture) {
+        gesture.offset = position();
+        gesture.x = gesture.lastX;
+        gesture.y = gesture.lastY;
       }
-      const progress = cycleWidth ? offset / cycleWidth : 0;
-      cycleWidth = originalSet.getBoundingClientRect().width;
-      offset = cycleWidth ? progress * cycleWidth : 0;
-      render();
+      syncPlayback();
     };
 
-    const canMove = () => (
-      cycleWidth > 0
-      && !mobileCarousel.matches
-      && !reducedMotion.matches
-      && !document.hidden
-      && !isHovered
-      && !hasKeyboardFocus
-      && !isDragging
-      && isInViewport
-    );
-
-    const animate = (timestamp) => {
-      if (!previousTimestamp) previousTimestamp = timestamp;
-      const elapsed = Math.min((timestamp - previousTimestamp) / 1000, 0.05);
-      previousTimestamp = timestamp;
-      if (canMove()) {
-        offset = normalizeOffset(offset + SPEED * elapsed);
-        render();
-      }
-      window.requestAnimationFrame(animate);
-    };
-
-    const scrollMobileCardIntoView = (index, behavior = 'smooth') => {
-      if (!mobileCarousel.matches || !cards.length) return;
-      mobileIndex = (index + cards.length) % cards.length;
-      const card = cards[mobileIndex];
-      const left = card.offsetLeft - (viewport.clientWidth - card.clientWidth) / 2;
-      viewport.scrollTo({ left, behavior });
-    };
-
+    // Like changePosition in the reference carousel, seek the SAME animation.
+    // Only the short manual transition uses RAF; autoplay runs on the compositor.
     const shiftByCard = (direction) => {
-      if (mobileCarousel.matches) {
-        scrollMobileCardIntoView(mobileIndex + direction);
+      if (!animation) return;
+      cancelButtonMove();
+      const gap = Number.parseFloat(getComputedStyle(originalSet).columnGap) || 0;
+      const distance = cards[0].getBoundingClientRect().width + gap;
+      const start = position();
+      animation.pause();
+      if (reducedMotion.matches) {
+        setPosition(start + direction * distance);
+        syncPlayback();
         return;
       }
-      const gap = Number.parseFloat(getComputedStyle(originalSet).columnGap) || 22;
-      const step = cards[0].getBoundingClientRect().width + gap;
-      offset = normalizeOffset(offset + direction * step);
-      previousTimestamp = performance.now();
-      render();
+      const startedAt = performance.now();
+      const moveFrame = (now) => {
+        const progress = Math.min((now - startedAt) / 420, 1);
+        const eased = progress < .5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        setPosition(start + direction * distance * eased);
+        if (progress < 1) buttonFrame = window.requestAnimationFrame(moveFrame);
+        else {
+          buttonFrame = 0;
+          syncPlayback();
+        }
+      };
+      buttonFrame = window.requestAnimationFrame(moveFrame);
     };
 
     previous?.addEventListener('click', () => shiftByCard(-1));
     next?.addEventListener('click', () => shiftByCard(1));
-    carousel.addEventListener('mouseenter', () => { isHovered = true; });
-    carousel.addEventListener('mouseleave', () => {
+    carousel.addEventListener('pointerenter', (event) => {
+      if (event.pointerType !== 'mouse' || !hoverPointer.matches) return;
+      isHovered = true;
+      syncPlayback();
+    });
+    carousel.addEventListener('pointerleave', () => {
       isHovered = false;
-      previousTimestamp = performance.now();
+      syncPlayback();
     });
     carousel.addEventListener('pointerdown', () => {
       pointerInitiatedFocus = true;
       hasKeyboardFocus = false;
+      syncPlayback();
     }, { capture: true });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab') pointerInitiatedFocus = false;
+    });
     carousel.addEventListener('keydown', () => {
       pointerInitiatedFocus = false;
       hasKeyboardFocus = true;
+      syncPlayback();
     });
     carousel.addEventListener('focusin', (event) => {
-      if (pointerInitiatedFocus) {
-        hasKeyboardFocus = false;
-        return;
+      hasKeyboardFocus = !pointerInitiatedFocus && event.target.matches(':focus-visible');
+      if (hasKeyboardFocus) {
+        const card = event.target.closest('.showcase-card');
+        if (card && originalSet.contains(card)) {
+          cancelButtonMove();
+          const bounds = card.getBoundingClientRect();
+          const frame = viewport.getBoundingClientRect();
+          if (bounds.left < frame.left || bounds.right > frame.right) {
+            setPosition(bounds.left - originalSet.getBoundingClientRect().left);
+          }
+        }
       }
-      try {
-        hasKeyboardFocus = event.target.matches(':focus-visible');
-      } catch {
-        hasKeyboardFocus = false;
-      }
+      syncPlayback();
     });
     carousel.addEventListener('focusout', (event) => {
       if (carousel.contains(event.relatedTarget)) return;
       pointerInitiatedFocus = false;
       hasKeyboardFocus = false;
-      previousTimestamp = performance.now();
+      syncPlayback();
     });
 
     viewport.addEventListener('pointerdown', (event) => {
-      if (mobileCarousel.matches) return;
       if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
-      isDragging = true;
-      dragStartX = event.clientX;
-      dragStartOffset = offset;
-      hasDragged = false;
-      viewport.classList.add('is-dragging');
-      viewport.setPointerCapture?.(event.pointerId);
+      suppressClick = false;
+      gesture = {
+        id: event.pointerId, axis: null,
+        x: event.clientX, y: event.clientY,
+        lastX: event.clientX, lastY: event.clientY, offset: position()
+      };
     });
-
     viewport.addEventListener('pointermove', (event) => {
-      if (mobileCarousel.matches) return;
-      if (!isDragging) return;
-      const distance = event.clientX - dragStartX;
-      if (Math.abs(distance) > 5) hasDragged = true;
-      if (!hasDragged) return;
+      if (!gesture || gesture.id !== event.pointerId) return;
+      gesture.lastX = event.clientX;
+      gesture.lastY = event.clientY;
+      const dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      if (!gesture.axis) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 7) return;
+        gesture.axis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
+        if (gesture.axis === 'horizontal') {
+          cancelButtonMove();
+          gesture.offset = position();
+          syncPlayback();
+          viewport.setPointerCapture(event.pointerId);
+          viewport.classList.add('is-dragging');
+        }
+      }
+      if (gesture.axis !== 'horizontal') return;
+      // Native vertical panning remains untouched until horizontal intent is clear.
       if (event.cancelable) event.preventDefault();
-      offset = normalizeOffset(dragStartOffset - distance);
-      render();
-    });
+      setPosition(gesture.offset - dx);
+    }, { passive: false });
 
     const finishDrag = (event) => {
-      if (mobileCarousel.matches) return;
-      if (!isDragging) return;
-      suppressClick = hasDragged;
-      isDragging = false;
+      if (!gesture || gesture.id !== event.pointerId) return;
+      suppressClick = gesture.axis === 'horizontal';
+      gesture = null;
       viewport.classList.remove('is-dragging');
-      if (viewport.hasPointerCapture?.(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
-      previousTimestamp = performance.now();
+      if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+      syncPlayback();
     };
-
     viewport.addEventListener('pointerup', finishDrag);
     viewport.addEventListener('pointercancel', finishDrag);
+    viewport.addEventListener('lostpointercapture', finishDrag);
+    viewport.addEventListener('pointerleave', (event) => {
+      if (gesture?.axis !== 'horizontal') finishDrag(event);
+    });
     viewport.addEventListener('dragstart', (event) => event.preventDefault());
     viewport.addEventListener('click', (event) => {
       if (suppressClick) {
@@ -384,55 +404,27 @@
       suppressClick = false;
     }, { capture: true });
 
-    let mobileScrollFrame = 0;
-    viewport.addEventListener('scroll', () => {
-      if (!mobileCarousel.matches || mobileScrollFrame) return;
-      mobileScrollFrame = window.requestAnimationFrame(() => {
-        mobileScrollFrame = 0;
-        const viewportCenter = viewport.scrollLeft + viewport.clientWidth / 2;
-        let nearestIndex = 0;
-        let nearestDistance = Infinity;
-        cards.forEach((card, index) => {
-          const center = card.offsetLeft + card.clientWidth / 2;
-          const distance = Math.abs(center - viewportCenter);
-          if (distance < nearestDistance) {
-            nearestDistance = distance;
-            nearestIndex = index;
-          }
-        });
-        mobileIndex = nearestIndex;
-      });
-    }, { passive: true });
-
-    mobileCarousel.addEventListener?.('change', () => {
-      previousTimestamp = performance.now();
-      render();
-      if (mobileCarousel.matches) {
-        window.requestAnimationFrame(() => scrollMobileCardIntoView(mobileIndex, 'auto'));
-      } else {
-        viewport.scrollLeft = 0;
-        measure();
-      }
+    document.addEventListener('visibilitychange', syncPlayback);
+    reducedMotion.addEventListener('change', () => {
+      cancelButtonMove();
+      syncPlayback();
     });
-
-    document.addEventListener('visibilitychange', () => { previousTimestamp = performance.now(); });
-    reducedMotion.addEventListener?.('change', () => { previousTimestamp = performance.now(); });
-
+    hoverPointer.addEventListener('change', () => {
+      isHovered = false;
+      syncPlayback();
+    });
     if ('IntersectionObserver' in window) {
       const carouselObserver = new IntersectionObserver(([entry]) => {
         isInViewport = entry.isIntersecting;
-        previousTimestamp = performance.now();
-      }, { threshold: 0.05 });
+        syncPlayback();
+      }, { threshold: .05 });
       carouselObserver.observe(carousel);
     }
-
     if ('ResizeObserver' in window) {
       const resizeObserver = new ResizeObserver(measure);
       resizeObserver.observe(viewport);
       resizeObserver.observe(originalSet);
     }
-
     measure();
-    window.requestAnimationFrame(animate);
   });
 })();
