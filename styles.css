@@ -421,6 +421,15 @@ p { text-wrap: pretty; }
 .contact-cta__grid { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 70px; }
 .contact-cta .eyebrow { color: #654319; }
 .contact-cta__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.contact-location { max-width: 650px; display: flex; align-items: flex-start; gap: 13px; margin-top: 24px; }
+.contact-location__pin { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border: 1px solid rgba(63,41,22,.28); border-radius: 50%; color: #4f3219; font-size: 1rem; }
+.contact-location p { margin: 0; color: #4e351d; font-size: .85rem; }
+.contact-location p > strong,
+.contact-location p > span,
+.contact-location p > a { display: block; }
+.contact-location p > span { margin-top: 2px; }
+.contact-location a { width: fit-content; margin-top: 7px; border-bottom: 1px solid rgba(63,41,22,.42); color: #3d2918; font-size: .74rem; font-weight: 850; }
+.contact-location a span { display: inline; }
 
 .footer { padding: 68px 0 22px; background: #190f0b; color: #cdbeb0; }
 .footer__grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 60px; }
@@ -1566,6 +1575,18 @@ p { text-wrap: pretty; }
   color: #c7b7a8;
 }
 
+.builder-heading > .visual-disclaimer {
+  max-width: 500px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  background: rgba(255,255,255,.05);
+  color: #c7b7a8;
+  font-size: .78rem;
+}
+
+.visual-disclaimer strong { color: var(--white); }
+
 .builder-layout {
   display: grid;
   grid-template-columns: minmax(340px, .76fr) minmax(0, 1.24fr);
@@ -2386,6 +2407,22 @@ p { text-wrap: pretty; }
   object-position: 48% 50%;
 }
 
+.hero-slide--real img {
+  object-fit: cover;
+}
+
+.hero-slide--making img {
+  object-position: 50% 62%;
+}
+
+.hero-slide--frames img {
+  object-position: 50% 58%;
+}
+
+.hero-slide--stock img {
+  object-position: 50% 44%;
+}
+
 .hero-slide--product {
   background:
     radial-gradient(circle at 50% 34%, rgba(255,255,255,.9), transparent 36%),
@@ -2410,6 +2447,10 @@ p { text-wrap: pretty; }
 
 .spec-visual--ambient img {
   object-position: 50% center;
+}
+
+.spec-visual--factory img {
+  object-position: 50% 52%;
 }
 
 .process-grid li {
@@ -2441,7 +2482,7 @@ p { text-wrap: pretty; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 36% center;
+  object-position: 50% center;
 }
 
 .about-production-media::before,
