@@ -374,6 +374,7 @@
                 '<label><span>Altura <small>(cm)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="height" placeholder="Ex.: 30"></label>',
               '</div>',
               '<p class="field-help"><strong>Ordem obrigatória:</strong> Superior × Inferior × Altura, em centímetros.</p>',
+              '<label class="form-field quantity-field"><span>Quantidade desejada <small>(unidades)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="quantity" placeholder="Ex.: 20" required></label>',
               '<label class="form-field observations-field"><span>Observações <small>(opcional)</small></span><textarea rows="3" maxlength="500" data-field="observations" placeholder="Inclua somente detalhes relevantes para a avaliação."></textarea></label>',
             '</fieldset>',
             '<p class="config-error" id="' + prefix + '-error-2" data-step-error role="alert" hidden></p>',
@@ -387,6 +388,7 @@
                 '<div><dt>Cor</dt><dd data-summary="color"></dd></div>',
                 '<div data-reference-summary><dt>Referência</dt><dd data-summary="reference"></dd></div>',
                 '<div><dt>Medida</dt><dd data-summary="measure"></dd></div>',
+                '<div><dt>Quantidade</dt><dd data-summary="quantity"></dd></div>',
                 '<div class="summary-observations"><dt>Observações</dt><dd data-summary="observations"></dd></div>',
               '</dl>',
               '<p class="viability-notice">Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.</p>',
@@ -434,6 +436,7 @@
       upper: form.querySelector('[data-field="upper"]'),
       lower: form.querySelector('[data-field="lower"]'),
       height: form.querySelector('[data-field="height"]'),
+      quantity: form.querySelector('[data-field="quantity"]'),
       observations: form.querySelector('[data-field="observations"]'),
       measureHelpToggle: form.querySelector('[data-measure-help-toggle]'),
       measureHelp: form.querySelector('[data-measure-help]'),
@@ -489,6 +492,7 @@
         upper: dimensions[0] || 'A informar',
         lower: dimensions[1] || 'A informar',
         height: dimensions[2] || 'A informar',
+        quantity: getPositiveInteger(fields.quantity),
         observations: fields.observations.value.trim()
       };
     };
@@ -542,6 +546,7 @@
       summary('color', configuration.color);
       summary('reference', customMeasure ? '' : 'REF. ' + configuration.reference.reference);
       summary('measure', [configuration.upper, configuration.lower, configuration.height].join(' × ') + (configuration.upper === 'A informar' ? '' : ' cm'));
+      summary('quantity', configuration.quantity ? configuration.quantity + ' unidades' : 'A informar');
       summary('observations', configuration.observations || 'Sem observações');
       const referenceSummary = form.querySelector('[data-reference-summary]');
       if (referenceSummary) referenceSummary.hidden = customMeasure;
@@ -565,6 +570,15 @@
       update();
       clearStepError(step);
       const panel = panels[step];
+      if (step === 2 && getPositiveInteger(fields.quantity) === null) {
+        const error = panel.querySelector('[data-step-error]');
+        error.textContent = 'Informe a quantidade desejada usando um número inteiro maior que zero.';
+        error.hidden = false;
+        fields.quantity.setAttribute('aria-invalid', 'true');
+        fields.quantity.setAttribute('aria-describedby', error.id);
+        fields.quantity.focus();
+        return false;
+      }
       if (step === 2 && checkedValue(fields.measureMode) === 'custom') {
         const measureFields = [fields.upper, fields.lower, fields.height];
         const invalidMeasures = measureFields.filter((field) => getPositiveInteger(field) === null);
@@ -673,9 +687,16 @@
 
       if (configuration.measureMode === 'suggested') lines.push('Referência: REF. ' + configuration.reference.reference);
       lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
+      lines.push('Quantidade: ' + configuration.quantity + ' unidades');
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
       lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
 
+      window.CenterCupulas?.trackEvent('whatsapp_click', {
+        cta_location: 'configurador',
+        configurator_mode: mode,
+        product_reference: configuration.measureMode === 'suggested' ? configuration.reference.reference : 'personalizada',
+        quantity: configuration.quantity
+      });
       window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n')), '_blank', 'noopener,noreferrer');
     });
 
@@ -692,6 +713,7 @@
       fields.upper.value = configuration.upper || '';
       fields.lower.value = configuration.lower || '';
       fields.height.value = configuration.height || '';
+      fields.quantity.value = configuration.quantity || '';
       fields.observations.value = configuration.observations || '';
       panels.forEach((panel, step) => clearStepError(step));
       showStep(0, false);
