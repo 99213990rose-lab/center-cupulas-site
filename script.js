@@ -8,6 +8,53 @@
     element.textContent = String(new Date().getFullYear());
   });
 
+  const campaignKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'];
+  const campaignStorageKey = 'center_cupulas_campaign';
+
+  const getCampaignContext = () => {
+    try {
+      const search = new URLSearchParams(window.location.search);
+      const incoming = Object.fromEntries(
+        campaignKeys
+          .map((key) => [key, search.get(key)])
+          .filter(([, value]) => value)
+      );
+
+      if (Object.keys(incoming).length) {
+        window.sessionStorage.setItem(campaignStorageKey, JSON.stringify(incoming));
+        return incoming;
+      }
+
+      return JSON.parse(window.sessionStorage.getItem(campaignStorageKey) || '{}');
+    } catch {
+      return {};
+    }
+  };
+
+  const trackEvent = (name, parameters = {}) => {
+    const payload = {
+      page_path: window.location.pathname,
+      page_title: document.title,
+      ...getCampaignContext(),
+      ...parameters
+    };
+
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag === 'function') window.gtag('event', name, payload);
+    else window.dataLayer.push({ event: name, ...payload });
+
+    window.dispatchEvent(new CustomEvent('center:analytics', { detail: { name, ...payload } }));
+  };
+
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href*="wa.me/"], a[href*="api.whatsapp.com/"]');
+    if (!link) return;
+    trackEvent('whatsapp_click', {
+      cta_location: link.dataset.analyticsLocation || link.closest('header, section, footer')?.id || link.className || 'site',
+      cta_text: link.textContent.trim() || link.getAttribute('aria-label') || 'WhatsApp'
+    });
+  });
+
   const header = document.querySelector('[data-header]');
   let headerFrame = 0;
 
@@ -78,7 +125,7 @@
     });
   };
 
-  window.CenterCupulas = { observeReveals };
+  window.CenterCupulas = { observeReveals, trackEvent };
   observeReveals();
 
   const hydrateDeferredImages = (root) => {
