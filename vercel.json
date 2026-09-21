@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "center-cupulas-site.vercel.app"
+        }
+      ],
+      "destination": "https://www.centercupulas.com.br/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "center-cupulas-site-ri-cos.vercel.app"
+        }
+      ],
+      "destination": "https://www.centercupulas.com.br/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "center-cupulas-site-git-main-ri-cos.vercel.app"
+        }
+      ],
+      "destination": "https://www.centercupulas.com.br/:path*",
+      "permanent": true
+    }
+  ]
+}
