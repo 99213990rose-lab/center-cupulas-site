@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://center-cupulas-site.vercel.app/sitemap.xml
+Sitemap: https://www.centercupulas.com.br/sitemap.xml
