@@ -38,4 +38,4 @@ Depois acesse `http://localhost:8000/`.
 
 ## URL pública
 
-O endereço oficial utilizado em URLs canônicas, `robots.txt` e `sitemap.xml` é `https://center-cupulas-site.vercel.app/`.
+O endereço oficial utilizado em URLs canônicas, `robots.txt` e `sitemap.xml` é `https://www.centercupulas.com.br/`.
