@@ -3441,3 +3441,31 @@ p { text-wrap: pretty; }
 @media (max-width: 350px) {
   .format-options { grid-template-columns: 1fr; }
 }
+
+
+/* Compact mobile hero titles */
+@media (max-width: 620px) {
+  .hero h1 {
+    max-width: 100%;
+    font-size: clamp(1.82rem, 7.9vw, 2.15rem);
+    line-height: 1.08;
+    letter-spacing: -.01em;
+  }
+
+  .catalog-hero h1 {
+    max-width: 100%;
+    font-size: clamp(1.9rem, 8.2vw, 2.25rem);
+    line-height: 1.06;
+    letter-spacing: -.012em;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero h1 {
+    font-size: 1.76rem;
+  }
+
+  .catalog-hero h1 {
+    font-size: 1.84rem;
+  }
+}
