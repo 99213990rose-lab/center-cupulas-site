@@ -30,7 +30,8 @@
   <meta name="twitter:image" content="https://www.centercupulas.com.br/assets/social-share-center-cupulas.png">
   <link rel="canonical" href="https://www.centercupulas.com.br/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/diamante-preto-optimized.jpg" as="image" fetchpriority="high">
+  <link rel="preload" href="assets/hero/slide-1-mobile.avif" as="image" type="image/avif" media="(max-width: 680px)" fetchpriority="high">
+  <link rel="preload" href="assets/hero/slide-1-desktop.avif" as="image" type="image/avif" media="(min-width: 681px)" fetchpriority="high">
   <link rel="stylesheet" href="styles.css">
   <script type="application/ld+json">
   {
@@ -87,46 +88,65 @@
   </header>
 
   <main id="conteudo">
-    <section class="hero">
-      <div class="hero__glow" aria-hidden="true"></div>
-      <div class="container hero__grid">
-        <div class="hero__content" data-reveal="up">
-          <p class="eyebrow eyebrow--light">Design técnico para marcas</p>
-          <h1>Fábrica de cúpulas para luminárias <em>sob medida</em></h1>
-          <p class="hero__lead">Produzimos cúpulas para abajures, lustres, pendentes e projetos decorativos, em diferentes formatos, materiais, cores e medidas definidos para cada projeto.</p>
-          <div class="hero__actions">
-            <a class="button button--gold button--arrow" href="modelos.html">Ver todos os modelos <span aria-hidden="true">↗</span></a>
-            <a class="button button--ghost" href="https://wa.me/5512983216069?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20um%20or%C3%A7amento." target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>
+    <section class="hero hero--carousel" data-hero-carousel aria-roledescription="carrossel" aria-label="Destaques da Center Cúpulas">
+      <div class="hero-carousel__slides" aria-live="polite">
+        <article class="hero-slide hero-slide--premium is-active" data-slide>
+          <picture class="hero-slide__media">
+            <source media="(max-width: 680px)" srcset="assets/hero/slide-1-mobile.avif" type="image/avif">
+            <img src="assets/hero/slide-1-desktop.avif" alt="Cúpula para luminária em tecido bege aplicada em ambiente decorado" width="1440" height="810" loading="eager" decoding="async" fetchpriority="high">
+          </picture>
+          <div class="hero-slide__scrim" aria-hidden="true"></div>
+          <div class="container hero-slide__content">
+            <div class="hero-slide__copy">
+              <p class="hero-slide__eyebrow">Fabricação sob medida</p>
+              <h1>Fábrica de cúpulas para luminárias sob medida</h1>
+              <p class="hero-slide__lead">Modelos para encomenda, atacado e projetos especiais.</p>
+              <a class="button hero-slide__button" href="https://wa.me/5512983216069?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20um%20or%C3%A7amento." target="_blank" rel="noopener noreferrer">Solicitar orçamento <span aria-hidden="true">→</span></a>
+            </div>
           </div>
-        </div>
+        </article>
 
-        <div class="hero-carousel media-reveal" data-hero-carousel data-reveal="scale" aria-roledescription="carrossel" aria-label="Referências visuais da Center Cúpulas">
-          <div class="hero-carousel__slides" aria-live="polite">
-            <figure class="hero-slide hero-slide--diamond is-active" data-slide>
-              <img src="assets/diamante-preto-optimized.jpg" alt="Estrutura aramada preta em formato diamante" width="1100" height="825" loading="eager" decoding="async" fetchpriority="high">
-              <figcaption><b>Geometria com presença</b><span>Estruturas desenvolvidas com atenção à proporção.</span></figcaption>
-            </figure>
-            <figure class="hero-slide hero-slide--scene hero-slide--workshop" data-slide aria-hidden="true">
-              <img src="assets/institucional/hero-oficina-montagem.webp" alt="Ilustração de montagem artesanal de uma cúpula" width="1536" height="1024" loading="eager" decoding="async">
-              <figcaption><b>Cuidado em cada etapa</b><span>Uma leitura visual do processo de montagem e acabamento.</span></figcaption>
-            </figure>
-            <figure class="hero-slide hero-slide--scene hero-slide--showroom" data-slide aria-hidden="true">
-              <img src="assets/institucional/hero-showroom-cliente.webp" alt="Ilustração de cliente observando um abajur em showroom" width="1536" height="1024" loading="eager" decoding="async">
-              <figcaption><b>Presença no ambiente</b><span>Proporção e acabamento percebidos no uso final.</span></figcaption>
-            </figure>
-          </div>
-          <div class="hero-carousel__bar">
-            <div class="hero-carousel__dots" role="group" aria-label="Selecionar imagem">
-              <button class="carousel-dot is-active" type="button" data-slide-to="0" aria-label="Mostrar imagem 1" aria-current="true"></button>
-              <button class="carousel-dot" type="button" data-slide-to="1" aria-label="Mostrar imagem 2"></button>
-              <button class="carousel-dot" type="button" data-slide-to="2" aria-label="Mostrar imagem 3"></button>
-            </div>
-            <div class="carousel-actions">
-              <button class="icon-button icon-button--light" type="button" data-hero-prev aria-label="Imagem anterior">←</button>
-              <button class="icon-button icon-button--light" type="button" data-hero-next aria-label="Próxima imagem">→</button>
+        <article class="hero-slide hero-slide--premium" data-slide aria-hidden="true">
+          <picture class="hero-slide__media">
+            <source media="(max-width: 680px)" srcset="assets/hero/slide-2-mobile.avif" type="image/avif">
+            <img src="assets/hero/slide-2-desktop.avif" alt="Conjunto de cúpulas para luminárias em diferentes formatos, tecidos e cores" width="1440" height="810" loading="lazy" decoding="async">
+          </picture>
+          <div class="hero-slide__scrim" aria-hidden="true"></div>
+          <div class="container hero-slide__content">
+            <div class="hero-slide__copy">
+              <p class="hero-slide__eyebrow">Modelos e aplicações</p>
+              <h2>Modelos para diferentes projetos de iluminação</h2>
+              <p class="hero-slide__lead">Formatos, tecidos, cores e acabamentos para cada necessidade.</p>
+              <a class="button hero-slide__button" href="modelos.html">Ver modelos <span aria-hidden="true">→</span></a>
             </div>
           </div>
+        </article>
+
+        <article class="hero-slide hero-slide--premium" data-slide aria-hidden="true">
+          <picture class="hero-slide__media">
+            <source media="(max-width: 680px)" srcset="assets/hero/slide-3-mobile.avif" type="image/avif">
+            <img src="assets/hero/slide-3-desktop.avif" alt="Processo artesanal de acabamento de uma cúpula para luminária" width="1440" height="810" loading="lazy" decoding="async">
+          </picture>
+          <div class="hero-slide__scrim" aria-hidden="true"></div>
+          <div class="container hero-slide__content">
+            <div class="hero-slide__copy">
+              <p class="hero-slide__eyebrow">Fabricação própria</p>
+              <h2>Cuidado em cada etapa</h2>
+              <p class="hero-slide__lead">Produção com atenção ao acabamento, estrutura e proporção.</p>
+              <a class="button hero-slide__button" href="#processo">Como funciona <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="container hero-carousel__controls">
+        <button class="hero-carousel__arrow hero-carousel__arrow--prev" type="button" data-hero-prev aria-label="Slide anterior">←</button>
+        <div class="hero-carousel__dots" role="group" aria-label="Selecionar destaque">
+          <button class="carousel-dot is-active" type="button" data-slide-to="0" aria-label="Mostrar destaque 1" aria-current="true"></button>
+          <button class="carousel-dot" type="button" data-slide-to="1" aria-label="Mostrar destaque 2"></button>
+          <button class="carousel-dot" type="button" data-slide-to="2" aria-label="Mostrar destaque 3"></button>
         </div>
+        <button class="hero-carousel__arrow hero-carousel__arrow--next" type="button" data-hero-next aria-label="Próximo slide">→</button>
       </div>
     </section>
 
