@@ -129,6 +129,7 @@
         const isActive = slideIndex === current;
         slide.classList.toggle('is-active', isActive);
         slide.setAttribute('aria-hidden', String(!isActive));
+        slide.inert = !isActive;
       });
 
       dots.forEach((dot, dotIndex) => {
@@ -197,6 +198,17 @@
     heroCarousel.addEventListener('pointercancel', () => {
       pointerStartX = null;
       pointerStartY = null;
+    });
+    heroCarousel.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        showSlide(current - 1);
+        startAutoplay();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        showSlide(current + 1);
+        startAutoplay();
+      }
     });
     document.addEventListener('visibilitychange', startAutoplay);
     reducedMotion.addEventListener?.('change', startAutoplay);
