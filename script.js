@@ -78,7 +78,19 @@
     });
   };
 
-  window.CenterCupulas = { observeReveals };
+  const trackWhatsAppConversion = () => {
+    if (typeof window.gtag !== 'function') return;
+    window.gtag('event', 'conversion', { send_to: 'AW-18466593229/dGyVCITQ_IAdEM2zx-VE' });
+  };
+
+  window.CenterCupulas = { observeReveals, trackWhatsAppConversion };
+
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest?.('a[href^="https://wa.me/"]');
+    if (!link) return;
+    trackWhatsAppConversion();
+  });
+
   observeReveals();
 
   const hydrateDeferredImages = (root) => {

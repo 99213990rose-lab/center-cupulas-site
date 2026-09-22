@@ -676,6 +676,7 @@
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
       lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
 
+      window.CenterCupulas?.trackWhatsAppConversion?.();
       window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n')), '_blank', 'noopener,noreferrer');
     });
 
