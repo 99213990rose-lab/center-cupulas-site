@@ -106,6 +106,7 @@
     const dots = [...heroCarousel.querySelectorAll('[data-slide-to]')];
     const previous = heroCarousel.querySelector('[data-hero-prev]');
     const next = heroCarousel.querySelector('[data-hero-next]');
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
     let current = 0;
     let autoplay = 0;
     let isHovered = false;
@@ -151,7 +152,7 @@
       autoplay = window.setTimeout(() => {
         showSlide(current + 1);
         startAutoplay();
-      }, 3200);
+      }, 4800);
     };
 
     previous?.addEventListener('click', () => { showSlide(current - 1); startAutoplay(); });
@@ -161,8 +162,16 @@
       startAutoplay();
     }));
 
-    heroCarousel.addEventListener('mouseenter', () => { isHovered = true; stopAutoplay(); });
-    heroCarousel.addEventListener('mouseleave', () => { isHovered = false; startAutoplay(); });
+    heroCarousel.addEventListener('mouseenter', () => {
+      if (!hoverCapable.matches) return;
+      isHovered = true;
+      stopAutoplay();
+    });
+    heroCarousel.addEventListener('mouseleave', () => {
+      if (!hoverCapable.matches) return;
+      isHovered = false;
+      startAutoplay();
+    });
     heroCarousel.addEventListener('focusin', (event) => {
       if (pointerStartX !== null) {
         hasFocus = false;
@@ -184,6 +193,7 @@
       if (!event.isPrimary) return;
       pointerStartX = event.clientX;
       pointerStartY = event.clientY;
+      stopAutoplay();
     });
     heroCarousel.addEventListener('pointerup', (event) => {
       if (pointerStartX === null || pointerStartY === null) return;
@@ -191,13 +201,17 @@
       const distanceY = event.clientY - pointerStartY;
       pointerStartX = null;
       pointerStartY = null;
-      if (Math.abs(distanceX) < 44 || Math.abs(distanceX) < Math.abs(distanceY)) return;
+      if (Math.abs(distanceX) < 44 || Math.abs(distanceX) < Math.abs(distanceY)) {
+        startAutoplay();
+        return;
+      }
       showSlide(current + (distanceX < 0 ? 1 : -1));
       startAutoplay();
     });
     heroCarousel.addEventListener('pointercancel', () => {
       pointerStartX = null;
       pointerStartY = null;
+      startAutoplay();
     });
     heroCarousel.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowLeft') {
@@ -212,6 +226,13 @@
     });
     document.addEventListener('visibilitychange', startAutoplay);
     reducedMotion.addEventListener?.('change', startAutoplay);
+    hoverCapable.addEventListener?.('change', (event) => {
+      if (event.matches) return;
+      isHovered = false;
+      startAutoplay();
+    });
+
+    showSlide(0);
 
     window.addEventListener('load', () => {
       const defer = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 350));
