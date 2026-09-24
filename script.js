@@ -155,8 +155,16 @@
       }, 4800);
     };
 
-    previous?.addEventListener('click', () => { showSlide(current - 1); startAutoplay(); });
-    next?.addEventListener('click', () => { showSlide(current + 1); startAutoplay(); });
+    previous?.addEventListener('click', (event) => {
+      showSlide(current - 1);
+      if (event.detail > 0) isHovered = false;
+      startAutoplay();
+    });
+    next?.addEventListener('click', (event) => {
+      showSlide(current + 1);
+      if (event.detail > 0) isHovered = false;
+      startAutoplay();
+    });
     dots.forEach((dot) => dot.addEventListener('click', () => {
       showSlide(Number(dot.dataset.slideTo));
       startAutoplay();

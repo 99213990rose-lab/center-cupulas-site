@@ -3491,7 +3491,8 @@ p { text-wrap: pretty; }
 .hero-slide__media,
 .hero-slide__media img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hero-slide__media { display: block; overflow: hidden; }
-.hero-slide__media img { object-fit: cover; object-position: center center; transform: scale(1.002); }
+.hero-slide__media img { object-fit: cover; object-position: center center; transform: none; }
+.hero--carousel .hero-slide.is-active .hero-slide__media img { transform: none; }
 .hero-slide__scrim {
   position: absolute;
   inset: 0;
