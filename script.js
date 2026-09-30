@@ -78,12 +78,65 @@
     });
   };
 
-  const trackWhatsAppConversion = () => {
-    if (typeof window.gtag !== 'function') return;
-    window.gtag('event', 'conversion', { send_to: 'AW-18466593229/dGyVCITQ_IAdEM2zx-VE' });
+  const readAttribution = () => {
+    const params = new URLSearchParams(window.location.search);
+    const current = {
+      source: params.get('utm_source') || '',
+      medium: params.get('utm_medium') || '',
+      campaign: params.get('utm_campaign') || ''
+    };
+
+    if (current.source || current.medium || current.campaign) {
+      try {
+        window.sessionStorage.setItem('centerCupulasAttribution', JSON.stringify(current));
+      } catch {}
+      return current;
+    }
+
+    try {
+      const stored = JSON.parse(window.sessionStorage.getItem('centerCupulasAttribution') || 'null');
+      if (stored && typeof stored === 'object') return stored;
+    } catch {}
+
+    return current;
   };
 
-  window.CenterCupulas = { observeReveals, trackWhatsAppConversion };
+  const attribution = readAttribution();
+
+  const trackWhatsAppConversion = () => {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'conversion', { send_to: 'AW-18466593229/dGyVCITQ_IAdEM2zx-VE' });
+    }
+
+    if (typeof window.va === 'function') {
+      window.va('event', {
+        name: 'WhatsApp Click',
+        data: {
+          page: window.location.pathname,
+          source: attribution.source || 'direct',
+          medium: attribution.medium || 'none',
+          campaign: attribution.campaign || 'none'
+        }
+      });
+    }
+  };
+
+  if (
+    typeof window.va === 'function' &&
+    (attribution.source || attribution.medium || attribution.campaign)
+  ) {
+    window.va('event', {
+      name: 'Campaign Visit',
+      data: {
+        page: window.location.pathname,
+        source: attribution.source || 'unknown',
+        medium: attribution.medium || 'unknown',
+        campaign: attribution.campaign || 'unknown'
+      }
+    });
+  }
+
+  window.CenterCupulas = { observeReveals, trackWhatsAppConversion, readAttribution };
 
   document.addEventListener('click', (event) => {
     const link = event.target.closest?.('a[href^="https://wa.me/"]');
