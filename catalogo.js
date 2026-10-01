@@ -375,7 +375,7 @@
               '</div>',
               '<p class="field-help"><strong>Ordem obrigatória:</strong> Superior × Inferior × Altura, em centímetros.</p>',
               '<div class="quantity-section" aria-label="Quantidade desejada">',
-                '<p class="quantity-section__label">Quantidade desejada <small>(opcional)</small></p>',
+                '<p class="quantity-section__label">Quantidade desejada</p>',
                 '<div class="quantity-options">',
                   '<label><input type="radio" name="' + prefix + '-quantity" value="1" data-field="quantity"><span>1</span></label>',
                   '<label><input type="radio" name="' + prefix + '-quantity" value="5" data-field="quantity"><span>5</span></label>',
