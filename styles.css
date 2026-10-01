@@ -3653,3 +3653,77 @@ p { text-wrap: pretty; }
   .hero--carousel .hero-slide h2 { max-width: 330px; font-size: clamp(1.82rem, 8.3vw, 2.18rem); }
   .hero-slide__lead { max-width: 300px; font-size: .88rem; }
 }
+
+
+/* Quantidade desejada: opcional, sem bloquear o envio ao WhatsApp. */
+.quantity-section {
+  margin: 18px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.quantity-section__label {
+  margin: 0 0 9px;
+  color: var(--ink);
+  font-size: .72rem;
+  font-weight: 850;
+}
+
+.quantity-section__label small {
+  color: var(--muted);
+  font-size: .64rem;
+  font-weight: 650;
+}
+
+.quantity-options {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quantity-options label {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.quantity-options input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quantity-options label > span {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #faf8f4;
+  color: var(--ink);
+  font-size: .7rem;
+  font-weight: 850;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.quantity-options input:checked + span {
+  border-color: var(--gold);
+  background: #fffaf1;
+  box-shadow: 0 0 0 2px rgba(183,122,45,.13);
+}
+
+.quantity-options input:focus-visible + span {
+  outline: 3px solid #2878b7;
+  outline-offset: 2px;
+}
+
+.custom-quantity-field {
+  margin: 10px 0 0;
+}
+
+@media (max-width: 620px) {
+  .quantity-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

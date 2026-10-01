@@ -374,6 +374,18 @@
                 '<label><span>Altura <small>(cm)</small></span><input type="number" min="1" step="1" inputmode="numeric" data-field="height" placeholder="Ex.: 30"></label>',
               '</div>',
               '<p class="field-help"><strong>Ordem obrigatória:</strong> Superior × Inferior × Altura, em centímetros.</p>',
+              '<div class="quantity-section" aria-label="Quantidade desejada">',
+                '<p class="quantity-section__label">Quantidade desejada</p>',
+                '<div class="quantity-options">',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="1" data-field="quantity"><span>1</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="5" data-field="quantity"><span>5</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="10" data-field="quantity"><span>10</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="20" data-field="quantity"><span>20</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="50" data-field="quantity"><span>50</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="other" data-field="quantity"><span>Outra</span></label>',
+                '</div>',
+                '<label class="form-field custom-quantity-field" hidden><span>Outra quantidade</span><input type="number" min="1" step="1" inputmode="numeric" data-field="custom-quantity" placeholder="Ex.: 30"></label>',
+              '</div>',
               '<label class="form-field observations-field"><span>Observações <small>(opcional)</small></span><textarea rows="3" maxlength="500" data-field="observations" placeholder="Inclua somente detalhes relevantes para a avaliação."></textarea></label>',
             '</fieldset>',
             '<p class="config-error" id="' + prefix + '-error-2" data-step-error role="alert" hidden></p>',
@@ -387,6 +399,7 @@
                 '<div><dt>Cor</dt><dd data-summary="color"></dd></div>',
                 '<div data-reference-summary><dt>Referência</dt><dd data-summary="reference"></dd></div>',
                 '<div><dt>Medida</dt><dd data-summary="measure"></dd></div>',
+                '<div><dt>Quantidade</dt><dd data-summary="quantity"></dd></div>',
                 '<div class="summary-observations"><dt>Observações</dt><dd data-summary="observations"></dd></div>',
               '</dl>',
               '<p class="viability-notice">Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.</p>',
@@ -434,6 +447,9 @@
       upper: form.querySelector('[data-field="upper"]'),
       lower: form.querySelector('[data-field="lower"]'),
       height: form.querySelector('[data-field="height"]'),
+      quantity: [...form.querySelectorAll('[data-field="quantity"]')],
+      customQuantity: form.querySelector('[data-field="custom-quantity"]'),
+      customQuantityField: form.querySelector('.custom-quantity-field'),
       observations: form.querySelector('[data-field="observations"]'),
       measureHelpToggle: form.querySelector('[data-measure-help-toggle]'),
       measureHelp: form.querySelector('[data-measure-help]'),
@@ -475,6 +491,11 @@
             const value = getPositiveInteger(input);
             return value === null ? '' : String(value);
           });
+      const quantityChoice = checkedValue(fields.quantity) || '';
+      const customQuantity = getPositiveInteger(fields.customQuantity);
+      const quantity = quantityChoice === 'other'
+        ? (customQuantity === null ? '' : String(customQuantity))
+        : quantityChoice;
 
       return {
         format: formatKey === 'personalizado' && fields.customFormat.value.trim()
@@ -489,6 +510,7 @@
         upper: dimensions[0] || 'A informar',
         lower: dimensions[1] || 'A informar',
         height: dimensions[2] || 'A informar',
+        quantity,
         observations: fields.observations.value.trim()
       };
     };
@@ -515,6 +537,7 @@
       const isColorful = !isJuta && selectedColor === 'Colorido';
       const customFormat = formatKey === 'personalizado';
       const customMeasure = checkedValue(fields.measureMode) === 'custom';
+      const customQuantity = checkedValue(fields.quantity) === 'other';
       const configuration = getConfiguration();
 
       fields.customFormatField.hidden = !customFormat;
@@ -536,12 +559,15 @@
         input.disabled = !customMeasure;
         input.required = customMeasure;
       });
+      fields.customQuantityField.hidden = !customQuantity;
+      fields.customQuantity.disabled = !customQuantity;
 
       summary('format', configuration.format);
       summary('material', configuration.material);
       summary('color', configuration.color);
       summary('reference', customMeasure ? '' : 'REF. ' + configuration.reference.reference);
       summary('measure', [configuration.upper, configuration.lower, configuration.height].join(' × ') + (configuration.upper === 'A informar' ? '' : ' cm'));
+      summary('quantity', configuration.quantity ? configuration.quantity + (configuration.quantity === '1' ? ' unidade' : ' unidades') : 'Não informada');
       summary('observations', configuration.observations || 'Sem observações');
       const referenceSummary = form.querySelector('[data-reference-summary]');
       if (referenceSummary) referenceSummary.hidden = customMeasure;
@@ -673,6 +699,7 @@
 
       if (configuration.measureMode === 'suggested') lines.push('Referência: REF. ' + configuration.reference.reference);
       lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
+      if (configuration.quantity) lines.push('Quantidade: ' + configuration.quantity + (configuration.quantity === '1' ? ' unidade' : ' unidades'));
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
       lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
 
@@ -693,6 +720,8 @@
       fields.upper.value = configuration.upper || '';
       fields.lower.value = configuration.lower || '';
       fields.height.value = configuration.height || '';
+      fields.quantity.forEach((input) => { input.checked = input.value === (configuration.quantity || ''); });
+      fields.customQuantity.value = configuration.customQuantity || '';
       fields.observations.value = configuration.observations || '';
       panels.forEach((panel, step) => clearStepError(step));
       showStep(0, false);
