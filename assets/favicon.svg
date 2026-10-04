@@ -1,6 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#2b1c13"/>
-  <g fill="none" stroke="#d4aa68" stroke-width="3" stroke-linecap="round">
-    <path d="M10 47h44M14 45c2-20 15-29 18-29s16 9 18 29M23 45c2-17 5-26 9-29M41 45c-2-17-5-26-9-29M32 16v29"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Center Cúpulas">
+  <g fill="none" stroke="#C99A4B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 4v11"/>
+    <path d="M27 16h10"/>
+    <path d="M18 23c8-4 20-4 28 0"/>
+    <path d="M18 23 9 50"/>
+    <path d="M46 23 55 50"/>
+    <path d="M24 22 20 50"/>
+    <path d="M32 21v29"/>
+    <path d="M40 22 44 50"/>
+    <path d="M9 50c11 5 35 5 46 0"/>
+    <path d="M12 50h40"/>
   </g>
 </svg>
