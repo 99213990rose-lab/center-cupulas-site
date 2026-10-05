@@ -416,7 +416,7 @@
           '<button class="button button--secondary" type="button" data-step-previous hidden>Anterior</button>',
           '<span data-step-status aria-live="polite">Etapa 1 de 4</span>',
           '<button class="button button--dark" type="button" data-step-next>Continuar <span aria-hidden="true">→</span></button>',
-          '<button class="button button--whatsapp" type="submit" data-step-submit hidden>Continuar pedido pelo WhatsApp <span aria-hidden="true">↗</span></button>',
+          '<button class="button button--dark" type="submit" data-step-submit hidden>Adicionar ao pedido <span aria-hidden="true">→</span></button>',
         '</div>',
       '</form>'
     ].join('');
@@ -596,17 +596,20 @@
       if (!quote || quote.status === 'error') {
         fields.priceBadge.textContent = 'Indisponível';
         fields.priceBody.innerHTML = '<strong>Preço sob consulta</strong><p>Continue pelo WhatsApp para receber a cotação.</p>';
+        submitButton.innerHTML = 'Solicitar cotação no WhatsApp <span aria-hidden="true">↗</span>';
         return;
       }
 
       if (quote.status === 'consult' || quote.confidence === 'low') {
         fields.priceBadge.textContent = 'Sob consulta';
         fields.priceBody.innerHTML = '<strong>Cotação personalizada</strong><p>Esse formato ou medida precisa de confirmação da fábrica antes de exibirmos um valor.</p>';
+        submitButton.innerHTML = 'Solicitar cotação no WhatsApp <span aria-hidden="true">↗</span>';
         return;
       }
 
       const badge = quote.exact_reference ? 'Referência direta' : 'Estimativa';
       fields.priceBadge.textContent = badge;
+      submitButton.innerHTML = 'Adicionar ao pedido <span aria-hidden="true">→</span>';
       const discount = quote.discount?.unlocked
         ? '<span class="public-price__benefit">10% de desconto aplicado neste pedido</span>'
         : quote.discount?.amount_to_unlock > 0
@@ -786,6 +789,35 @@
       showStep(panels.length - 1, false);
 
       const configuration = getConfiguration();
+
+      if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' && window.CenterCupulasCart) {
+        window.CenterCupulasCart.add({
+          format: configuration.formatData.key,
+          format_label: configuration.format,
+          material: configuration.material,
+          color: configuration.color,
+          top: Number(configuration.upper),
+          bottom: Number(configuration.lower),
+          height: Number(configuration.height),
+          quantity: Number(configuration.quantity || 1),
+          reference: configuration.measureMode === 'suggested' ? configuration.reference.reference : null,
+          observations: configuration.observations,
+          quote_snapshot: {
+            unit_price: lastPriceQuote.unit_price,
+            total: lastPriceQuote.total,
+            confidence: lastPriceQuote.confidence,
+            exact_reference: lastPriceQuote.exact_reference,
+            engine_version: lastPriceQuote.engine_version
+          }
+        });
+        window.CenterCupulas?.sendWebEvent?.('cart_add', {
+          placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
+          ctaText: configuration.format
+        });
+        window.location.href = 'carrinho.html';
+        return;
+      }
+
       const lines = [
         'Olá, vim pelo catálogo da Center Cúpulas e gostaria de solicitar a avaliação desta configuração.',
         '',
@@ -798,11 +830,7 @@
       lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
       if (configuration.quantity) lines.push('Quantidade: ' + configuration.quantity + (configuration.quantity === '1' ? ' unidade' : ' unidades'));
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
-      if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low') {
-        lines.push('Estimativa do site: ' + formatMoney(lastPriceQuote.total));
-        if (lastPriceQuote.discount?.unlocked) lines.push('Benefício: 10% de desconto aplicado no pedido');
-      }
-      lines.push('', 'O valor exibido no site é uma estimativa e será confirmado pela fábrica antes da produção.');
+      lines.push('', 'A configuração precisa de confirmação da fábrica antes de receber um preço final.');
 
       const leadRef = window.CenterCupulas?.trackWhatsAppConversion?.({
         eventType: 'configurator_submit',
