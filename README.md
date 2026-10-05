@@ -4,8 +4,10 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 
 ## Páginas
 
-- `index.html`: homepage institucional para fabricação sob encomenda no atacado.
+- `index.html`: homepage institucional e comercial.
 - `modelos.html`: catálogo de medidas sugeridas e configuradores para formato, material, cor e dimensões personalizadas.
+- `reformas.html`: landing page dedicada ao serviço de reforma de cúpulas.
+- `/catalogo`: download rastreável do catálogo PDF, preservando a experiência de download.
 
 ## Estrutura
 
@@ -16,6 +18,20 @@ Site institucional B2B e catálogo configurável da Center Cúpulas. O projeto u
 - `assets/catalogo/`: fotografias de apresentação dos formatos e futuras imagens exclusivas das referências.
 - `catalogo-assets.json`: manifesto técnico das imagens exclusivas planejadas para as 40 referências.
 - `robots.txt` e `sitemap.xml`: arquivos de rastreamento.
+
+## Medição e atribuição
+
+A medição comercial usa uma arquitetura complementar:
+
+- **Google Ads**: tag de conversão para cliques no WhatsApp.
+- **Vercel Web Analytics**: pageviews e eventos de interação.
+- **Supabase**: histórico próprio de eventos do site para atribuição por página, origem, mídia e posição do CTA.
+- **UTM / referrer / Google click ID presente**: usados para classificar a origem sem interromper a navegação.
+- **Código de atendimento `CC-XXXXXXXX`**: anexado às mensagens iniciadas pelo site e preparado para vincular o clique ao lead quando o WhatsApp de produção estiver conectado ao CRM.
+- **Configurador**: envio ao WhatsApp medido separadamente de um clique simples.
+- **Catálogo PDF**: downloads por `/catalogo` são registrados antes do redirecionamento para o arquivo.
+
+Os eventos de medição não armazenam nome, telefone ou conteúdo digitado pelo visitante no site.
 
 ## Contatos oficiais
 
