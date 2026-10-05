@@ -36,19 +36,35 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Center Cúpulas",
-    "url": "https://www.centercupulas.com.br/",
-    "description": "Fabricação de cúpulas para luminárias, abajures, lustres e pendentes sob medida e por encomenda para atacado.",
-    "email": "centercupulas@gmail.com",
-    "telephone": "+55 12 98321-6069",
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "sales",
-      "telephone": "+55 12 98321-6069",
-      "email": "centercupulas@gmail.com",
-      "availableLanguage": "Portuguese"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://www.centercupulas.com.br/#website",
+        "url": "https://www.centercupulas.com.br/",
+        "name": "Center Cúpulas",
+        "alternateName": "Center Cupulas",
+        "inLanguage": "pt-BR",
+        "publisher": {
+          "@id": "https://www.centercupulas.com.br/#organization"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://www.centercupulas.com.br/#organization",
+        "name": "Center Cúpulas",
+        "url": "https://www.centercupulas.com.br/",
+        "description": "Fabricação de cúpulas para luminárias, abajures, lustres e pendentes sob medida e por encomenda para atacado.",
+        "email": "centercupulas@gmail.com",
+        "telephone": "+55 12 98321-6069",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "sales",
+          "telephone": "+55 12 98321-6069",
+          "email": "centercupulas@gmail.com",
+          "availableLanguage": "Portuguese"
+        }
+      }
+    ]
   }
   </script>
 
