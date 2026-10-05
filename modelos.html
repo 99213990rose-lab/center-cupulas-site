@@ -39,17 +39,47 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Cúpulas para Luminárias Sob Medida | Center Cúpulas",
-    "description": "Explore 40 referências de cúpulas para luminárias, abajures, lustres e pendentes e configure formato, material, cor e medidas para fabricação sob encomenda.",
-    "url": "https://www.centercupulas.com.br/modelos.html",
-    "isPartOf": {
-      "@type": "WebSite",
-      "@id": "https://www.centercupulas.com.br/#website",
-      "name": "Center Cúpulas",
-      "alternateName": "Center Cupulas",
-      "url": "https://www.centercupulas.com.br/"
-    }
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://www.centercupulas.com.br/modelos.html#webpage",
+        "url": "https://www.centercupulas.com.br/modelos.html",
+        "name": "Cúpulas para Luminárias Sob Medida | Center Cúpulas",
+        "description": "Explore 40 referências de cúpulas para luminárias, abajures, lustres e pendentes e configure formato, material, cor e medidas para fabricação sob encomenda.",
+        "inLanguage": "pt-BR",
+        "isPartOf": {
+          "@id": "https://www.centercupulas.com.br/#website"
+        },
+        "breadcrumb": {
+          "@id": "https://www.centercupulas.com.br/modelos.html#breadcrumb"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.centercupulas.com.br/#website",
+        "url": "https://www.centercupulas.com.br/",
+        "name": "Center Cúpulas",
+        "alternateName": "Center Cupulas"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.centercupulas.com.br/modelos.html#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Center Cúpulas",
+            "item": "https://www.centercupulas.com.br/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Modelos",
+            "item": "https://www.centercupulas.com.br/modelos.html"
+          }
+        ]
+      }
+    ]
   }
   </script>
 
