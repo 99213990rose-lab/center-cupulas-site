@@ -78,32 +78,162 @@
     });
   };
 
+  const TRACKING_ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/center-web-event';
+
+  const safeStorage = {
+    get(storage, key) {
+      try { return storage.getItem(key); } catch { return null; }
+    },
+    set(storage, key, value) {
+      try { storage.setItem(key, value); } catch {}
+    }
+  };
+
+  const randomToken = (size = 8) => {
+    const bytes = new Uint8Array(size);
+    if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+    else bytes.forEach((_, index) => { bytes[index] = Math.floor(Math.random() * 256); });
+    return [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('').slice(0, size * 2);
+  };
+
+  const getSessionId = () => {
+    const key = 'centerCupulasSessionId';
+    let value = safeStorage.get(window.sessionStorage, key);
+    if (!value) {
+      value = 'cc-session-' + randomToken(8);
+      safeStorage.set(window.sessionStorage, key, value);
+    }
+    return value;
+  };
+
+  const normalizeHost = (value) => String(value || '').replace(/^www\./i, '').toLowerCase();
+
+  const inferReferrerAttribution = () => {
+    let host = '';
+    try { host = normalizeHost(new URL(document.referrer).hostname); } catch {}
+    if (!host || host === 'centercupulas.com.br') return { source: 'direct', medium: 'none', referrerHost: host };
+
+    if (/(^|\.)google\./.test(host)) return { source: 'google', medium: 'organic', referrerHost: host };
+    if (host === 'bing.com' || host.endsWith('.bing.com')) return { source: 'bing', medium: 'organic', referrerHost: host };
+    if (host === 'l.instagram.com' || host.endsWith('.instagram.com')) return { source: 'instagram', medium: 'referral', referrerHost: host };
+    if (host === 'facebook.com' || host.endsWith('.facebook.com')) return { source: 'facebook', medium: 'referral', referrerHost: host };
+    if (host === 'com.google.android.gm' || host === 'mail.google.com') return { source: 'gmail', medium: 'email', referrerHost: host };
+    return { source: host, medium: 'referral', referrerHost: host };
+  };
+
   const readAttribution = () => {
     const params = new URLSearchParams(window.location.search);
-    const current = {
-      source: params.get('utm_source') || '',
-      medium: params.get('utm_medium') || '',
-      campaign: params.get('utm_campaign') || ''
+    const referrer = inferReferrerAttribution();
+    const hasGoogleClick = Boolean(params.get('gclid') || params.get('gbraid') || params.get('wbraid'));
+    const hasMetaClick = Boolean(params.get('fbclid'));
+
+    const explicit = {
+      source: params.get('utm_source') || (hasGoogleClick ? 'google' : ''),
+      medium: params.get('utm_medium') || (hasGoogleClick ? 'cpc' : ''),
+      campaign: params.get('utm_campaign') || '',
+      content: params.get('utm_content') || '',
+      term: params.get('utm_term') || '',
+      referrerHost: referrer.referrerHost || '',
+      hasGoogleClick,
+      hasMetaClick
     };
 
-    if (current.source || current.medium || current.campaign) {
-      try {
-        window.sessionStorage.setItem('centerCupulasAttribution', JSON.stringify(current));
-      } catch {}
-      return current;
+    const hasExplicit = Boolean(explicit.source || explicit.medium || explicit.campaign || hasGoogleClick || hasMetaClick);
+    const current = hasExplicit ? explicit : {
+      ...explicit,
+      source: referrer.source || 'direct',
+      medium: referrer.medium || 'none'
+    };
+
+    const firstKey = 'centerCupulasFirstTouch';
+    const lastKey = 'centerCupulasAttribution';
+    const existingFirst = safeStorage.get(window.localStorage, firstKey);
+
+    if (!existingFirst) {
+      safeStorage.set(window.localStorage, firstKey, JSON.stringify({
+        ...current,
+        landingPage: window.location.pathname + window.location.search,
+        capturedAt: new Date().toISOString()
+      }));
     }
 
-    try {
-      const stored = JSON.parse(window.sessionStorage.getItem('centerCupulasAttribution') || 'null');
-      if (stored && typeof stored === 'object') return stored;
-    } catch {}
+    safeStorage.set(window.sessionStorage, lastKey, JSON.stringify(current));
 
-    return current;
+    let firstTouch = null;
+    try { firstTouch = JSON.parse(safeStorage.get(window.localStorage, firstKey) || 'null'); } catch {}
+
+    return {
+      ...current,
+      firstTouch: firstTouch && typeof firstTouch === 'object' ? firstTouch : null
+    };
   };
 
   const attribution = readAttribution();
+  const sessionId = getSessionId();
+  const landingPage = attribution.firstTouch?.landingPage || window.location.pathname + window.location.search;
 
-  const trackWhatsAppConversion = () => {
+  const placementFor = (element) => {
+    if (!element) return 'unknown';
+    if (element.dataset?.trackPlacement) return element.dataset.trackPlacement;
+    if (element.closest('.floating-whatsapp')) return 'floating_whatsapp';
+    if (element.closest('.site-header')) return 'header';
+    if (element.closest('.hero')) return 'hero';
+    if (element.closest('.catalog-hero')) return 'catalog_hero';
+    if (element.closest('.contact-cta')) return 'contact_cta';
+    if (element.closest('.footer')) return 'footer';
+    if (element.closest('.configurator')) return 'configurator_dialog';
+    if (element.closest('[data-configuration-form]')) return 'configurator_page';
+    return 'content';
+  };
+
+  const sendWebEvent = (eventType, details = {}) => {
+    const payload = {
+      event_id: 'cc-' + Date.now().toString(36) + '-' + randomToken(5),
+      session_id: sessionId,
+      lead_ref: details.leadRef || null,
+      event_type: eventType,
+      page: window.location.pathname,
+      placement: details.placement || 'page',
+      source: attribution.source || 'direct',
+      medium: attribution.medium || 'none',
+      campaign: attribution.campaign || '',
+      content: attribution.content || '',
+      term: attribution.term || '',
+      referrer_host: attribution.referrerHost || '',
+      landing_page: landingPage,
+      occurred_at: new Date().toISOString(),
+      metadata: {
+        has_google_click_id: Boolean(attribution.hasGoogleClick),
+        has_meta_click_id: Boolean(attribution.hasMetaClick),
+        cta_text: details.ctaText || '',
+        page_title: document.title
+      }
+    };
+
+    const body = JSON.stringify(payload);
+    try {
+      if (navigator.sendBeacon) {
+        const sent = navigator.sendBeacon(TRACKING_ENDPOINT, new Blob([body], { type: 'application/json' }));
+        if (sent) return payload;
+      }
+    } catch {}
+
+    fetch(TRACKING_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+      credentials: 'omit'
+    }).catch(() => {});
+
+    return payload;
+  };
+
+  const createLeadRef = () => 'CC-' + randomToken(4).toUpperCase();
+
+  const trackWhatsAppConversion = (details = {}) => {
+    const leadRef = details.leadRef || createLeadRef();
+
     if (typeof window.gtag === 'function') {
       window.gtag('event', 'conversion', { send_to: 'AW-18466593229/dGyVCITQ_IAdEM2zx-VE' });
     }
@@ -115,16 +245,37 @@
           page: window.location.pathname,
           source: attribution.source || 'direct',
           medium: attribution.medium || 'none',
-          campaign: attribution.campaign || 'none'
+          campaign: attribution.campaign || 'none',
+          placement: details.placement || 'unknown'
         }
       });
     }
+
+    sendWebEvent(details.eventType || 'whatsapp_click', {
+      leadRef,
+      placement: details.placement || 'unknown',
+      ctaText: details.ctaText || ''
+    });
+
+    return leadRef;
   };
 
-  if (
-    typeof window.va === 'function' &&
-    (attribution.source || attribution.medium || attribution.campaign)
-  ) {
+  const appendLeadRefToWhatsAppUrl = (href, leadRef) => {
+    try {
+      const url = new URL(href);
+      if (url.hostname !== 'wa.me') return href;
+      const message = url.searchParams.get('text') || '';
+      if (!message.includes(leadRef)) {
+        const suffix = (message ? '\n\n' : '') + 'Código de atendimento: ' + leadRef;
+        url.searchParams.set('text', message + suffix);
+      }
+      return url.toString();
+    } catch {
+      return href;
+    }
+  };
+
+  if (typeof window.va === 'function' && attribution.source !== 'direct') {
     window.va('event', {
       name: 'Campaign Visit',
       data: {
@@ -136,12 +287,33 @@
     });
   }
 
-  window.CenterCupulas = { observeReveals, trackWhatsAppConversion, readAttribution };
+  sendWebEvent('page_view', { placement: 'page' });
+
+  window.CenterCupulas = {
+    observeReveals,
+    trackWhatsAppConversion,
+    readAttribution,
+    sendWebEvent,
+    createLeadRef,
+    placementFor
+  };
 
   document.addEventListener('click', (event) => {
     const link = event.target.closest?.('a[href^="https://wa.me/"]');
     if (!link) return;
-    trackWhatsAppConversion();
+    const placement = placementFor(link);
+    const ctaText = (link.textContent || link.getAttribute('aria-label') || '').trim().slice(0, 120);
+    const leadRef = trackWhatsAppConversion({ placement, ctaText, eventType: 'whatsapp_click' });
+    link.href = appendLeadRefToWhatsAppUrl(link.href, leadRef);
+  });
+
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest?.('a[href^="mailto:"],a[href^="tel:"]');
+    if (!link) return;
+    sendWebEvent('contact_click', {
+      placement: placementFor(link),
+      ctaText: (link.textContent || '').trim().slice(0, 120)
+    });
   });
 
   observeReveals();
