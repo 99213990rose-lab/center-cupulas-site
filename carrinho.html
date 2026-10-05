@@ -72,7 +72,7 @@
               <div class="cart-totals__total"><dt>Total dos produtos</dt><dd data-cart-total>Calculando…</dd></div>
             </dl>
             <p class="cart-progress" data-cart-progress></p>
-            <p class="cart-freight-note">Frete não incluído. Ele será confirmado antes da produção.</p>
+            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note">Frete não incluído. Ele será confirmado antes da produção.</p>
           </section>
 
           <section class="checkout-card">
@@ -81,11 +81,17 @@
               <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
               <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
               <label><span>E-mail</span><input name="email" type="email" autocomplete="email" maxlength="180"></label>
-              <div class="checkout-form__row">
-                <label><span>CEP</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9"></label>
-                <label><span>UF</span><input name="state" autocomplete="address-level1" maxlength="2" placeholder="SP"></label>
+              <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status></small></label>
+              <label><span>Rua / Avenida *</span><input name="street" autocomplete="address-line1" maxlength="160" required></label>
+              <div class="checkout-form__row checkout-form__row--address">
+                <label><span>Número *</span><input name="number" autocomplete="address-line2" maxlength="30" required></label>
+                <label><span>Complemento</span><input name="complement" maxlength="120" placeholder="Apto, bloco..."></label>
               </div>
-              <label><span>Cidade</span><input name="city" autocomplete="address-level2" maxlength="100"></label>
+              <label><span>Bairro *</span><input name="neighborhood" maxlength="100" required></label>
+              <div class="checkout-form__row">
+                <label><span>Cidade *</span><input name="city" autocomplete="address-level2" maxlength="100" required></label>
+                <label><span>UF *</span><input name="state" autocomplete="address-level1" maxlength="2" placeholder="SP" required></label>
+              </div>
               <label><span>Observações</span><textarea name="notes" rows="3" maxlength="600" placeholder="Detalhes de entrega, acabamento ou prazo."></textarea></label>
               <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Enviar pedido para confirmação</button>
               <p class="checkout-payment-lock">Pagamento online ainda não é cobrado nesta etapa. Primeiro a fábrica confirma preço e frete.</p>
