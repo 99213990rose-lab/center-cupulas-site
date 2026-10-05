@@ -2,6 +2,7 @@
   'use strict';
 
   const WHATSAPP_NUMBER = '5512983216069';
+  const PUBLIC_PRICING_ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-pricing-quote';
 
   // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
@@ -342,6 +343,7 @@
               '<legend tabindex="-1" data-step-title><span>Etapa 2</span> Escolha o material e a cor</legend>',
               '<div class="material-options">',
                 '<label><input type="radio" name="' + prefix + '-material" value="Juta" data-field="material" checked><span><b>Juta</b><small>Acabamento natural</small></span></label>',
+                '<label><input type="radio" name="' + prefix + '-material" value="Linho" data-field="material"><span><b>Linho</b><small>Textura premium</small></span></label>',
                 '<label><input type="radio" name="' + prefix + '-material" value="Tricoline" data-field="material"><span><b>Tricoline</b><small>Disponível em várias cores</small></span></label>',
               '</div>',
               '<p class="material-note" data-material-note>Juta é oferecida somente na cor natural.</p>',
@@ -377,7 +379,7 @@
               '<div class="quantity-section" aria-label="Quantidade desejada">',
                 '<p class="quantity-section__label">Quantidade desejada</p>',
                 '<div class="quantity-options">',
-                  '<label><input type="radio" name="' + prefix + '-quantity" value="1" data-field="quantity"><span>1</span></label>',
+                  '<label><input type="radio" name="' + prefix + '-quantity" value="1" data-field="quantity" checked><span>1</span></label>',
                   '<label><input type="radio" name="' + prefix + '-quantity" value="5" data-field="quantity"><span>5</span></label>',
                   '<label><input type="radio" name="' + prefix + '-quantity" value="10" data-field="quantity"><span>10</span></label>',
                   '<label><input type="radio" name="' + prefix + '-quantity" value="20" data-field="quantity"><span>20</span></label>',
@@ -402,7 +404,11 @@
                 '<div><dt>Quantidade</dt><dd data-summary="quantity"></dd></div>',
                 '<div class="summary-observations"><dt>Observações</dt><dd data-summary="observations"></dd></div>',
               '</dl>',
-              '<p class="viability-notice">Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.</p>',
+              '<div class="public-price" data-price-estimate aria-live="polite">',
+                '<div class="public-price__head"><span>Estimativa do pedido</span><small data-price-badge>Calculando</small></div>',
+                '<div class="public-price__body" data-price-body><strong>Calculando preço…</strong><p>O valor é estimado e será confirmado antes da produção.</p></div>',
+              '</div>',
+              '<p class="viability-notice">O valor exibido é uma estimativa automática. A fábrica confirma medidas, acabamento e valor final antes da produção.</p>',
             '</div>',
           '</section>',
         '</div>',
@@ -410,7 +416,7 @@
           '<button class="button button--secondary" type="button" data-step-previous hidden>Anterior</button>',
           '<span data-step-status aria-live="polite">Etapa 1 de 4</span>',
           '<button class="button button--dark" type="button" data-step-next>Continuar <span aria-hidden="true">→</span></button>',
-          '<button class="button button--whatsapp" type="submit" data-step-submit hidden>Solicitar avaliação pelo WhatsApp <span aria-hidden="true">↗</span></button>',
+          '<button class="button button--whatsapp" type="submit" data-step-submit hidden>Continuar pedido pelo WhatsApp <span aria-hidden="true">↗</span></button>',
         '</div>',
       '</form>'
     ].join('');
@@ -455,9 +461,14 @@
       measureHelp: form.querySelector('[data-measure-help]'),
       measureHelpClose: form.querySelector('[data-measure-help-close]'),
       headingEyebrow: form.querySelector('[data-configuration-eyebrow]'),
-      headingTitle: form.querySelector('[data-configuration-title]')
+      headingTitle: form.querySelector('[data-configuration-title]'),
+      priceBox: form.querySelector('[data-price-estimate]'),
+      priceBadge: form.querySelector('[data-price-badge]'),
+      priceBody: form.querySelector('[data-price-body]')
     };
     let currentStep = 0;
+    let lastPriceQuote = null;
+    let pricingRequestId = 0;
     const defaultEyebrow = mode === 'reference' ? 'Configuração da referência' : 'Configurador de produto';
     const defaultTitle = mode === 'reference' ? 'Configure esta medida' : 'Defina sua cúpula';
 
@@ -551,7 +562,9 @@
       fields.customColor.required = isColorful;
       fields.materialNote.textContent = isJuta
         ? 'Juta é oferecida somente na cor natural.'
-        : 'Tricoline permite escolher entre as cores disponíveis ou informar outra cor.';
+        : material === 'Linho'
+          ? 'Linho recebe o acabamento premium e pode ser combinado com as cores disponíveis.'
+          : 'Tricoline permite escolher entre as cores disponíveis ou informar outra cor.';
       fields.suggestedMeasureField.hidden = customMeasure;
       fields.reference.disabled = customMeasure;
       fields.customMeasures.hidden = !customMeasure;
@@ -572,6 +585,89 @@
       const referenceSummary = form.querySelector('[data-reference-summary]');
       if (referenceSummary) referenceSummary.hidden = customMeasure;
       updatePreview(configuration);
+    };
+
+    const formatMoney = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
+
+    const renderPriceEstimate = (quote) => {
+      lastPriceQuote = quote;
+      if (!fields.priceBody || !fields.priceBadge) return;
+
+      if (!quote || quote.status === 'error') {
+        fields.priceBadge.textContent = 'Indisponível';
+        fields.priceBody.innerHTML = '<strong>Preço sob consulta</strong><p>Continue pelo WhatsApp para receber a cotação.</p>';
+        return;
+      }
+
+      if (quote.status === 'consult' || quote.confidence === 'low') {
+        fields.priceBadge.textContent = 'Sob consulta';
+        fields.priceBody.innerHTML = '<strong>Cotação personalizada</strong><p>Esse formato ou medida precisa de confirmação da fábrica antes de exibirmos um valor.</p>';
+        return;
+      }
+
+      const badge = quote.exact_reference ? 'Referência direta' : 'Estimativa';
+      fields.priceBadge.textContent = badge;
+      const discount = quote.discount?.unlocked
+        ? '<span class="public-price__benefit">10% de desconto aplicado neste pedido</span>'
+        : quote.discount?.amount_to_unlock > 0
+          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar 10% de desconto.</span>'
+          : '';
+
+      fields.priceBody.innerHTML =
+        '<div class="public-price__value"><span>Total estimado</span><strong>' + formatMoney(quote.total) + '</strong></div>' +
+        '<div class="public-price__unit">' + quote.quantity + (quote.quantity === 1 ? ' unidade' : ' unidades') + ' · ' + formatMoney(quote.unit_price) + ' por unidade</div>' +
+        discount +
+        '<p>Frete não incluído. Valor sujeito à confirmação da fábrica.</p>';
+
+      window.CenterCupulas?.sendWebEvent?.('pricing_estimate_view', {
+        placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
+        ctaText: quote.discount?.unlocked ? 'discount_unlocked' : 'estimate_shown'
+      });
+    };
+
+    const requestPriceEstimate = async (configuration) => {
+      if (!fields.priceBody || !fields.priceBadge) return;
+      const requestId = ++pricingRequestId;
+      lastPriceQuote = null;
+      fields.priceBadge.textContent = 'Calculando';
+      fields.priceBody.innerHTML = '<strong>Calculando preço…</strong><p>Isso leva só alguns instantes.</p>';
+
+      const upper = Number(configuration.upper);
+      const lower = Number(configuration.lower);
+      const height = Number(configuration.height);
+      const quantity = Number(configuration.quantity || 1);
+
+      if (![upper, lower, height].every(Number.isFinite)) {
+        renderPriceEstimate({ status: 'consult' });
+        return;
+      }
+
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch(PUBLIC_PRICING_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'omit',
+          signal: controller.signal,
+          body: JSON.stringify({
+            format: configuration.formatData.key,
+            material: configuration.material,
+            top: upper,
+            bottom: lower,
+            height,
+            quantity
+          })
+        });
+        const quote = response.ok ? await response.json() : { status: 'error' };
+        if (requestId !== pricingRequestId) return;
+        renderPriceEstimate(quote);
+      } catch {
+        if (requestId !== pricingRequestId) return;
+        renderPriceEstimate({ status: 'error' });
+      } finally {
+        window.clearTimeout(timer);
+      }
     };
 
     const clearStepError = (step) => {
@@ -633,6 +729,7 @@
       submitButton.hidden = currentStep !== panels.length - 1;
       stepStatus.textContent = 'Etapa ' + (currentStep + 1) + ' de ' + panels.length;
       update();
+      if (currentStep === panels.length - 1) requestPriceEstimate(getConfiguration());
       if (focusHeading) panels[currentStep].querySelector('[data-step-title]')?.focus({ preventScroll: true });
     };
 
@@ -701,7 +798,11 @@
       lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
       if (configuration.quantity) lines.push('Quantidade: ' + configuration.quantity + (configuration.quantity === '1' ? ' unidade' : ' unidades'));
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
-      lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
+      if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low') {
+        lines.push('Estimativa do site: ' + formatMoney(lastPriceQuote.total));
+        if (lastPriceQuote.discount?.unlocked) lines.push('Benefício: 10% de desconto aplicado no pedido');
+      }
+      lines.push('', 'O valor exibido no site é uma estimativa e será confirmado pela fábrica antes da produção.');
 
       const leadRef = window.CenterCupulas?.trackWhatsAppConversion?.({
         eventType: 'configurator_submit',
@@ -725,7 +826,7 @@
       fields.upper.value = configuration.upper || '';
       fields.lower.value = configuration.lower || '';
       fields.height.value = configuration.height || '';
-      fields.quantity.forEach((input) => { input.checked = input.value === (configuration.quantity || ''); });
+      fields.quantity.forEach((input) => { input.checked = input.value === (configuration.quantity || '1'); });
       fields.customQuantity.value = configuration.customQuantity || '';
       fields.observations.value = configuration.observations || '';
       panels.forEach((panel, step) => clearStepError(step));
