@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Pedido | Center Cúpulas</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .order-page{min-height:100vh;display:grid;place-items:center;padding:40px 20px;background:#f4efe8}
+    .order-card{width:min(620px,100%);background:#fff;padding:42px;border-radius:18px;box-shadow:0 18px 60px rgba(34,23,17,.12)}
+    .order-card h1{margin:.35rem 0 1rem}.order-card p{line-height:1.65}
+    .order-status{display:inline-flex;padding:8px 12px;border-radius:999px;background:#eee6da;font-weight:700}
+    .order-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+  </style>
+</head>
+<body>
+  <main class="order-page">
+    <section class="order-card" aria-live="polite">
+      <p class="eyebrow">Center Cúpulas</p>
+      <span class="order-status" id="status">Consultando pagamento...</span>
+      <h1 id="title">Seu pedido</h1>
+      <p id="message">Estamos confirmando o retorno do Mercado Pago.</p>
+      <p id="reference" hidden></p>
+      <div class="order-actions">
+        <a class="button button--dark" href="index.html">Voltar ao site</a>
+        <a class="button button--secondary" href="https://wa.me/5512983216069" target="_blank" rel="noopener noreferrer">Preciso de ajuda</a>
+      </div>
+    </section>
+  </main>
+  <script>
+    (async () => {
+      const params = new URLSearchParams(location.search);
+      const paymentId = params.get('payment_id');
+      const fallback = params.get('result') || '';
+      const status = document.getElementById('status');
+      const title = document.getElementById('title');
+      const message = document.getElementById('message');
+      const reference = document.getElementById('reference');
+
+      const render = (value, data = {}) => {
+        if (value === 'approved') {
+          status.textContent = 'Pagamento aprovado';
+          title.textContent = 'Pedido recebido';
+          message.textContent = 'Seu pagamento foi confirmado. A Center Cúpulas recebeu o pedido e seguirá com a produção conforme a configuração escolhida.';
+        } else if (value === 'pending' || value === 'in_process') {
+          status.textContent = 'Pagamento em análise';
+          title.textContent = 'Pedido aguardando confirmação';
+          message.textContent = 'O Mercado Pago ainda está processando o pagamento. Não é necessário pagar novamente.';
+        } else {
+          status.textContent = 'Pagamento não concluído';
+          title.textContent = 'O pagamento não foi finalizado';
+          message.textContent = 'Você pode voltar ao site e tentar novamente ou falar com a Center Cúpulas se precisar de ajuda.';
+        }
+        if (data.orderRef) {
+          reference.hidden = false;
+          reference.textContent = 'Referência do pedido: ' + data.orderRef;
+        }
+      };
+
+      if (!paymentId) return render(fallback === 'success' ? 'pending' : fallback);
+
+      try {
+        const response = await fetch('/api/payment?payment_id=' + encodeURIComponent(paymentId));
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Falha');
+        render(data.status, data);
+      } catch {
+        render(fallback === 'success' ? 'pending' : fallback);
+      }
+    })();
+  </script>
+</body>
+</html>
