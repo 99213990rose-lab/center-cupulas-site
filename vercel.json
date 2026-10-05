@@ -2,6 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/catalogo",
+      "destination": "https://at.adobe.com/fHpvR5YkF02SWo9R",
+      "permanent": false
+    },
+    {
       "source": "/",
       "has": [
         {
@@ -68,10 +73,5 @@
       "permanent": true
     }
   ],
-  "rewrites": [
-    {
-      "source": "/catalogo",
-      "destination": "/modelos.html"
-    }
-  ]
+  "rewrites": []
 }
