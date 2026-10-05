@@ -34,7 +34,7 @@
   <div id="pricingApp">
     <div class="pricing-grid">
       <div class="panel">
-        <div class="panel-head"><div><h2>Cotador interno</h2><p style="margin:4px 0 0;color:var(--muted)">Motor v0.1 • uso interno e calibração</p></div></div>
+        <div class="panel-head"><div><h2>Cotador interno</h2><p style="margin:4px 0 0;color:var(--muted)">Motor v0.1 • uso interno e calibração</p></div><span class="pill p-amber">EM CALIBRAÇÃO</span></div>
         <div style="padding:16px">
           <div class="pricing-form-grid">
             <div class="fullcol"><label>Formato</label><select id="priceFormat" class="input" onchange="calculatePricing()"><option value="conica_redonda">Cônica redonda</option><option value="cilindrica_redonda">Cilíndrica redonda</option><option value="quadrada">Quadrada</option><option value="oval">Oval</option></select></div>
@@ -230,13 +230,13 @@ function calculatePricing(){
   if(!top||!bottom||!height||!pricingRules||!pricingRefs.length){out.innerHTML='<div class="empty">Base de preços indisponível para esta empresa.</div>';badge.textContent='—';return}
   let e=pricingEstimateFor(top,bottom,height,format,material,qty);pricingLastEstimate=e;
   let confClass=e.confidence==='alta'?'high':e.confidence==='média'?'medium':'low';
-  badge.className='pill confidence '+confClass;badge.textContent='Confiança '+e.confidence;
+  badge.className='pill confidence '+confClass;badge.textContent=(e.method==='referência exata'||e.method==='validação exata')?'Referência exata':'Confiança '+e.confidence;
   let shapeTxt=e.shapeSizePct?('+'+e.shapeSizePct.toFixed(0)+'% formato/tamanho'):'sem adicional de formato/tamanho';
   let materialTxt=e.materialPct?('+'+e.materialPct.toFixed(0)+'% material'):'tecido comum';
   let discountLine=e.unlocked?'<div class="price-line"><span>Desconto liberado</span><b>'+Number(pricingRules.discount_pct).toFixed(0)+'% OFF</b></div>':'<div class="price-line"><span>Para liberar 10% OFF</span><b>faltam '+money(Math.max(0,Number(pricingRules.discount_threshold)-e.subtotal))+'</b></div>';
   let nearest=e.nearest.slice(0,3).map(n=>n.label+' ('+Number(n.top_cm)+'×'+Number(n.bottom_cm)+'×'+Number(n.height_cm)+')').join(', ');
   out.innerHTML='<div class="pricing-result">'+
-    '<div class="price-hero"><small>Preço final do pedido</small><b>'+money(e.finalTotal)+'</b><div style="margin-top:4px;color:#d7cbc2">'+qty+' un. • '+money(e.unitFinal)+' / un.</div></div>'+
+    '<div class="price-hero"><small>Preço sugerido ao cliente</small><b>'+money(e.finalTotal)+'</b><div style="margin-top:4px;color:#d7cbc2">'+qty+' un. • '+money(e.unitFinal)+' / un.</div></div>'+
     '<div class="price-breakdown">'+
       '<div class="price-line"><span>Fábrica estimada</span><b>'+money(e.factory)+'</b></div>'+
       '<div class="price-line"><span>Base após sua margem + estrutura</span><b>'+money(e.internal)+'</b></div>'+
@@ -245,7 +245,7 @@ function calculatePricing(){
       discountLine+
       '<div class="price-line"><span>Regra aplicada</span><b>'+shapeTxt+' • '+materialTxt+'</b></div>'+
     '</div>'+
-    '<div class="price-note"><b>Método:</b> '+esc(e.method)+'. Referências mais próximas: '+esc(nearest)+'. Enquanto o motor estiver em calibração, preços de baixa confiança devem ser confirmados antes de enviar ao cliente.</div>'+
+    '<div class="price-note"><b>Método:</b> '+esc(e.method)+'. Referências mais próximas: '+esc(nearest)+'. Motor em calibração: confirme o valor antes de enviar ao cliente, especialmente quando a confiança não for alta.</div>'+
   '</div>';
 }
 function renderPricing(){
