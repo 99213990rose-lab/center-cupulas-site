@@ -91,23 +91,6 @@
           "value": "public, max-age=3600"
         }
       ]
-    },
-    {
-      "source": "/catalogo",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/pdf"
-        },
-        {
-          "key": "Content-Disposition",
-          "value": "attachment; filename=\"Catalogo-Center-Cupulas.pdf\""
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
     }
   ]
 }
