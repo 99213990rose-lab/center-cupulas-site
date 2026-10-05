@@ -19,6 +19,9 @@
   <div id="metaAppSetup" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
     <p><b>Configuração inicial do App Meta</b></p>
     <div class="hint">Isto é necessário uma única vez. O App Secret é enviado direto ao Vault e não fica salvo no navegador.</div>
+    <div class="row" style="margin-top:10px;flex-wrap:wrap"><a class="btn" href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Abrir meus Apps na Meta</a></div>
+    <label>OAuth Redirect URI</label><div class="code" style="font-size:11px;word-break:break-all;background:#f7f4ef;border:1px solid var(--line);border-radius:9px;padding:9px">https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/meta-oauth-callback</div>
+    <div class="hint">Se a Meta pedir uma URL de redirecionamento válida para o Facebook Login, use exatamente a URL acima.</div>
     <label>App ID</label><input id="metaAppId" class="input" autocomplete="off">
     <label>App Secret</label><input id="metaAppSecret" class="input" type="password" autocomplete="new-password">
     <label>Graph API</label><input id="metaAppVersion" class="input" value="v26.0">
