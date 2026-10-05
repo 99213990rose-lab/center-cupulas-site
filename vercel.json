@@ -67,5 +67,11 @@
       "destination": "https://www.centercupulas.com.br/:path*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/catalogo",
+      "destination": "/modelos.html"
+    }
   ]
 }
