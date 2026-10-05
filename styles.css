@@ -4159,3 +4159,95 @@ p { text-wrap: pretty; }
   .packaging-line { flex-direction: column; gap: 3px; }
   .packaging-line b { text-align: left; }
 }
+
+
+/* Cotação de frete */
+.shipping-quote-box {
+  overflow: hidden;
+  border: 1px solid #ded4c5;
+  border-radius: 12px;
+  background: #fbfaf7;
+}
+.shipping-quote-box__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e7dfd3;
+  background: #f5f0e8;
+}
+.shipping-quote-box__head span {
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.shipping-quote-box__head small {
+  color: var(--muted);
+  font-size: .58rem;
+}
+.shipping-options { padding: 8px; }
+.shipping-option {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center;
+  gap: 10px !important;
+  min-height: 58px;
+  padding: 9px 10px;
+  margin: 0 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  cursor: pointer;
+}
+.shipping-option:last-of-type { margin-bottom: 0; }
+.shipping-option:has(input:checked) {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(183,122,45,.12);
+}
+.shipping-option input {
+  width: 17px !important;
+  height: 17px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  accent-color: var(--gold);
+}
+.shipping-option__main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.shipping-option__main b {
+  color: var(--ink);
+  font-size: .72rem;
+}
+.shipping-option__main small {
+  color: var(--muted);
+  font-size: .6rem;
+  line-height: 1.35;
+}
+.shipping-option > strong {
+  white-space: nowrap;
+  font-size: .74rem;
+}
+.shipping-note,
+.shipping-calibration-note {
+  margin: 0;
+  padding: 10px;
+  color: var(--muted);
+  font-size: .63rem;
+  line-height: 1.5;
+}
+.shipping-calibration-note {
+  margin-top: 6px;
+  border-radius: 8px;
+  background: #fff5d8;
+  color: #735400;
+}
+@media (max-width: 430px) {
+  .shipping-option {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+  .shipping-option > strong {
+    grid-column: 2;
+  }
+}
