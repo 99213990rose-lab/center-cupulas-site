@@ -71,7 +71,7 @@
   "rewrites": [
     {
       "source": "/catalogo",
-      "destination": "/catalogo.pdf"
+      "destination": "/api/catalogo"
     }
   ],
   "headers": [
