@@ -703,7 +703,12 @@
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
       lines.push('', 'Formatos e medidas personalizados passam por avaliação técnica da fábrica antes da confirmação do pedido.');
 
-      window.CenterCupulas?.trackWhatsAppConversion?.();
+      const leadRef = window.CenterCupulas?.trackWhatsAppConversion?.({
+        eventType: 'configurator_submit',
+        placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
+        ctaText: 'Solicitar avaliação'
+      }) || '';
+      if (leadRef) lines.push('', 'Código de atendimento: ' + leadRef);
       window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n')), '_blank', 'noopener,noreferrer');
     });
 
