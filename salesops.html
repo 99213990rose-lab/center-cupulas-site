@@ -68,7 +68,7 @@
 
     <div class="panel pricing-section">
       <div class="panel-head"><div><h2>Bateria de testes</h2><p style="margin:4px 0 0;color:var(--muted)">Um lote para seu pai conferir de uma vez, sem perguntas separadas.</p></div><div class="batch-actions"><button class="btn" onclick="copyPricingBatch()">Copiar para WhatsApp</button><button class="btn primary" onclick="saveBatchValidations()">Salvar respostas preenchidas</button></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Medida</th><th>Estimativa fábrica</th><th>Confiança</th><th>Preço do pai</th><th>Erro</th></tr></thead><tbody id="pricingBatchRows"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Medida</th><th>Atacado sistema</th><th>Varejo fábrica (prov.)</th><th>Confiança</th><th>Atacado pai</th><th>Varejo pai</th><th>Erro atacado</th><th>Erro varejo</th></tr></thead><tbody id="pricingBatchRows"></tbody></table></div>
     </div>
 
     <div class="panel pricing-section">
@@ -207,6 +207,18 @@ function estimateBaseFactory(top,bottom,height){
   let confidence=(d0<=0.10&&spreadRatio<=0.35)?'alta':(d0<=0.28&&spreadRatio<=0.65)?'média':'baixa';
   return {price,confidence,nearest:near,method:'interpolação ponderada'};
 }
+function estimateFactoryRetail(top,bottom,height,format,material,wholesalePrice){
+  let q={top_cm:top,bottom_cm:bottom,height_cm:height};
+  let retailAnchors=pricingValidations.filter(v=>Number(v.actual_factory_price)>0&&Number(v.actual_retail_price)>0).map(v=>{
+    let delta=Number(v.actual_retail_price)-Number(v.actual_factory_price);
+    return {...v,delta,d:pricingDistance(v,q)};
+  }).sort((a,b)=>a.d-b.d).slice(0,5);
+  if(!retailAnchors.length)return {price:null,method:'sem validação'};
+  let num=0,den=0;
+  retailAnchors.forEach(v=>{let w=1/(Math.pow(v.d,2)+0.01);num+=v.delta*w;den+=w});
+  let delta=num/den;
+  return {price:Number(wholesalePrice)+delta,delta,method:'margem de varejo calibrada'};
+}
 function pricingEstimateFor(top,bottom,height,format='conica_redonda',material='tecido_comum',qty=1){
   let base=estimateBaseFactory(top,bottom,height);if(!base||!pricingRules)return null;
   let shapeSizePct=pricingShapeSizePct(format,top,bottom,height);
@@ -292,18 +304,22 @@ function renderPricingBatch(){
   let rows=document.getElementById('pricingBatchRows');if(!rows||!pricingRules||!pricingRefs.length)return;
   rows.innerHTML=PRICING_BATCH.map((m,i)=>{
     let e=pricingEstimateFor(m[0],m[1],m[2],'conica_redonda','tecido_comum',1);
+    let retailEst=estimateFactoryRetail(m[0],m[1],m[2],'conica_redonda','tecido_comum',e.factory);
     let known=pricingValidations.find(v=>Number(v.top_cm)===m[0]&&Number(v.bottom_cm)===m[1]&&Number(v.height_cm)===m[2]&&v.format==='conica_redonda'&&v.material==='tecido_comum');
-    let actual=known?.actual_factory_price||'',err=known?pricingErrorPct(e.factory,known.actual_factory_price):null;
-    return '<tr data-batch-row="'+i+'"><td><b>'+m.join(' × ')+' cm</b></td><td data-batch-estimate="'+e.factory.toFixed(2)+'">'+money(e.factory)+'</td><td><span class="confidence '+(e.confidence==='alta'?'high':e.confidence==='média'?'medium':'low')+'">'+e.confidence+'</span></td><td><input class="input batch-input" data-batch-actual="'+i+'" type="number" min="0" step="0.01" value="'+esc(actual)+'" placeholder="R$"></td><td>'+(err===null?'—':err.toFixed(1)+'%')+'</td></tr>';
+    let actual=known?.actual_factory_price||'',actualRetail=known?.actual_retail_price||'';
+    let err=known?pricingErrorPct(e.factory,known.actual_factory_price):null;
+    let retailErr=(known&&retailEst.price&&known.actual_retail_price)?pricingErrorPct(retailEst.price,known.actual_retail_price):null;
+    return '<tr data-batch-row="'+i+'"><td><b>'+m.join(' × ')+' cm</b></td><td data-batch-estimate="'+e.factory.toFixed(2)+'">'+money(e.factory)+'</td><td data-batch-retail-estimate="'+(retailEst.price?retailEst.price.toFixed(2):'')+'">'+(retailEst.price?money(retailEst.price):'—')+'</td><td><span class="confidence '+(e.confidence==='alta'?'high':e.confidence==='média'?'medium':'low')+'">'+e.confidence+'</span></td><td><input class="input batch-input" data-batch-actual="'+i+'" type="number" min="0" step="0.01" value="'+esc(actual)+'" placeholder="R$"></td><td><input class="input batch-input" data-batch-retail="'+i+'" type="number" min="0" step="0.01" value="'+esc(actualRetail)+'" placeholder="R$"></td><td>'+(err===null?'—':err.toFixed(1)+'%')+'</td><td>'+(retailErr===null?'—':retailErr.toFixed(1)+'%')+'</td></tr>';
   }).join('');
 }
 async function saveBatchValidations(){
   let payload=[];
   PRICING_BATCH.forEach((m,i)=>{
-    let input=document.querySelector('[data-batch-actual="'+i+'"]'),actual=Number(input?.value);
-    if(!actual||actual<=0)return;
+    let input=document.querySelector('[data-batch-actual="'+i+'"]'),retailInput=document.querySelector('[data-batch-retail="'+i+'"]');
+    let actual=Number(input?.value),actualRetail=Number(retailInput?.value)||null;
+    if((!actual||actual<=0)&&(!actualRetail||actualRetail<=0))return;
     let e=pricingEstimateFor(m[0],m[1],m[2],'conica_redonda','tecido_comum',1);
-    payload.push({organization_id:org.id,format:'conica_redonda',top_cm:m[0],bottom_cm:m[1],height_cm:m[2],material:'tecido_comum',quantity:1,estimated_factory_price:Number(e.factory.toFixed(2)),actual_factory_price:actual,notes:'Bateria de calibração'});
+    payload.push({organization_id:org.id,format:'conica_redonda',top_cm:m[0],bottom_cm:m[1],height_cm:m[2],material:'tecido_comum',quantity:1,estimated_factory_price:Number(e.factory.toFixed(2)),actual_factory_price:actual||null,actual_retail_price:actualRetail,notes:'Bateria de calibração'});
   });
   if(!payload.length)return toast('Preencha pelo menos um preço do pai.');
   payload=payload.map(x=>({...x,updated_at:new Date().toISOString()}));let {error}=await sb.from('pricing_validations').upsert(payload,{onConflict:'organization_id,format,top_cm,bottom_cm,height_cm,material,quantity'});if(error)return toast('Erro ao salvar a bateria.');
@@ -311,10 +327,14 @@ async function saveBatchValidations(){
 }
 async function copyPricingBatch(){
   if(!pricingRules||!pricingRefs.length)return;
-  let lines=['Pai, montei um cotador interno. Quando puder, confere esses valores de fábrica/atacado para cúpula cônica redonda em tecido comum?',''];
-  PRICING_BATCH.forEach((m,i)=>{let e=pricingEstimateFor(m[0],m[1],m[2],'conica_redonda','tecido_comum',1);lines.push((i+1)+') '+m.join(' × ')+' cm — sistema: '+money(e.factory))});
-  lines.push('','Pode só me mandar os valores corrigidos dos que estiverem diferentes.');
-  try{await navigator.clipboard.writeText(lines.join('\n'));toast('Lote copiado para o WhatsApp.')}catch(e){toast('Não foi possível copiar automaticamente.')}
+  let lines=['Pai, montei um cotador interno. Quando puder, confere seu preço de atacado e de varejo para estas cúpulas cônicas redondas em tecido comum?',''];
+  PRICING_BATCH.forEach((m,i)=>{
+    let e=pricingEstimateFor(m[0],m[1],m[2],'conica_redonda','tecido_comum',1);
+    let retailEst=estimateFactoryRetail(m[0],m[1],m[2],'conica_redonda','tecido_comum',e.factory);
+    lines.push((i+1)+') '+m.join(' × ')+' cm — sistema: atacado '+money(e.factory)+' | varejo '+(retailEst.price?money(retailEst.price):'a confirmar'));
+  });
+  lines.push('','Pode me responder só no formato: 1) atacado / varejo. Ex.: 1) 20 / 25. Se algum valor do sistema já estiver certo, pode repetir ele.');
+  try{await navigator.clipboard.writeText(lines.join('\n'));toast('Lote com atacado e varejo copiado.')}catch(e){toast('Não foi possível copiar automaticamente.')}
 }
 
 
