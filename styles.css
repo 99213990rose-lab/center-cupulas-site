@@ -4080,3 +4080,82 @@ p { text-wrap: pretty; }
   .cart-item__controls strong { text-align: right; }
   .cart-remove { justify-self: end; }
 }
+
+
+/* Endereço e prévia logística */
+.packaging-preview {
+  margin: 12px 17px 16px;
+  overflow: hidden;
+  border: 1px solid #ded4c5;
+  border-radius: 12px;
+  background: #fbfaf7;
+}
+.packaging-preview__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e7dfd3;
+  background: #f5f0e8;
+}
+.packaging-preview__head span {
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.packaging-preview__head small {
+  color: var(--muted);
+  font-size: .58rem;
+}
+.packaging-preview [data-packaging-body] {
+  padding: 12px;
+}
+.packaging-preview [data-packaging-body] > strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: .75rem;
+}
+.packaging-preview [data-packaging-body] > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .62rem;
+  line-height: 1.45;
+}
+.packaging-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #ece5da;
+  font-size: .63rem;
+}
+.packaging-line:last-of-type { border-bottom: 0; }
+.packaging-line span { color: var(--muted); }
+.packaging-line b { text-align: right; }
+.packaging-warning {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff3d5;
+  color: #735400 !important;
+}
+.field-inline-status {
+  display: block;
+  min-height: 16px;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: .58rem;
+  line-height: 1.3;
+}
+.field-inline-status.is-loading { color: #76561c; }
+.field-inline-status.is-ok { color: #167049; }
+.field-inline-status.is-warning { color: #9b5c00; }
+.checkout-form__row--address {
+  grid-template-columns: minmax(110px, .4fr) minmax(0, 1fr);
+}
+@media (max-width: 430px) {
+  .checkout-form__row,
+  .checkout-form__row--address { grid-template-columns: 1fr; }
+  .packaging-line { flex-direction: column; gap: 3px; }
+  .packaging-line b { text-align: left; }
+}
