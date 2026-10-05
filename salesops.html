@@ -276,10 +276,10 @@ async function saveCurrentValidation(){
   if(!actual||actual<=0)return toast('Informe o preço real da fábrica.');
   let notes=document.getElementById('validationNotes').value.trim();
   let e=pricingLastEstimate;
-  let {error}=await sb.from('pricing_validations').insert({
+  let {error}=await sb.from('pricing_validations').upsert({
     organization_id:org.id,format:e.format,top_cm:e.top,bottom_cm:e.bottom,height_cm:e.height,material:e.material,quantity:e.qty,
-    estimated_factory_price:Number(e.factory.toFixed(2)),actual_factory_price:actual,actual_retail_price:retail,notes:notes||null
-  });
+    estimated_factory_price:Number(e.factory.toFixed(2)),actual_factory_price:actual,actual_retail_price:retail,notes:notes||null,updated_at:new Date().toISOString()
+  },{onConflict:'organization_id,format,top_cm,bottom_cm,height_cm,material,quantity'});
   if(error)return toast('Erro ao salvar validação.');
   document.getElementById('validationFactory').value='';document.getElementById('validationRetail').value='';document.getElementById('validationNotes').value='';
   await loadPricing();renderPricing();toast('Validação salva.');
@@ -306,7 +306,7 @@ async function saveBatchValidations(){
     payload.push({organization_id:org.id,format:'conica_redonda',top_cm:m[0],bottom_cm:m[1],height_cm:m[2],material:'tecido_comum',quantity:1,estimated_factory_price:Number(e.factory.toFixed(2)),actual_factory_price:actual,notes:'Bateria de calibração'});
   });
   if(!payload.length)return toast('Preencha pelo menos um preço do pai.');
-  let {error}=await sb.from('pricing_validations').insert(payload);if(error)return toast('Erro ao salvar a bateria.');
+  payload=payload.map(x=>({...x,updated_at:new Date().toISOString()}));let {error}=await sb.from('pricing_validations').upsert(payload,{onConflict:'organization_id,format,top_cm,bottom_cm,height_cm,material,quantity'});if(error)return toast('Erro ao salvar a bateria.');
   await loadPricing();renderPricing();toast(payload.length+' validações salvas.');
 }
 async function copyPricingBatch(){
