@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Cotador Interno — Center Cúpulas</title>
+<style>
+:root{--bg:#f5f2ed;--card:#fff;--ink:#2b2926;--muted:#706b64;--line:#ded8cf;--accent:#6c4f3d;--accent2:#efe6de;--good:#2f6b49;--warn:#8a6321;--bad:#8a3d35}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 18px 48px}
+.head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:18px}
+h1{margin:0;font-size:28px;line-height:1.1}.sub{margin-top:7px;color:var(--muted);font-size:14px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.badge{background:var(--accent2);color:var(--accent);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.labels,.row{display:grid;grid-template-columns:1fr 1fr 1fr 1.25fr 1.25fr 1.2fr .85fr 44px;gap:10px;align-items:center}
+.labels{padding:13px 15px;background:#faf8f5;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+.row{padding:13px 15px;border-bottom:1px solid #eee9e2}.row:last-child{border-bottom:0}.field label{display:none}
+input,select{width:100%;min-height:44px;border:1px solid #cfc8bf;border-radius:10px;background:#fff;color:var(--ink);padding:9px 10px;font-size:16px;outline:none}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,79,61,.12)}
+.value{min-height:44px;border-radius:10px;background:#f3eee9;display:flex;align-items:center;padding:8px 12px;font-weight:800;font-size:19px;color:var(--accent)}
+.conf{font-size:12px;font-weight:700;border-radius:999px;padding:7px 9px;text-align:center;background:#eee}
+.conf.alta{color:var(--good);background:#e6f1ea}.conf.media{color:var(--warn);background:#f6eedb}.conf.baixa{color:var(--bad);background:#f5e5e2}
+.remove{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:20px;cursor:pointer;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button.action{border:0;border-radius:10px;min-height:44px;padding:0 15px;font-size:14px;font-weight:700;cursor:pointer}
+.primary{background:var(--accent);color:#fff}.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)!important}
+.note{margin-top:17px;color:var(--muted);font-size:12px;line-height:1.45}.toast{display:none;margin-top:10px;padding:10px 12px;background:#e8f1eb;color:var(--good);border-radius:9px;font-size:13px}
+@media(max-width:760px){
+.head{display:block}.badges{justify-content:flex-start;margin-top:10px}.badge{display:inline-block}
+.labels{display:none}.panel{border:0;background:transparent;overflow:visible}
+.row{grid-template-columns:1fr 1fr;background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;padding:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:0 0 5px}
+.field.format-field,.field.material-field{grid-column:1/-1}
+.value-wrap{grid-column:1/-1}.value-wrap:before{content:"Valor estimado do pai / fábrica";display:block;font-size:11px;font-weight:700;color:var(--muted);margin:0 0 5px}
+.conf-wrap:before{content:"Confiança";display:block;font-size:11px;font-weight:700;color:var(--muted);margin:0 0 5px}.remove{align-self:end}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="head">
+<div><h1>Cotador Interno — Center Cúpulas</h1><div class="sub">Escolha o formato, informe as medidas em centímetros e selecione o tecido</div></div>
+<div class="badges"><div class="badge">MOTOR EM CALIBRAÇÃO</div><div class="badge">SEM SUA MARGEM • SEM 2% SITE</div></div>
+</div>
+<div class="panel">
+<div class="labels"><div>Superior</div><div>Inferior</div><div>Altura</div><div>Formato</div><div>Tecido</div><div>Valor estimado</div><div>Confiança</div><div></div></div>
+<div id="rows"></div>
+</div>
+<div class="actions"><button class="action primary" id="addBtn">+ Adicionar outro teste</button><button class="action secondary" id="copyBtn">Copiar resultados</button><button class="action secondary" id="clearBtn">Limpar</button></div>
+<div id="toast" class="toast">Resultados copiados.</div>
+<div class="note">Este cotador mostra somente o <b>valor estimado do pai / fábrica</b>. <b>Não inclui sua margem de lucro nem os 2% do site.</b> Tecido comum usa a base normal; linho e juta recebem +15%. Quadrada e oval recebem +10% pelo formato. O motor combina as referências históricas com as medidas já validadas e calcula medidas intermediárias pelas referências mais próximas.<br><br><b>Cálculo usado:</b> base histórica + 15% de reajuste/ganho do pai; +10% para quadrada/oval; +5% quando a maior medida passa de 40 cm; +15% para linho ou juta.</div>
+</div>
+<script>
+const REFS=[{"code":"01","top":10,"bottom":20,"height":11,"price":16.2},{"code":"02","top":8,"bottom":12,"height":11,"price":12.6},{"code":"03","top":10,"bottom":20,"height":15,"price":17.4},{"code":"04","top":16,"bottom":28,"height":19,"price":25.2},{"code":"05","top":17,"bottom":43,"height":27,"price":33.5},{"code":"06","top":18,"bottom":45,"height":31,"price":40.8},{"code":"07","top":20,"bottom":50,"height":31,"price":48},{"code":"08","top":25,"bottom":60,"height":35,"price":60},{"code":"09","top":10,"bottom":26,"height":17,"price":20.4},{"code":"10","top":11,"bottom":30,"height":20,"price":24.5},{"code":"11","top":13,"bottom":35,"height":23,"price":27.5},{"code":"12","top":20,"bottom":35,"height":25,"price":32.5},{"code":"13","top":10,"bottom":30,"height":15,"price":26.5},{"code":"14","top":10,"bottom":35,"height":23,"price":25},{"code":"15","top":30,"bottom":40,"height":35,"price":48},{"code":"16","top":30,"bottom":40,"height":30,"price":45},{"code":"17","top":35,"bottom":50,"height":40,"price":54},{"code":"18","top":15,"bottom":50,"height":33,"price":51.6},{"code":"19","top":11,"bottom":50,"height":27,"price":45.6},{"code":"20","top":25,"bottom":45,"height":33,"price":49},{"code":"21","top":20,"bottom":40,"height":30,"price":36},{"code":"22","top":22,"bottom":55,"height":36,"price":65},{"code":"23","top":22,"bottom":50,"height":34,"price":60},{"code":"24","top":15,"bottom":40,"height":27,"price":36},{"code":"25","top":10,"bottom":55,"height":28,"price":52},{"code":"26","top":15,"bottom":45,"height":26,"price":37.5},{"code":"27","top":15,"bottom":22,"height":16,"price":18},{"code":"28","top":15,"bottom":30,"height":20,"price":27.5},{"code":"29","top":8,"bottom":19,"height":14,"price":18},{"code":"30","top":11,"bottom":30,"height":16,"price":26.5},{"code":"31","top":8,"bottom":15,"height":11,"price":15},{"code":"32","top":20,"bottom":25,"height":20,"price":28.8},{"code":"33","top":27,"bottom":35,"height":26,"price":40.5},{"code":"34","top":27,"bottom":45,"height":33,"price":49},{"code":"35","top":30,"bottom":40,"height":25,"price":42},{"code":"36","top":25,"bottom":25,"height":15,"price":25},{"code":"37","top":30,"bottom":30,"height":20,"price":35},{"code":"38","top":40,"bottom":40,"height":25,"price":42},{"code":"39","top":45,"bottom":45,"height":30,"price":50},{"code":"40","top":50,"bottom":50,"height":35,"price":65}];
+const VALS=[{"top":50,"bottom":65,"height":42,"material":"tecido_comum","actual":75},{"top":36,"bottom":52,"height":36,"material":"tecido_comum","actual":58},{"top":42,"bottom":58,"height":38,"material":"tecido_comum","actual":65},{"top":9,"bottom":18,"height":13,"material":"tecido_comum","actual":18},{"top":11,"bottom":24,"height":16,"material":"tecido_comum","actual":22},{"top":13,"bottom":28,"height":19,"material":"tecido_comum","actual":28},{"top":16,"bottom":34,"height":22,"material":"tecido_comum","actual":35},{"top":18,"bottom":38,"height":25,"material":"tecido_comum","actual":42},{"top":20,"bottom":42,"height":28,"material":"tecido_comum","actual":45},{"top":24,"bottom":48,"height":32,"material":"tecido_comum","actual":50},{"top":28,"bottom":38,"height":24,"material":"tecido_comum","actual":42},{"top":32,"bottom":46,"height":31,"material":"tecido_comum","actual":48},{"top":14,"bottom":32,"height":22,"material":"tecido_comum","actual":30},{"top":12,"bottom":23,"height":17,"material":"tecido_comum","actual":20}];
+const RULES={factory_update_pct:15,large_threshold_cm:40,large_pct:5,premium_material_pct:15,square_oval_pct:10};
+const rows=document.getElementById('rows');
+function pct(v){return 1+Number(v||0)/100}
+function money(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v)}
+function num(v){const n=Number(String(v).replace(',','.'));return Number.isFinite(n)&&n>0?n:0}
+function sizePct(t,b,h){return Math.max(t,b,h)>RULES.large_threshold_cm?RULES.large_pct:0}
+function formatPct(f){return(f==='quadrada'||f==='oval')?RULES.square_oval_pct:0}
+function distance(a,b){let s=0;for(const k of['top','bottom','height']){const x=Number(a[k]),y=Number(b[k]),scale=Math.max(10,y),d=(x-y)/scale;s+=d*d}return Math.sqrt(s)}
+function normalizedValidation(v){let p=Number(v.actual),sp=sizePct(v.top,v.bottom,v.height);if(sp)p/=pct(sp);if(v.material==='linho'||v.material==='juta')p/=pct(RULES.premium_material_pct);return p}
+function estimateBase(top,bottom,height){const q={top,bottom,height};let a=REFS.map(r=>({kind:'ref',top:r.top,bottom:r.bottom,height:r.height,price:Number(r.price)*pct(RULES.factory_update_pct)}));for(const v of VALS)a.push({kind:'validation',top:v.top,bottom:v.bottom,height:v.height,price:normalizedValidation(v)});a=a.map(x=>({...x,d:distance(x,q)})).sort((x,y)=>x.d-y.d);const ex=a.find(x=>x.d<.000001);if(ex)return{price:ex.price,confidence:'alta'};const near=a.slice(0,5);let n=0,d=0;for(const x of near){const w=1/(Math.pow(x.d,2)+.0025);n+=x.price*w;d+=w}const price=n/d,d0=near[0]?.d??1,vals=near.map(x=>x.price),spread=Math.max(...vals)-Math.min(...vals),ratio=price?spread/price:1,confidence=(d0<=.10&&ratio<=.35)?'alta':(d0<=.28&&ratio<=.65)?'média':'baixa';return{price,confidence}}
+function estimate(top,bottom,height,format,material){if(!top||!bottom||!height)return null;const base=estimateBase(top,bottom,height);let factory=base.price*pct(sizePct(top,bottom,height)+formatPct(format));if(material==='linho'||material==='juta')factory*=pct(RULES.premium_material_pct);return{price:factory,confidence:base.confidence}}
+function rowTemplate(v={top:'',bottom:'',height:'',format:'conica_redonda',material:'tecido_comum'}){const d=document.createElement('div');d.className='row';d.innerHTML=`
+<div class="field"><label>Superior (cm)</label><input class="top" type="number" min="1" step="0.1" inputmode="decimal" value="${v.top}"></div>
+<div class="field"><label>Inferior (cm)</label><input class="bottom" type="number" min="1" step="0.1" inputmode="decimal" value="${v.bottom}"></div>
+<div class="field"><label>Altura (cm)</label><input class="height" type="number" min="1" step="0.1" inputmode="decimal" value="${v.height}"></div>
+<div class="field format-field"><label>Formato</label><select class="format-select"><option value="conica_redonda">Cônica redonda</option><option value="cilindrica_redonda">Cilíndrica redonda</option><option value="quadrada">Quadrada (+10%)</option><option value="oval">Oval (+10%)</option></select></div>
+<div class="field material-field"><label>Tecido</label><select class="material-select"><option value="tecido_comum">Tecido comum</option><option value="linho">Linho (+15%)</option><option value="juta">Juta (+15%)</option></select></div>
+<div class="value-wrap"><div class="value">—</div></div><div class="conf-wrap"><div class="conf">—</div></div><button class="remove" type="button" title="Remover linha">×</button>`;
+d.querySelector('.format-select').value=v.format||'conica_redonda';d.querySelector('.material-select').value=v.material||'tecido_comum';d.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',()=>calcRow(d));el.addEventListener('change',()=>calcRow(d))});d.querySelector('.remove').addEventListener('click',()=>{if(rows.children.length>1)d.remove();else clearRow(d)});rows.appendChild(d);calcRow(d);return d}
+function calcRow(r){const top=num(r.querySelector('.top').value),bottom=num(r.querySelector('.bottom').value),height=num(r.querySelector('.height').value),format=r.querySelector('.format-select').value,material=r.querySelector('.material-select').value,out=r.querySelector('.value'),conf=r.querySelector('.conf'),e=estimate(top,bottom,height,format,material);if(!e){out.textContent='—';conf.textContent='—';conf.className='conf';return}out.textContent=money(e.price);conf.textContent=e.confidence.charAt(0).toUpperCase()+e.confidence.slice(1);conf.className='conf '+(e.confidence==='média'?'media':e.confidence)}
+function clearRow(r){r.querySelectorAll('input').forEach(i=>i.value='');r.querySelector('.format-select').value='conica_redonda';r.querySelector('.material-select').value='tecido_comum';calcRow(r)}
+function allResults(){return[...rows.children].map((r,i)=>{const top=num(r.querySelector('.top').value),bottom=num(r.querySelector('.bottom').value),height=num(r.querySelector('.height').value);if(!top||!bottom||!height)return null;const format=r.querySelector('.format-select').value,material=r.querySelector('.material-select').value,e=estimate(top,bottom,height,format,material),mat={tecido_comum:'tecido comum',linho:'linho',juta:'juta'}[material],fmt={conica_redonda:'cônica redonda',cilindrica_redonda:'cilíndrica redonda',quadrada:'quadrada',oval:'oval'}[format];return `${i+1}) ${top} × ${bottom} × ${height} cm • ${fmt} • ${mat} → ${money(e.price)} (${e.confidence})`}).filter(Boolean)}
+document.getElementById('addBtn').addEventListener('click',()=>rowTemplate());
+document.getElementById('clearBtn').addEventListener('click',()=>{rows.innerHTML='';rowTemplate()});
+document.getElementById('copyBtn').addEventListener('click',async()=>{const results=allResults();if(!results.length)return;const txt=['Cotador Center Cúpulas — testes','',...results].join('\n');let ok=false;try{await navigator.clipboard.writeText(txt);ok=true}catch(e){}if(!ok){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok=true}catch(e){}ta.remove()}if(ok){const t=document.getElementById('toast');t.style.display='block';setTimeout(()=>t.style.display='none',1800)}});
+rowTemplate({top:12,bottom:23,height:17,format:'conica_redonda',material:'tecido_comum'});
+</script>
+</body>
+</html>
