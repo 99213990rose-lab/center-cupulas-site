@@ -2,6 +2,7 @@
   'use strict';
 
   const ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
+  const PREVIEW_ENDPOINT = '/api/checkout/preview';
   const CEP_ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cep-lookup';
   const WHATSAPP_NUMBER = '5512983216069';
   const cart = window.CenterCupulasCart;
@@ -15,6 +16,7 @@
   const progressEl = document.querySelector('[data-cart-progress]');
   const totalEl = document.querySelector('[data-cart-total]');
   const freightRow = document.querySelector('[data-cart-freight-row]');
+  const packagingFeeEl = document.querySelector('[data-cart-packaging-fee]');
   const freightEl = document.querySelector('[data-cart-freight]');
   const grandTotalEl = document.querySelector('[data-cart-grand-total]');
   const checkoutForm = document.querySelector('[data-checkout-form]');
@@ -115,8 +117,9 @@
   const updateGrandTotal = () => {
     const productTotal = Number(preview?.product_total || 0);
     const freight = Number(selectedShipping?.price || 0);
+    const boxes = Number(preview?.packaging_fee || 0);
     if (freightEl) freightEl.textContent = selectedShipping ? money(freight) : 'A confirmar';
-    if (grandTotalEl) grandTotalEl.textContent = money(productTotal + freight);
+    if (grandTotalEl) grandTotalEl.textContent = money(productTotal + boxes + freight);
   };
 
   const updateCheckoutAvailability = () => {
@@ -125,7 +128,12 @@
       checkoutButton.disabled = true;
       return;
     }
-    checkoutButton.disabled = Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
+    // Somente interface de prévia nesta branch. Nunca criar orçamento com total
+    // divergente do custo de embalagem e nunca cobrar antes da calibração.
+    checkoutButton.disabled = preview.payment_eligible !== true ||
+      preview.packaging?.status !== 'approved' ||
+      !selectedShipping ||
+      Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
   };
 
   const renderFreightState = (data) => {
@@ -204,7 +212,7 @@
         credentials: 'omit',
         body: JSON.stringify({
           recipientCep: cep,
-          shipmentValue: preview.product_total,
+          shipmentValue: preview.subtotal_with_packaging || preview.product_total,
           packages: preview.packaging.packages
         })
       });
@@ -247,6 +255,7 @@
       }
     }
     if (totalEl) totalEl.textContent = money(data.product_total);
+    if (packagingFeeEl) packagingFeeEl.textContent = money(data.packaging_fee);
     updateGrandTotal();
     if (packagingSummary && packagingBody && data.packaging) {
       packagingSummary.hidden = false;
@@ -261,8 +270,8 @@
         }).join('');
         const extra = packs.length > 6 ? '<p>+' + (packs.length - 6) + ' volume(s) adicionais.</p>' : '';
         const warning = data.packaging.status === 'review'
-          ? '<p class="packaging-warning">A embalagem precisa de revisão manual antes da cotação do frete.</p>'
-          : '<p>Prévia para organizar o frete. Medidas da caixa serão confirmadas pela fábrica.</p>';
+          ? '<p class="packaging-warning">Este pedido não cabe com segurança nas caixas padrão e precisa de revisão manual.</p>'
+          : '<p>Caixas padronizadas com custo estimado. Dimensões externas e peso real ainda serão medidos.</p>';
         packagingBody.innerHTML = '<strong>' + Number(data.packaging.package_count || packs.length) + ' volume(s) estimado(s)</strong>' + previewPacks + extra + warning;
       }
     }
@@ -286,11 +295,11 @@
     if (checkoutButton) checkoutButton.disabled = true;
     if (totalEl) totalEl.textContent = 'Calculando…';
     try {
-      const response = await fetch(ENDPOINT, {
+      const response = await fetch(PREVIEW_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'omit',
-        body: JSON.stringify({ action: 'preview', items })
+        body: JSON.stringify({ items })
       });
       const data = await response.json();
       if (seq !== requestSeq) return;
@@ -299,8 +308,10 @@
         if (totalEl) totalEl.textContent = 'Sob consulta';
         return;
       }
-      if (statusBox) statusBox.hidden = true;
       renderPreview(data);
+      if (data.payment_eligible === false) {
+        setStatus('info', '<strong>Prévia de compra em testes.</strong><p>Preço das cúpulas + caixas estimadas. A cobrança automática ainda depende da confirmação das embalagens, da precificação e do frete.</p>');
+      } else if (statusBox) statusBox.hidden = true;
     } catch {
       if (seq !== requestSeq) return;
       setStatus('warning', '<strong>Não foi possível atualizar o preço agora.</strong><p>Tente novamente em instantes ou continue pelo WhatsApp.</p>');
