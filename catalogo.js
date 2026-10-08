@@ -651,7 +651,7 @@
         const response = await fetch(PUBLIC_PRICING_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'omit',
+          credentials: 'same-origin',
           signal: controller.signal,
           body: JSON.stringify({
             format: configuration.formatData.key,
