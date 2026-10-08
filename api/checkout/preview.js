@@ -1,5 +1,5 @@
 'use strict';
-const { estimateCenterPackaging } = require('../../lib/center-packaging.cjs');
+import { estimateCenterPackaging } from '../../lib/center-packaging.cjs';
 
 const QUOTE_URL = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
 const MAX_BYTES = 40_000;
