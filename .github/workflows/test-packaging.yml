@@ -5,6 +5,9 @@ on:
       - feat/mercadopago-checkout-testes-20261008
     paths:
       - 'lib/center-packaging.cjs'
+      - 'lib/center-shipping-gate.cjs'
+      - 'api/frete.js'
+      - 'tests/center-freight-gate.test.cjs'
       - 'lib/center-checkout-eligibility.cjs'
       - 'lib/center-mp-security.cjs'
       - 'lib/center-checkout-db.cjs'
@@ -30,6 +33,8 @@ jobs:
       - name: Validar JavaScript e executar testes
         run: |
           node --check lib/center-packaging.cjs
+          node --check lib/center-shipping-gate.cjs
+          node --check api/frete.js
           node --check api/checkout/preview.js
           node --check carrinho.js
           node --check catalogo.js
