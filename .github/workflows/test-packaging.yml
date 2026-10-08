@@ -12,6 +12,7 @@ on:
       - 'api/mercadopago/webhook.js'
       - 'tests/center-payments.test.cjs'
       - 'api/checkout/preview.js'
+      - 'carrinho.js'
       - 'tests/center-packaging.test.cjs'
       - '.github/workflows/test-packaging.yml'
   workflow_dispatch:
