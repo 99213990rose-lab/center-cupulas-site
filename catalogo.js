@@ -2,7 +2,7 @@
   'use strict';
 
   const WHATSAPP_NUMBER = '5512983216069';
-  const PUBLIC_PRICING_ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-pricing-quote';
+  const PUBLIC_PRICING_ENDPOINT = '/api/pricing/preview';
 
   // O terceiro valor é reservado ao arquivo exclusivo da referência, por exemplo "referencias/ref-01.webp".
   // Enquanto estiver ausente, o card usa apenas o tratamento gráfico neutro.
@@ -595,15 +595,15 @@
 
       if (!quote || quote.status === 'error') {
         fields.priceBadge.textContent = 'Indisponível';
-        fields.priceBody.innerHTML = '<strong>Preço sob consulta</strong><p>Continue pelo WhatsApp para receber a cotação.</p>';
-        submitButton.innerHTML = 'Solicitar cotação no WhatsApp <span aria-hidden="true">↗</span>';
+        fields.priceBody.innerHTML = '<strong>Cálculo temporariamente indisponível</strong><p>Você pode colocar a cúpula no carrinho. O preço será conferido antes de qualquer pagamento.</p>';
+        submitButton.innerHTML = 'Continuar para o carrinho <span aria-hidden="true">→</span>';
         return;
       }
 
       if (quote.status === 'consult' || quote.confidence === 'low') {
         fields.priceBadge.textContent = 'Sob consulta';
-        fields.priceBody.innerHTML = '<strong>Cotação personalizada</strong><p>Esse formato ou medida precisa de confirmação da fábrica antes de exibirmos um valor.</p>';
-        submitButton.innerHTML = 'Solicitar cotação no WhatsApp <span aria-hidden="true">↗</span>';
+        fields.priceBody.innerHTML = '<strong>Configuração sob avaliação</strong><p>Você pode adicionar ao pedido, mas este modelo precisa de validação da fábrica antes do pagamento.</p>';
+        submitButton.innerHTML = 'Continuar para o carrinho <span aria-hidden="true">→</span>';
         return;
       }
 
@@ -781,16 +781,17 @@
       }
 
       for (let step = 0; step < panels.length - 1; step += 1) {
-        showStep(step, false);
         if (!validateStep(step)) {
+          showStep(step, false);
           return;
         }
       }
-      showStep(panels.length - 1, false);
+      // Não navegar novamente para a última etapa: showStep() reinicia a
+      // cotação assíncrona e apagava o preço antes da verificação do botão.
 
       const configuration = getConfiguration();
 
-      if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' && window.CenterCupulasCart) {
+      if (window.CenterCupulasCart) {
         window.CenterCupulasCart.add({
           format: configuration.formatData.key,
           format_label: configuration.format,
@@ -802,13 +803,13 @@
           quantity: Number(configuration.quantity || 1),
           reference: configuration.measureMode === 'suggested' ? configuration.reference.reference : null,
           observations: configuration.observations,
-          quote_snapshot: {
+          quote_snapshot: lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' ? {
             unit_price: lastPriceQuote.unit_price,
             total: lastPriceQuote.total,
             confidence: lastPriceQuote.confidence,
             exact_reference: lastPriceQuote.exact_reference,
             engine_version: lastPriceQuote.engine_version
-          }
+          } : null
         });
         window.CenterCupulas?.sendWebEvent?.('cart_add', {
           placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
