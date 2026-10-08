@@ -47,7 +47,7 @@
         <nav class="breadcrumb" aria-label="Navegação estrutural"><a href="index.html">Center Cúpulas</a><span aria-hidden="true">›</span><a href="modelos.html">Modelos</a><span aria-hidden="true">›</span><span aria-current="page">Seu pedido</span></nav>
         <p class="eyebrow">Seu pedido</p>
         <h1>Revise as cúpulas antes de enviar</h1>
-        <p>Você pode ajustar quantidades. O preço é recalculado automaticamente e o frete será confirmado pela equipe antes da produção.</p>
+        <p>Monte seu pedido e visualize os custos provisórios de embalagem. Os valores e o frete precisam de validação antes de liberar pagamentos automáticos.</p>
       </div>
     </section>
 
@@ -70,11 +70,12 @@
               <div><dt>Subtotal</dt><dd data-cart-subtotal>Calculando…</dd></div>
               <div data-cart-discount-row hidden><dt>Desconto</dt><dd data-cart-discount>—</dd></div>
               <div><dt>Total dos produtos</dt><dd data-cart-total>Calculando…</dd></div>
+              <div><dt>Embalagens (estimativa)</dt><dd data-cart-packaging-fee>A calcular</dd></div>
               <div data-cart-freight-row><dt>Frete</dt><dd data-cart-freight>A confirmar</dd></div>
-              <div class="cart-totals__total"><dt>Total estimado</dt><dd data-cart-grand-total>Calculando…</dd></div>
+              <div class="cart-totals__total"><dt>Total estimado com caixas</dt><dd data-cart-grand-total>Calculando…</dd></div>
             </dl>
             <p class="cart-progress" data-cart-progress></p>
-            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note">Frete não incluído. Ele será confirmado antes da produção.</p>
+            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note">Custos das caixas ainda não confirmados com o fornecedor. Frete calculado separadamente, após aferir medidas externas e peso das embalagens.</p>
           </section>
 
           <section class="checkout-card">
@@ -99,8 +100,8 @@
                 <div class="shipping-options" data-shipping-options></div>
               </div>
               <label><span>Observações</span><textarea name="notes" rows="3" maxlength="600" placeholder="Detalhes de entrega, acabamento ou prazo."></textarea></label>
-              <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Enviar pedido para confirmação</button>
-              <p class="checkout-payment-lock">Pagamento online ainda não é cobrado nesta etapa. Primeiro a fábrica confirma preço e frete.</p>
+              <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Compra automática em preparação</button>
+              <p class="checkout-payment-lock">Ambiente de testes: pagamento online indisponível até a confirmação dos preços de caixas, calibração de frete e aprovação das regras da fábrica. Para dúvidas, utilize o WhatsApp.</p>
             </form>
           </section>
 
