@@ -69,3 +69,15 @@ Uma versão prévia isolada da Center com botão de pagamento habilitado apenas 
 3. Definir provedor de frete efetivo (Frenet atual ou Melhor Envio), com credenciais server-side e cotação final no servidor.
 4. Criar pedidos e transações específicos da Center no Supabase (não misturar com Métodos Digitais), checkout Pix/cartão com total server-side, assinatura de webhook e confirmação real antes de liberar produção.
 5. Testar simulações de recusa, estorno, frete indisponível, caixa especial, duplicidade e pagamento pendente em ambiente seguro. Não publicar em produção sem autorização do responsável.
+
+
+## Implementado nesta continuação — estrutura de pagamento (branch apenas)
+
+- Gate de segurança em `lib/center-checkout-eligibility.cjs`: exige preços aprovados no servidor, confirmação de produção, custo e dimensões externas de embalagem com peso medido, frete verificado e total matematicamente consistente. Na situação atual, **sempre recusa** a cobrança: preços e embalagens continuam provisórios e não existe frete final aferido.
+- Endpoint `api/checkout/start.js`: recalcula itens no servidor, verifica os gates, restringe o host aos previews da Vercel, e somente quando tudo aprovado usa uma **credencial de teste** Mercado Pago `MERCADO_PAGO_TEST_ACCESS_TOKEN` (prefixo `TEST-`) e `CENTER_CHECKOUT_TEST_ENABLED=true`. Não utiliza o token real da Center.
+- Modelo de dados `docs/sql/center-checkout-orders.sql` proposto e **não aplicado** no Supabase da Center. Armazena estado de cobrança e pedido exclusivo Center, com RLS e sem políticas públicas.
+- Webhook `api/mercadopago/webhook.js`: verifica HMAC Mercado Pago com segredo da Center, consulta pagamento pela API, confere ID, identificador `CENTER-...`, moeda e valor em centavos; apenas então atualiza status do pedido usando comparação condicional. Não altera tabela do Métodos Digitais.
+- Testes em `tests/center-payments.test.cjs` e `tests/center-packaging.test.cjs`. Workflow GitHub Actions de checkout executado com sucesso em 2026-10-08.
+- Branch Vercel de prévia implantado, sem merge na main. Nenhum banco atualizado, nenhuma credencial criada/alterada e nenhum pagamento ou pedido real gerado.
+
+**Pendências operacionais**: retorno de orçamentos reais de caixas em Itaquera; aferição das dimensões externas/peso; validação final do preço dos tamanhos personalizados e das margens; configuração segura do frete; implantação revisada da tabela exclusiva da Center; configuração de credenciais **de teste** e testes completos Pix/cartão/webhook em sandbox antes de cogitar ativação no site oficial.
