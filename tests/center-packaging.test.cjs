@@ -12,15 +12,15 @@ test('quatro caixas e custos provisórios conhecidos', () => {
     [30,6],[45,16],[60,30],[70,45]
   ]);
 });
-test('25 cm com proteção total de 5 cm entra na caixa 30', () => {
-  const a=estimateCenterPackaging([item(10,25,20)]);
+test('24 cm com proteção total de 6 cm entra na caixa 30', () => {
+  const a=estimateCenterPackaging([item(10,24,20)]);
   assert.equal(a.package_count,1);
   assert.equal(a.packages[0].box_id,'P30');
   assert.equal(a.packaging_fee,6);
   assert.equal(a.calibration,true);
 });
-test('26 cm exige caixa média, por margem de proteção',()=>{
-  assert.equal(estimateCenterPackaging([item(10,26,20)]).packages[0].box_id,'M45');
+test('25 cm exige caixa média, por margem de proteção',()=>{
+  assert.equal(estimateCenterPackaging([item(10,25,20)]).packages[0].box_id,'M45');
 });
 test('seleciona caixas 45/60/70 respeitando folga',()=>{
   const a=estimateCenterPackaging([item(10,40,20),item(10,55,20),item(10,65,20)]);
@@ -28,7 +28,7 @@ test('seleciona caixas 45/60/70 respeitando folga',()=>{
   assert.equal(a.packaging_fee,16+30+45);
 });
 test('quantidades contam uma caixa por peça, sem inferir encaixe',()=>{
-  const a=estimateCenterPackaging([item(10,25,20,3)]);
+  const a=estimateCenterPackaging([item(10,24,20,3)]);
   assert.equal(a.package_count,3);
   assert.equal(a.packaging_fee,18);
 });
@@ -55,11 +55,11 @@ test('quantidade fracionada é recusada, sem arredondar para baixo',()=>{
   assert.throws(()=>estimateCenterPackaging([item(10,25,20,1.5)]),/invalid_quantity/);
 });
 test('não aceita preço de caixa alterado por entrada do cliente',()=>{
-  const a=estimateCenterPackaging([{...item(10,25,20), estimated_cost_brl:0, box_id:'GG70'}]);
+  const a=estimateCenterPackaging([{...item(10,24,20), estimated_cost_brl:0, box_id:'GG70'}]);
   assert.equal(a.packaging_fee,6);
   assert.equal(a.packages[0].box_id,'P30');
 });
 test('não aceita carrinho vazio ou com mais de 20 linhas',()=>{
   assert.throws(()=>estimateCenterPackaging([]),/invalid_cart/);
-  assert.throws(()=>estimateCenterPackaging(Array(21).fill(item(10,25,20))),/invalid_cart/);
+  assert.throws(()=>estimateCenterPackaging(Array(21).fill(item(10,24,20))),/invalid_cart/);
 });
