@@ -48,3 +48,24 @@ Estado em 08/10/2026: **planejamento técnico**, não liberado para cobrança. E
 ## Entrega de teste
 
 Uma versão prévia isolada da Center com botão de pagamento habilitado apenas quando preço e logística estiverem aprovados. Nenhuma publicação na versão de produção ou cobrança real por esta branch.
+
+
+## Implementado em 2026-10-08 — embalagem padronizada (somente branch de testes)
+
+- Branch: `feat/mercadopago-checkout-testes-20261008`; o `main` e o site em produção não foram alterados.
+- Novos arquivos: `lib/center-packaging.cjs` e `api/checkout/preview.js`. O carrinho consulta a prévia pelo backend e apresenta custo de produto + embalagem + frete estimado.
+- **Preços de caixas são provisórios**: P30 (30 × 30 × 30 cm) R$ 6; M45 (45 × 45 × 45 cm) R$ 16; G60 (60 × 60 × 60 cm) R$ 30; GG70 (70 × 70 × 70 cm) R$ 45. Dimensões internas, ainda sem confirmação do fornecedor.
+- Seleção automática: menor caixa cuja aresta interna comporte maior medida da cúpula + 5 cm de folga total estimada. Uma caixa por peça neste primeiro teste; não presumir que produtos encaixam uns nos outros. Formatos especiais, volumes >30 e peças que não cabem exigem revisão.
+- Motor de preço da cúpula consultado novamente no Supabase pelo servidor. Nenhum `unit_price`, `total` ou `shipping_price` recebido do navegador é aceito como preço do produto.
+- O frete de prévia ainda usa o endpoint Frenet do projeto, com cálculo em calibração; **as medidas externas e o peso real das caixas ainda não foram medidos**. Não usar cotação provisória para cobrança final. Melhor Envio ainda não foi integrado.
+- Frontend da branch foi alterado apenas para **prévia**, deixando envio/pagamento desabilitado enquanto as regras não forem aprovadas. O endpoint antigo do Supabase continua gerando orçamento e não faz cobrança.
+- CI: `node --test tests/center-packaging.test.cjs` na branch, com testes de formatos, limites, quantidade, preço e seleção; GitHub Actions `test-packaging.yml` concluído com sucesso em 2026-10-08.
+- Não existe cobrança automática ou webhook Mercado Pago habilitado neste protótipo. O token MP previamente configurado na Vercel não foi usado nesta etapa.
+
+### Próximos bloqueios antes da cobrança
+
+1. Confirmar custos reais das caixas (fabricantes próximos de Itaquera); medir dimensões externas e peso de cada caixa montada com proteção interna.
+2. Calibrar tabela de fábrica, margens, formatos/cores, descontos e estoque/capacidade para medida personalizada; garantir produção viável.
+3. Definir provedor de frete efetivo (Frenet atual ou Melhor Envio), com credenciais server-side e cotação final no servidor.
+4. Criar pedidos e transações específicos da Center no Supabase (não misturar com Métodos Digitais), checkout Pix/cartão com total server-side, assinatura de webhook e confirmação real antes de liberar produção.
+5. Testar simulações de recusa, estorno, frete indisponível, caixa especial, duplicidade e pagamento pendente em ambiente seguro. Não publicar em produção sem autorização do responsável.
