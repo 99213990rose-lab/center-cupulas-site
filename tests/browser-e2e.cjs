@@ -27,7 +27,7 @@ if (!url) throw new Error('E2E_URL missing');
     await form.locator('[data-field="upper"]').fill('20');
     await form.locator('[data-field="lower"]').fill('20');
     await form.locator('[data-field="height"]').fill('20');
-    await form.locator('[data-field="quantity"][value="20"]').check();
+    await form.locator('[data-field="quantity"][value="20"]').locator('xpath=..').click();
     console.log('Step 3: 20x20x20 cm - 20 unidades');
     await form.locator('[data-step-next]').click();
     await page.waitForFunction(()=>{
