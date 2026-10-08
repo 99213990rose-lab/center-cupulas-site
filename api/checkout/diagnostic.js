@@ -1,4 +1,5 @@
 import pkg from '../../lib/center-packaging.cjs';
+import previewHandler from './preview.js';
 
 const { estimateCenterPackaging } = pkg;
 const UPSTREAM='https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
@@ -25,6 +26,18 @@ export default async function handler(req,res) {
       signal:AbortSignal.timeout(12000)
     });
     const data=await response.json().catch(()=>({}));
+    let apiResult=null;
+    const mockRes={
+      statusCode:200,
+      headers:{},
+      setHeader(k,v){this.headers[k]=v;return this;},
+      status(code){this.statusCode=code;return this;},
+      json(value){apiResult={statusCode:this.statusCode,data:value};return this;}
+    };
+    await previewHandler(
+      {method:'POST',headers:{'content-length':'300'},body:{items:[item]}},
+      mockRes
+    );
     return res.status(200).json({
       stage:'server_quote',upstream_status:response.status,
       upstream_error:data?.error||null,upstream_type:data?.status||null,
@@ -32,6 +45,10 @@ export default async function handler(req,res) {
       packaging_status:packaging.status,
       packaging_count:packaging.package_count,
       packaging_fee:packaging.packaging_fee,
+      preview_http_status:apiResult?.statusCode || null,
+      preview_error:apiResult?.data?.error || null,
+      preview_total:apiResult?.data?.subtotal_with_packaging ?? null,
+      preview_items:apiResult?.data?.items?.length ?? null,
       no_payment:true
     });
   }catch(e){
