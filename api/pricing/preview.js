@@ -2,8 +2,8 @@
 // evita o bloqueio CORS das URLs temporárias da Vercel.
 // Não autoriza cobrança: a resposta do motor ainda é estimativa em calibração.
 const UPSTREAM = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-pricing-quote';
-const FORMATS = new Set(['conica','bell','drum','oval','piramidal-quadrada','cubo']);
-const MATERIALS = new Set(['juta','linho','tecido','tecido_comum','rústico','rustico']);
+const FORMATS = new Set(['conica','bell','drum','oval','piramidal-quadrada','piramidal-retangular','octogonal','cubo']);
+const MATERIALS = new Set(['juta','linho','tricoline','tecido','tecido_comum','rústico','rustico']);
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
