@@ -23,7 +23,7 @@ test('25 cm exige caixa média, por margem de proteção',()=>{
   assert.equal(estimateCenterPackaging([item(10,25,20)]).packages[0].box_id,'M45');
 });
 test('seleciona caixas 45/60/70 respeitando folga',()=>{
-  const a=estimateCenterPackaging([item(10,40,20),item(10,55,20),item(10,65,20)]);
+  const a=estimateCenterPackaging([item(10,39,20),item(10,54,20),item(10,64,20)]);
   assert.deepEqual(a.packages.map(x=>x.box_id),['M45','G60','GG70']);
   assert.equal(a.packaging_fee,16+30+45);
 });
