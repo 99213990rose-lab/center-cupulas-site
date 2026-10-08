@@ -237,8 +237,8 @@
         credentials: 'same-origin',
         body: JSON.stringify({
           recipientCep: cep,
-          shipmentValue: preview.subtotal_with_packaging || preview.product_total,
-          packages: preview.packaging.packages
+          // Servidor recalcula preço, caixas, dimensões e peso validados.
+          items: apiItems()
         })
       });
       const data = await response.json();
