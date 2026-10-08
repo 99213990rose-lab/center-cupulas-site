@@ -196,6 +196,31 @@
       return;
     }
 
+    // As dimensões usadas para cotar frete precisam ser EXTERNAS e medidas.
+    // A tabela atual contém somente medidas INTERNAS e peso ainda estimado.
+    // Bloqueia a exibição de preços de transportadoras potencialmente errados.
+    const packagesVerified = preview?.calibration === false &&
+      preview?.packaging?.calibration === false &&
+      preview.packaging.packages.every((pack) => {
+        const d = pack.external_dimensions_cm;
+        return pack.measured === true &&
+          d && ['width', 'length', 'height'].every((key) => Number.isFinite(Number(d[key])) && Number(d[key]) > 0) &&
+          Number.isFinite(Number(pack.gross_weight_kg)) && Number(pack.gross_weight_kg) > 0;
+      });
+    if (!packagesVerified) {
+      ++freightRequestSeq;
+      selectedShipping = null;
+      freightOptions = [];
+      freightProviderConfigured = false;
+      if (shippingBox) shippingBox.hidden = false;
+      if (shippingProvider) shippingProvider.textContent = 'em validação';
+      if (shippingOptionsHost) shippingOptionsHost.innerHTML =
+        '<p class="shipping-note">Estamos validando as medidas externas e os pesos das caixas para calcular um frete correto. Nenhum valor provisório será cobrado.</p>';
+      updateGrandTotal();
+      updateCheckoutAvailability();
+      return;
+    }
+
     const seq = ++freightRequestSeq;
     selectedShipping = null;
     freightOptions = [];
