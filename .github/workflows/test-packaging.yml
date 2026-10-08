@@ -5,6 +5,12 @@ on:
       - feat/mercadopago-checkout-testes-20261008
     paths:
       - 'lib/center-packaging.cjs'
+      - 'lib/center-checkout-eligibility.cjs'
+      - 'lib/center-mp-security.cjs'
+      - 'lib/center-checkout-db.cjs'
+      - 'api/checkout/start.js'
+      - 'api/mercadopago/webhook.js'
+      - 'tests/center-payments.test.cjs'
       - 'api/checkout/preview.js'
       - 'tests/center-packaging.test.cjs'
       - '.github/workflows/test-packaging.yml'
@@ -22,4 +28,9 @@ jobs:
           node --check lib/center-packaging.cjs
           node --check api/checkout/preview.js
           node --check carrinho.js
-          node --test tests/center-packaging.test.cjs
+          node --check lib/center-checkout-eligibility.cjs
+          node --check lib/center-mp-security.cjs
+          node --check lib/center-checkout-db.cjs
+          node --check api/checkout/start.js
+          node --check api/mercadopago/webhook.js
+          node --test tests/*.test.cjs
