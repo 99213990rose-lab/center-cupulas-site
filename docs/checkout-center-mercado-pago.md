@@ -5,9 +5,9 @@ Estado em 08/10/2026: **planejamento técnico**, não liberado para cobrança. E
 ## Decisões confirmadas com o responsável comercial
 
 - Reaproveitar a estrutura existente do projeto `metodos-digitais` (Pix, Checkout Pro e confirmação por webhook).
-- Utilizar provisoriamente a conta atual de Mercado Pago, cadastrada no CPF da mãe do operador. Não alterar a titularidade e não misturar cadastros nem pedidos dos dois negócios.
+- Utilizar provisoriamente a conta de Mercado Pago indicada pelo responsável comercial, após verificar titularidade e autorização. Não misturar cadastros nem pedidos dos dois negócios.
 - Não exigir conta nova nesta etapa. A eventual troca de credenciais no futuro deverá ser possível via variáveis de ambiente.
-- Cobranças reais somente depois da concordância da titular da conta, revisão financeira/fiscal e aprovação da implementação pela operação.
+- Cobranças reais somente depois da validação de autorização para uso da conta, revisão financeira/fiscal e aprovação da implementação pela operação.
 - Não alterar nem publicar o site atual até que os testes de preço, frete e fluxo estejam concluídos.
 
 ## Diagnóstico verificado
