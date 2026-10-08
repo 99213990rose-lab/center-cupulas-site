@@ -17,7 +17,7 @@ if (!url) throw new Error('E2E_URL missing');
   try {
     await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
     await page.waitForSelector('[data-configurator-host] [data-configuration-form]',{timeout:25000});
-    const form=page.locator('.configurator-host [data-configuration-form]');
+    const form=page.locator('[data-configurator-host][data-mode="custom"] [data-configuration-form]');
     console.log('Step 1: Formato',await form.locator('[data-field="format"]:checked').inputValue());
     await form.locator('[data-step-next]').click();
     await form.locator('[data-field="material"][value="Juta"]').check();
@@ -31,7 +31,7 @@ if (!url) throw new Error('E2E_URL missing');
     console.log('Step 3: 20x20x20 cm - 20 unidades');
     await form.locator('[data-step-next]').click();
     await page.waitForFunction(()=>{
-      const e=document.querySelector('.configurator-host [data-price-badge]');
+      const e=document.querySelector('[data-configurator-host][data-mode="custom"] [data-price-badge]');
       return e&&e.textContent&&!e.textContent.includes('Calculando');
     },null,{timeout:25000});
     const badge=await form.locator('[data-price-badge]').innerText();
