@@ -1,147 +1,87 @@
-const ORIGIN_CEP = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '08265220').replace(/\D/g, '');
-const FRENET_TOKEN = process.env.FRENET_TOKEN || '';
+import packagingLib from '../lib/center-packaging.cjs';
+import freightGate from '../lib/center-shipping-gate.cjs';
+const { estimateCenterPackaging } = packagingLib;
+const { normalizeVerifiedPackages } = freightGate;
+const QUOTE_URL='https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
+const ORIGIN_CEP=String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '08265220').replace(/\D/g,'');
+const FRENET_TOKEN=process.env.FRENET_TOKEN || '';
+const asCep = v => String(v || '').replace(/\D/g,'');
+const round = x => Math.round((Number(x)+Number.EPSILON)*100)/100;
 
-function cleanCep(value) {
-  return String(value || '').replace(/\D/g, '').slice(0, 8);
-}
+export default async function handler(req,res) {
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  if(req.method!=='POST')return res.status(405).json({error:'method_not_allowed'});
+  if(Number(req.headers['content-length']||0)>40000)return res.status(413).json({error:'request_too_large'});
 
-function number(value, fallback = 0) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function round(value, decimals = 2) {
-  const p = 10 ** decimals;
-  return Math.round((number(value) + Number.EPSILON) * p) / p;
-}
-
-function normalizePackages(packages) {
-  if (!Array.isArray(packages) || !packages.length || packages.length > 30) return [];
-  return packages.map((pack, index) => {
-    const dims = pack?.dimensions_cm || {};
-    const width = Math.max(1, Math.ceil(number(dims.width)));
-    const length = Math.max(1, Math.ceil(number(dims.length)));
-    const height = Math.max(1, Math.ceil(number(dims.height)));
-    // Enquanto não medimos o peso real das caixas, usamos peso volumétrico conservador.
-    // A cotação fica sempre marcada como "em calibração" e não libera pagamento automático.
-    const volumetricWeight = Math.max(0.3, (width * length * height) / 5000);
-    return {
-      Weight: round(volumetricWeight, 3),
-      Length: length,
-      Height: height,
-      Width: width,
-      Diameter: 0,
-      SKU: 'CX-' + String(index + 1).padStart(2, '0'),
-      Category: 'Cupulas para iluminacao',
-      isFragile: true,
-      Quantity: 1,
-      ProductName: 'Volume Center Cupulas ' + (index + 1)
-    };
-  });
-}
-
-function setCors(req, res) {
-  const origin = req.headers.origin || '';
-  const allowed =
-    origin === 'https://www.centercupulas.com.br' ||
-    origin === 'https://centercupulas.com.br' ||
-    origin.endsWith('.vercel.app') ||
-    origin.startsWith('http://localhost:');
-
-  res.setHeader('Access-Control-Allow-Origin', allowed ? origin : 'https://www.centercupulas.com.br');
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'no-store');
-}
-
-export default async function handler(req, res) {
-  setCors(req, res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
-
-  const recipientCep = cleanCep(req.body?.recipientCep);
-  const shipmentValue = Math.max(1, number(req.body?.shipmentValue));
-  const packages = normalizePackages(req.body?.packages);
-
-  if (!/^\d{8}$/.test(recipientCep)) return res.status(400).json({ error: 'invalid_recipient_cep' });
-  if (!/^\d{8}$/.test(ORIGIN_CEP)) return res.status(503).json({ error: 'origin_cep_not_configured' });
-  if (!packages.length) return res.status(400).json({ error: 'invalid_packages' });
-
-  if (!FRENET_TOKEN) {
-    return res.status(503).json({
-      error: 'frenet_not_configured',
-      provider: 'Frenet',
-      integration_ready: true,
-      origin_cep: ORIGIN_CEP,
-      message: 'A integração está pronta, mas falta configurar o token da Frenet.'
-    });
+  const cep=asCep(req.body?.recipientCep);
+  const items=req.body?.items;
+  if(!/^\d{8}$/.test(cep))return res.status(400).json({error:'invalid_recipient_cep'});
+  if(!/^\d{8}$/.test(ORIGIN_CEP))return res.status(503).json({error:'invalid_origin_cep'});
+  if(!Array.isArray(items) || items.length<1 || items.length>20)return res.status(400).json({error:'invalid_cart'});
+  // Nem dimensões, nem preços, nem peso podem ser injetados pelo navegador.
+  // A tabela de embalagem da própria fábrica é a única fonte para o frete.
+  let packaging;
+  try{packaging=estimateCenterPackaging(items)}catch(error){
+    return res.status(400).json({error:String(error?.message||'invalid_cart')});
   }
+  const physical=normalizeVerifiedPackages(packaging);
+  if(!physical.ready)return res.status(409).json({
+    error:'freight_calibration_pending',
+    reason:physical.reason,
+    missing_box_id:physical.missing_box_id||null,
+    provider:'Frenet',
+    calibration:true,
+    message:'Caixas ainda não tiveram medidas externas e pesos reais aferidos.'
+  });
 
-  const payload = {
-    SellerCEP: ORIGIN_CEP,
-    RecipientCEP: recipientCep,
-    ShipmentInvoiceValue: round(shipmentValue),
-    RecipientCountry: 'BR',
-    ShippingServiceCode: null,
-    Coupom: null,
-    ShippingItemArray: packages
-  };
+  if(!FRENET_TOKEN)return res.status(503).json({error:'frenet_not_configured',provider:'Frenet'});
 
-  try {
-    const response = await fetch('https://api.frenet.com.br/shipping/quote', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        token: FRENET_TOKEN
-      },
-      body: JSON.stringify(payload)
+  try{
+    const qr=await fetch(QUOTE_URL,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'preview',items}),
+      signal:AbortSignal.timeout(12000)
     });
-
-    const rawText = await response.text();
-    let data = {};
-    try { data = rawText ? JSON.parse(rawText) : {}; } catch {}
-
-    if (!response.ok) {
-      console.error('Frenet quote error', response.status, rawText.slice(0, 1000));
-      return res.status(502).json({ error: 'freight_provider_error', provider: 'Frenet' });
+    if(!qr.ok)return res.status(422).json({error:'product_pricing_review_required'});
+    const quote=await qr.json();
+    if(quote?.status!=='ok'||quote.calibration!==false || quote.pricing_approved!==true){
+      return res.status(409).json({error:'product_pricing_not_approved'});
     }
-
-    const services = Array.isArray(data.ShippingSevicesArray)
-      ? data.ShippingSevicesArray
-      : Array.isArray(data.ShippingServicesArray)
-        ? data.ShippingServicesArray
-        : [];
-
-    const options = services
-      .filter((service) => !service?.Error && Number.isFinite(Number(service?.ShippingPrice)))
-      .map((service) => ({
-        code: String(service.ServiceCode || ''),
-        carrier: String(service.Carrier || ''),
-        carrier_code: String(service.CarrierCode || ''),
-        service: String(service.ServiceDescription || ''),
-        price: round(service.ShippingPrice),
-        original_price: round(service.OriginalShippingPrice || service.ShippingPrice),
-        delivery_days: Math.max(0, Math.ceil(number(service.DeliveryTime))),
-        original_delivery_days: Math.max(0, Math.ceil(number(service.OriginalDeliveryTime || service.DeliveryTime))),
-        allow_buy_label: Boolean(service.AllowBuyLabel),
-        pickup: service.Pickup || null
-      }))
-      .sort((a, b) => a.price - b.price || a.delivery_days - b.delivery_days);
-
-    return res.status(200).json({
-      status: options.length ? 'ok' : 'no_options',
-      provider: 'Frenet',
-      calibration: true,
-      origin_cep: ORIGIN_CEP,
-      recipient_cep: recipientCep,
-      package_count: packages.length,
-      weight_basis: 'peso_volumetrico_conservador',
-      options
+    const subtotal=round(Number(quote.product_total)+Number(packaging.packaging_fee));
+    if(!Number.isFinite(subtotal)||subtotal<=0||subtotal>500000){
+      return res.status(502).json({error:'invalid_server_pricing'});
+    }
+    const payload={
+      SellerCEP:ORIGIN_CEP,RecipientCEP:cep,
+      ShipmentInvoiceValue:subtotal,RecipientCountry:'BR',
+      ShippingServiceCode:null,Coupom:null,ShippingItemArray:physical.packages
+    };
+    const r=await fetch('https://api.frenet.com.br/shipping/quote',{
+      method:'POST',headers:{accept:'application/json','content-type':'application/json',token:FRENET_TOKEN},
+      body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)
     });
-  } catch (error) {
-    console.error('Freight quote exception', error);
-    return res.status(502).json({ error: 'freight_unavailable', provider: 'Frenet' });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)return res.status(502).json({error:'freight_provider_error',provider:'Frenet'});
+    const services=Array.isArray(data.ShippingSevicesArray)?data.ShippingSevicesArray:
+      Array.isArray(data.ShippingServicesArray)?data.ShippingServicesArray:[];
+    const options=services.filter(s=>!s?.Error && Number.isFinite(Number(s?.ShippingPrice)) && Number(s.ShippingPrice)>=0 && String(s?.ServiceCode||'')).map(s=>({
+      code:String(s.ServiceCode),
+      carrier:String(s.Carrier||'').slice(0,100),
+      service:String(s.ServiceDescription||'').slice(0,100),
+      price:round(Number(s.ShippingPrice)),
+      delivery_days:Math.max(0,Math.ceil(Number(s.DeliveryTime)||0)),
+      allow_buy_label:Boolean(s.AllowBuyLabel)
+    })).sort((a,b)=>a.price-b.price||a.delivery_days-b.delivery_days);
+    return res.status(200).json({
+      status:options.length?'ok':'no_options',
+      provider:'Frenet',
+      calibration:false,freight_basis:'measured_verified_packages',
+      origin_cep:ORIGIN_CEP,recipient_cep:cep,
+      package_count:physical.packages.length,options
+    });
+  }catch(error){
+    console.error('Center freight failed:',error?.name||'unknown');
+    return res.status(502).json({error:'freight_unavailable',provider:'Frenet'});
   }
 }
