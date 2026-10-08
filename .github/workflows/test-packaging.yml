@@ -1,0 +1,25 @@
+name: Teste checkout de embalagens
+on:
+  push:
+    branches:
+      - feat/mercadopago-checkout-testes-20261008
+    paths:
+      - 'lib/center-packaging.cjs'
+      - 'api/checkout/preview.js'
+      - 'tests/center-packaging.test.cjs'
+      - '.github/workflows/test-packaging.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar JavaScript e executar testes
+        run: |
+          node --check lib/center-packaging.cjs
+          node --check api/checkout/preview.js
+          node --check carrinho.js
+          node --test tests/center-packaging.test.cjs
