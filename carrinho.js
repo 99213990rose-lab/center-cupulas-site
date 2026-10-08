@@ -234,7 +234,7 @@
       const response = await fetch('/api/frete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'omit',
+        credentials: 'same-origin',
         body: JSON.stringify({
           recipientCep: cep,
           shipmentValue: preview.subtotal_with_packaging || preview.product_total,
@@ -323,7 +323,7 @@
       const response = await fetch(PREVIEW_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'omit',
+        credentials: 'same-origin',
         body: JSON.stringify({ items })
       });
       const data = await response.json();
