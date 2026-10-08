@@ -31,3 +31,20 @@ test('carrinho persiste dados sem depender de preço passado pelo navegador',()=
   assert.match(cart,/quote_snapshot:/);
   assert.match(builder,/quote_snapshot:.*\? \{/);
 });
+
+const checkout=fs.readFileSync('carrinho.js','utf8');
+test('preço e carrinho incluem cookie somente nas chamadas da Vercel',()=>{
+  const config=builder.slice(builder.indexOf('const response = await fetch(PUBLIC_PRICING_ENDPOINT'),builder.indexOf('const quote = response.ok'));
+  assert.match(config,/credentials: 'same-origin'/);
+  const preview=checkout.slice(checkout.indexOf('const response = await fetch(PREVIEW_ENDPOINT'),checkout.indexOf('const data = await response.json()',checkout.indexOf('const response = await fetch(PREVIEW_ENDPOINT')));
+  assert.match(preview,/credentials: 'same-origin'/);
+  const freight=checkout.slice(checkout.indexOf("const response = await fetch('/api/frete'"),checkout.indexOf('const data = await response.json()',checkout.indexOf("const response = await fetch('/api/frete'")));
+  assert.match(freight,/credentials: 'same-origin'/);
+  // Supabase continua sem receber cookies do usuário da Vercel.
+  const external=checkout.slice(checkout.indexOf('const response = await fetch(ENDPOINT'),checkout.indexOf('const data = await response.json()',checkout.indexOf('const response = await fetch(ENDPOINT')));
+  assert.match(external,/credentials: 'omit'/);
+});
+test('falha de cotação não aparece como total de R$ 0,00',()=>{
+  assert.match(checkout,/preview\?\.status === 'ok' \? money\(productTotal \+ boxes \+ freight\) : 'A calcular'/);
+  assert.match(checkout,/Não foi possível calcular o total agora/);
+});
