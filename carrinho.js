@@ -119,7 +119,7 @@
     const freight = Number(selectedShipping?.price || 0);
     const boxes = Number(preview?.packaging_fee || 0);
     if (freightEl) freightEl.textContent = selectedShipping ? money(freight) : 'A confirmar';
-    if (grandTotalEl) grandTotalEl.textContent = money(productTotal + boxes + freight);
+    if (grandTotalEl) grandTotalEl.textContent = preview?.status === 'ok' ? money(productTotal + boxes + freight) : 'A calcular';
   };
 
   const updateCheckoutAvailability = () => {
@@ -317,8 +317,13 @@
       return;
     }
     const seq = ++requestSeq;
+    preview = null;
+    selectedShipping = null;
     if (checkoutButton) checkoutButton.disabled = true;
+    if (subtotalEl) subtotalEl.textContent = 'Calculando…';
     if (totalEl) totalEl.textContent = 'Calculando…';
+    if (packagingFeeEl) packagingFeeEl.textContent = 'A calcular';
+    updateGrandTotal();
     try {
       const response = await fetch(PREVIEW_ENDPOINT, {
         method: 'POST',
@@ -329,8 +334,15 @@
       const data = await response.json();
       if (seq !== requestSeq) return;
       if (!response.ok || data.status !== 'ok') {
-        setStatus('warning', '<strong>Este pedido precisa de revisão.</strong><p>Uma das configurações ainda não tem segurança suficiente para preço automático. Você pode falar com a equipe pelo WhatsApp.</p>');
-        if (totalEl) totalEl.textContent = 'Sob consulta';
+        const needsReview = response.status === 422 && data?.requires_review === true;
+        const message = needsReview
+          ? '<strong>Esta configuração exige avaliação.</strong><p>As medidas precisam ser confirmadas pela fábrica antes do pagamento.</p>'
+          : '<strong>Não foi possível calcular o total agora.</strong><p>O pedido continua salvo no carrinho. Tente atualizar a página. Nenhum valor será cobrado.</p>';
+        setStatus('warning', message);
+        if (totalEl) totalEl.textContent = needsReview ? 'Sob consulta' : 'Indisponível';
+        if (subtotalEl) subtotalEl.textContent = '—';
+        if (packagingFeeEl) packagingFeeEl.textContent = '—';
+        updateGrandTotal();
         return;
       }
       renderPreview(data);
@@ -341,6 +353,9 @@
       if (seq !== requestSeq) return;
       setStatus('warning', '<strong>Não foi possível atualizar o preço agora.</strong><p>Tente novamente em instantes ou continue pelo WhatsApp.</p>');
       if (totalEl) totalEl.textContent = 'Indisponível';
+      if (subtotalEl) subtotalEl.textContent = '—';
+      if (packagingFeeEl) packagingFeeEl.textContent = '—';
+      updateGrandTotal();
     }
   };
 
