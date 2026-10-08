@@ -123,11 +123,11 @@ export default async function handler(req, res) {
         }],
         payer:{name:customer.name,email:customer.email},
         external_reference:externalReference,
-        notification_url:'${previewOrigin}/api/mercadopago/webhook',
+        notification_url:`${previewOrigin}/api/mercadopago/webhook`,
         back_urls:{
-          success:'${previewOrigin}/carrinho.html',
-          failure:'${previewOrigin}/carrinho.html',
-          pending:'${previewOrigin}/carrinho.html'
+          success:`${previewOrigin}/carrinho.html`,
+          failure:`${previewOrigin}/carrinho.html`,
+          pending:`${previewOrigin}/carrinho.html`
         },
         auto_return:'approved'
       }),
