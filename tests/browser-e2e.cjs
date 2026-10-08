@@ -58,8 +58,12 @@ if (!url) throw new Error('E2E_URL missing');
     console.log('Page Errors:',JSON.stringify(consoleErrors.slice(0,6)));
     const assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
     assert(cart.items===1,'FAILED: Item não chegou ao carrinho');
-    assert(cart.products.includes('R
-    assert(cart.boxes.includes('R
+    const moneyValue = value => {
+      const digits = String(value).replace(/[^0-9,]/g, '');
+      return digits ? Number(digits.replace(',', '.')) : NaN;
+    };
+    assert(moneyValue(cart.products) > 0,'FAILED: Preço das cúpulas não carregou');
+    assert(moneyValue(cart.boxes) > 0,'FAILED: Custo das caixas não carregou');
     assert(cart.checkoutDisabled===true,'FAILED: checkout deveria permanecer bloqueado em testes');
     assert(diagnostics.some(x=>x.endpoint==='/api/checkout/preview' && x.status===200),'FAILED: endpoint do carrinho falhou');
     assert(consoleErrors.length===0,'FAILED: Erro JavaScript no navegador');
