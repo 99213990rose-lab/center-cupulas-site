@@ -72,32 +72,3 @@ if (!url) throw new Error('E2E_URL missing');
     await browser.close();
   }
 })().catch(e=>{console.error('E2E FAILED:',e.stack||e);process.exitCode=1;});
-) && !/^R\\$\\s*0,00$/.test(cart.products),'FAILED: Preço das cúpulas não carregou');
-    assert(cart.boxes.includes('R$') && !cart.boxes.includes('0,00'),'FAILED: Custo das caixas não carregou');
-    assert(cart.checkoutDisabled===true,'FAILED: checkout deveria permanecer bloqueado em testes');
-    assert(diagnostics.some(x=>x.endpoint==='/api/checkout/preview' && x.status===200),'FAILED: endpoint do carrinho falhou');
-    assert(consoleErrors.length===0,'FAILED: Erro JavaScript no navegador');
-    console.log('E2E PASSED: configurador -> carrinho -> preços produtos+caixas -> pagamento bloqueado.');
-  } finally {
-    await browser.close();
-  }
-})().catch(e=>{console.error('E2E FAILED:',e.stack||e);process.exitCode=1;});
-) && !/^R\\$\\s*0,00$/.test(cart.boxes),'FAILED: Custo das caixas não carregou');
-    assert(cart.checkoutDisabled===true,'FAILED: checkout deveria permanecer bloqueado em testes');
-    assert(diagnostics.some(x=>x.endpoint==='/api/checkout/preview' && x.status===200),'FAILED: endpoint do carrinho falhou');
-    assert(consoleErrors.length===0,'FAILED: Erro JavaScript no navegador');
-    console.log('E2E PASSED: configurador -> carrinho -> preços produtos+caixas -> pagamento bloqueado.');
-  } finally {
-    await browser.close();
-  }
-})().catch(e=>{console.error('E2E FAILED:',e.stack||e);process.exitCode=1;});
-) && !/^R\\$\\s*0,00$/.test(cart.products),'FAILED: Preço das cúpulas não carregou');
-    assert(cart.boxes.includes('R$') && !cart.boxes.includes('0,00'),'FAILED: Custo das caixas não carregou');
-    assert(cart.checkoutDisabled===true,'FAILED: checkout deveria permanecer bloqueado em testes');
-    assert(diagnostics.some(x=>x.endpoint==='/api/checkout/preview' && x.status===200),'FAILED: endpoint do carrinho falhou');
-    assert(consoleErrors.length===0,'FAILED: Erro JavaScript no navegador');
-    console.log('E2E PASSED: configurador -> carrinho -> preços produtos+caixas -> pagamento bloqueado.');
-  } finally {
-    await browser.close();
-  }
-})().catch(e=>{console.error('E2E FAILED:',e.stack||e);process.exitCode=1;});
