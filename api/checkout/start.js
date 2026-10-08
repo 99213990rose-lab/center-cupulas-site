@@ -37,6 +37,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({error:'method_not_allowed'});
   if (Number(req.headers['content-length'] || 0) > 40000) return res.status(413).json({error:'cart_too_large'});
 
+  const host=String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  if (!/^center-cupulas-site-[a-z0-9-]+\.vercel\.app$/.test(host)) {
+    return res.status(403).json({error:'preview_only'});
+  }
+  const previewOrigin='https://' + host;
+
   const body = req.body || {};
   const items = Array.isArray(body.items) ? body.items : [];
   if (items.length < 1 || items.length > 20) return res.status(400).json({error:'invalid_cart'});
@@ -117,11 +123,11 @@ export default async function handler(req, res) {
         }],
         payer:{name:customer.name,email:customer.email},
         external_reference:externalReference,
-        notification_url:'https://www.centercupulas.com.br/api/mercadopago/webhook',
+        notification_url:'${previewOrigin}/api/mercadopago/webhook',
         back_urls:{
-          success:'https://www.centercupulas.com.br/carrinho.html',
-          failure:'https://www.centercupulas.com.br/carrinho.html',
-          pending:'https://www.centercupulas.com.br/carrinho.html'
+          success:'${previewOrigin}/carrinho.html',
+          failure:'${previewOrigin}/carrinho.html',
+          pending:'${previewOrigin}/carrinho.html'
         },
         auto_return:'approved'
       }),
