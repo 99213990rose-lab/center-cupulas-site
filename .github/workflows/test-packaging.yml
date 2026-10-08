@@ -13,6 +13,9 @@ on:
       - 'tests/center-payments.test.cjs'
       - 'api/checkout/preview.js'
       - 'carrinho.js'
+      - 'catalogo.js'
+      - 'api/pricing/preview.js'
+      - 'tests/configurator-flow.test.cjs'
       - 'tests/center-packaging.test.cjs'
       - '.github/workflows/test-packaging.yml'
   workflow_dispatch:
@@ -29,6 +32,8 @@ jobs:
           node --check lib/center-packaging.cjs
           node --check api/checkout/preview.js
           node --check carrinho.js
+          node --check catalogo.js
+          node --check api/pricing/preview.js
           node --check lib/center-checkout-eligibility.cjs
           node --check lib/center-mp-security.cjs
           node --check lib/center-checkout-db.cjs
