@@ -81,3 +81,16 @@ Uma versão prévia isolada da Center com botão de pagamento habilitado apenas 
 - Branch Vercel de prévia implantado, sem merge na main. Nenhum banco atualizado, nenhuma credencial criada/alterada e nenhum pagamento ou pedido real gerado.
 
 **Pendências operacionais**: retorno de orçamentos reais de caixas em Itaquera; aferição das dimensões externas/peso; validação final do preço dos tamanhos personalizados e das margens; configuração segura do frete; implantação revisada da tabela exclusiva da Center; configuração de credenciais **de teste** e testes completos Pix/cartão/webhook em sandbox antes de cogitar ativação no site oficial.
+
+
+## Frete com dados medidos — 08/10/2026
+
+- A versão de testes mantém Frenet como provedor previsto, mas **`FRENET_TOKEN` não está configurado na Vercel**. Só existe `MERCADO_PAGO_ACCESS_TOKEN` no projeto e ele não foi usado.
+- Revisão das regras já existentes no Supabase da Center: `max_nested_per_package = 4`, `side_padding_cm = 6`, `height_padding_cm = 6`, `nested_height_increment_cm = 3` e `rule_version = v0.1-calibracao`. Isso indica possibilidade de cúpulas cônicas encaixadas em caixas, **não comprovação de viabilidade física**, e não foi liberado no cálculo cobrável.
+- O catálogo de caixas na branch (P30/M45/G60/GG70) mantém preços **provisórios** de R$6/R$16/R$30/R$45. A folga do estimador foi alinhada de 5cm para **6cm** para simulação. Para caixas de 30cm, dimensão máxima da cúpula precisa ser no máximo 24cm nesse critério provisório.
+- O estimador continua **conservador com uma peça por caixa** até testar embalagem e resistência em transporte. Não confundir esse custo conservador com preço definitivo de embalagem em lotes de várias cúpulas. O antigo motor tem uma hipótese de 4 encaixadas, que precisa de prova física.
+- Novo módulo `lib/center-shipping-gate.cjs` registra `external_cm=null`, `gross_weight_kg=null`, `packing_test_approved=false` para os quatro modelos. Somente medida **externa**, peso bruto do pacote cheio e teste de proteção podem habilitar cotação.
+- A API `api/frete.js` passou a receber apenas itens e CEP, bloqueia a cotação enquanto embalagens não forem aprovadas e recalcula o preço dos produtos no servidor; não confia mais em `shipmentValue`, dimensões ou massa enviados pelo navegador.
+- A UI `carrinho.js` também envia somente itens/CEP. Com as caixas não verificadas, o usuário vê frete em validação e não recebe valor provisório.
+- Testes `tests/center-packaging.test.cjs` e `tests/center-freight-gate.test.cjs` no GitHub Actions passaram (run `37844279170`). Publicação continua **somente na branch de testes**. Pagamentos desativados.
+- O próximo passo operacional é adquirir/amostrar as quatro caixas, testar a proteção e eventual encaixe, pesar os volumes cheios, medir dimensões **externas**, registrar custos finais e então conectar `FRENET_TOKEN` no ambiente correto e fazer cotações reais antes de habilitar Pix/cartão.
