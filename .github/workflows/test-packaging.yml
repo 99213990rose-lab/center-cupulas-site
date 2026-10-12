@@ -14,6 +14,7 @@ on:
       - 'api/checkout/start.js'
       - 'api/mercadopago/webhook.js'
       - 'tests/center-payments.test.cjs'
+      - 'tests/center-checkout-start.test.cjs'
       - 'api/checkout/preview.js'
       - 'carrinho.js'
       - 'catalogo.js'
