@@ -4,7 +4,11 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const originalFetch = global.fetch;
-const { default: handler } = await import('../api/checkout/start.js');
+let handler;
+
+test.before(async () => {
+  ({ default: handler } = await import('../api/checkout/start.js'));
+});
 
 test.after(() => {
   global.fetch = originalFetch;
