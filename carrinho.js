@@ -418,7 +418,7 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'checkout_error');
       const checkoutUrl = new URL(data.checkout_url);
-      if (checkoutUrl.protocol !== 'https:' || !/(^|\\.)mercadopago\\.com(\\.br)?$/.test(checkoutUrl.hostname)) {
+      if (checkoutUrl.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.br)?$/.test(checkoutUrl.hostname)) {
         throw new Error('invalid_checkout_url');
       }
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
