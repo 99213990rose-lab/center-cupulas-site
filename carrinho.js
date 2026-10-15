@@ -162,7 +162,7 @@
         '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · até ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
         '<strong>' + money(option.price) + '</strong>' +
       '</label>';
-    }).join('') + '<p class="shipping-calibration-note">Frete calculado com a embalagem estimada e peso volumétrico conservador. A cobrança online continua bloqueada até a calibração logística.</p>';
+    }).join('') + '<p class="shipping-calibration-note">Frete calculado com a embalagem estimada e peso volumétrico conservador. O pagamento online será habilitado após validar o frete e concluir os testes do checkout.</p>';
 
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
