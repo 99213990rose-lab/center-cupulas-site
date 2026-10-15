@@ -299,7 +299,7 @@
         if (totalEl) totalEl.textContent = 'Sob consulta';
         return;
       }
-      if (statusBox) statusBox.hidden = true;
+      if (statusBox && !new URLSearchParams(window.location.search).has('payment')) statusBox.hidden = true;
       renderPreview(data);
     } catch {
       if (seq !== requestSeq) return;
