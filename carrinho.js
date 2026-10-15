@@ -433,6 +433,14 @@
     }
   });
 
+  const paymentReturn = new URLSearchParams(window.location.search).get('payment');
+  if (paymentReturn === 'return') {
+    setStatus('info', '<strong>Você voltou do Mercado Pago.</strong><p>O pedido será confirmado somente após a verificação automática do pagamento. Guarde seu comprovante até a confirmação.</p>');
+  } else if (paymentReturn === 'pending') {
+    setStatus('info', '<strong>Pagamento em processamento.</strong><p>A confirmação ocorrerá após a aprovação pelo Mercado Pago.</p>');
+  } else if (paymentReturn === 'failed') {
+    setStatus('warning', '<strong>Pagamento não concluído.</strong><p>Você pode revisar seu carrinho e tentar novamente.</p>');
+  }
   renderItems();
   refreshPreview();
 })();
