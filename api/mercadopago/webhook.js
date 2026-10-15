@@ -5,10 +5,10 @@ const respond = (res, status, body) => res.status(status).setHeader('Cache-Contr
 function signatureOk(req, secret) {
   const signature = String(req.headers['x-signature'] || '');
   const requestId = String(req.headers['x-request-id'] || '');
-  const ts = signature.match(/(?:^|,)\\s*ts=([^,]+)/)?.[1];
-  const v1 = signature.match(/(?:^|,)\\s*v1=([0-9a-f]+)/i)?.[1];
+  const ts = signature.match(/(?:^|,)\s*ts=([^,]+)/)?.[1];
+  const v1 = signature.match(/(?:^|,)\s*v1=([0-9a-f]+)/i)?.[1];
   const dataId = String(req.query['data.id'] || req.body?.data?.id || '');
-  if (!ts || !v1 || !requestId || !/^\\d+$/.test(dataId)) return false;
+  if (!ts || !v1 || !requestId || !/^\d+$/.test(dataId)) return false;
   const expected = createHmac('sha256', secret).update('id:' + dataId.toLowerCase() + ';request-id:' + requestId + ';ts:' + ts + ';').digest('hex');
   const actualBytes = Buffer.from(v1, 'hex');
   const expectedBytes = Buffer.from(expected, 'hex');
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     if (!reference.startsWith('CENTER_CUPULAS:')) return respond(res, 200, { received: true, ignored: true });
     const quoteId = reference.slice('CENTER_CUPULAS:'.length);
     if (!/^[0-9a-f-]{36}$/i.test(quoteId)) return respond(res, 400, { error: 'invalid_reference' });
-    const base = supaUrl.replace(/\\/$/, '') + '/rest/v1/quotes';
+    const base = supaUrl.replace(/\/$/, '') + '/rest/v1/quotes';
     const headers = { apikey: supaKey, Authorization: 'Bearer ' + supaKey, 'Content-Type': 'application/json' };
     const query = '?id=eq.' + encodeURIComponent(quoteId) + '&organization_id=eq.' + ORG_ID + '&select=id,status,total,currency,notes';
     const found = await fetch(base + query, { headers });
