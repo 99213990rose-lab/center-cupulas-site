@@ -125,7 +125,7 @@
       checkoutButton.disabled = true;
       return;
     }
-    checkoutButton.disabled = Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
+    checkoutButton.disabled = !selectedShipping || preview?.packaging?.status !== 'estimated';
   };
 
   const renderFreightState = (data) => {
@@ -405,54 +405,31 @@
     };
 
     checkoutButton.disabled = true;
-    checkoutButton.textContent = 'Enviando…';
+    checkoutButton.textContent = 'Preparando pagamento…';
     setStatus('info', '<strong>Enviando seu pedido para a Center Cúpulas…</strong>');
 
     try {
-      const response = await fetch(ENDPOINT, {
+      if (!selectedShipping) throw new Error('Escolha uma opção de frete antes de continuar.');
+      const response = await fetch('/api/mercadopago/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'omit',
-        body: JSON.stringify({ action: 'submit', items, customer, shippingSelection: selectedShipping ? { code: selectedShipping.code } : null })
+        body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code } })
       });
       const data = await response.json();
-      if (!response.ok && (data.error === 'shipping_service_required' || data.error === 'shipping_service_invalid')) {
-        if (Array.isArray(data.shipping_options)) {
-          renderFreightState({ status: 'ok', provider: 'Frenet', options: data.shipping_options });
-        } else {
-          refreshFreight();
-        }
-        throw new Error('Escolha uma opção de frete antes de continuar.');
+      if (!response.ok) throw new Error(data.error || 'checkout_error');
+      const checkoutUrl = new URL(data.checkout_url);
+      if (checkoutUrl.protocol !== 'https:' || !/(^|\\.)mercadopago\\.com(\\.br)?$/.test(checkoutUrl.hostname)) {
+        throw new Error('invalid_checkout_url');
       }
-      if (!response.ok || !data.submitted) throw new Error(data.error || 'checkout_error');
-
-      cart.clear();
-      const message = [
-        'Olá! Acabei de montar um pedido pelo site da Center Cúpulas.',
-        '',
-        'Código: ' + data.quote_code,
-        'Produtos: ' + money(data.product_total),
-        'Frete: ' + (data.freight != null ? money(data.freight) : 'a confirmar'),
-        'Total: ' + money(data.total),
-        '',
-        'Gostaria de confirmar os detalhes para produção.'
-      ].join('\n');
-      const wa = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-
-      document.querySelector('[data-checkout-layout]')?.classList.add('is-complete');
-      setStatus('success',
-        '<strong>Pedido recebido!</strong>' +
-        '<p>Seu código é <b>' + escapeHtml(data.quote_code) + '</b>. Produtos: <b>' + money(data.product_total) + '</b>' + (data.freight != null ? ' · Frete: <b>' + money(data.freight) + '</b> · Total: <b>' + money(data.total) + '</b>.' : '. O frete será confirmado pela equipe.') + '</p>' +
-        '<a class="button button--whatsapp" href="' + wa + '" target="_blank" rel="noopener noreferrer">Continuar pelo WhatsApp <span aria-hidden="true">↗</span></a>'
-      );
-      window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
+      window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
+      window.location.assign(checkoutUrl.href);
     } catch (error) {
       const message = error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'
-        : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
-      setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
+        : 'Pagamento indisponível neste momento. Revise o frete ou solicite ajuda pelo WhatsApp.';
+      setStatus('error', '<strong>Não conseguimos iniciar o pagamento.</strong><p>' + escapeHtml(message) + '</p>');
       checkoutButton.disabled = false;
-      checkoutButton.textContent = 'Enviar pedido para confirmação';
+      checkoutButton.textContent = 'Ir para pagamento seguro';
     }
   });
 
