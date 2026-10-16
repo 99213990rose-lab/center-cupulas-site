@@ -38,6 +38,7 @@
   let freightOptions = [];
   let selectedShipping = null;
   let freightProviderConfigured = false;
+  let checkoutProEnabled = false;
 
   const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
@@ -299,7 +300,7 @@
         if (totalEl) totalEl.textContent = 'Sob consulta';
         return;
       }
-      if (statusBox) statusBox.hidden = true;
+      if (statusBox && !new URLSearchParams(window.location.search).has('payment')) statusBox.hidden = true;
       renderPreview(data);
     } catch {
       if (seq !== requestSeq) return;
@@ -405,10 +406,29 @@
     };
 
     checkoutButton.disabled = true;
-    checkoutButton.textContent = 'Enviando…';
+    checkoutButton.textContent = checkoutProEnabled ? 'Preparando pagamento…' : 'Enviando…';
     setStatus('info', '<strong>Enviando seu pedido para a Center Cúpulas…</strong>');
 
     try {
+      if (checkoutProEnabled) {
+        if (!selectedShipping) throw new Error('shipping_required');
+        const response = await fetch('/api/mercadopago/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code } })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.checkout_url) throw new Error(data.error || 'payment_unavailable');
+        const url = new URL(data.checkout_url);
+        if (url.protocol !== 'https:' || !/(^|\\.)mercadopago\\.com(\\.br)?$/.test(url.hostname)) {
+          throw new Error('invalid_payment_url');
+        }
+        // Never treat the browser redirect as payment confirmation; the signed webhook decides.
+        window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
+        window.location.assign(url.href);
+        return;
+      }
       const response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -452,10 +472,31 @@
         : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
       setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
       checkoutButton.disabled = false;
-      checkoutButton.textContent = 'Enviar pedido para confirmação';
+      checkoutButton.textContent = checkoutProEnabled ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
     }
   });
 
+  // The payment flow is enabled only when the server confirms *all* required
+  // production credentials and shipping settings. Otherwise keep WhatsApp quoting.
+  (async () => {
+    try {
+      const response = await fetch('/api/mercadopago/status', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      checkoutProEnabled = data.checkout_enabled === true;
+      if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
+        ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
+    } catch { /* the manual quote flow remains available */ }
+  })();
+
+  const paymentReturn = new URLSearchParams(window.location.search).get('payment');
+  if (paymentReturn === 'return') {
+    setStatus('info', '<strong>Você voltou do Mercado Pago.</strong><p>A compra será confirmada somente após a validação automática do pagamento. Guarde seu comprovante.</p>');
+  } else if (paymentReturn === 'pending') {
+    setStatus('info', '<strong>Pagamento em processamento.</strong><p>A confirmação acontece após a aprovação pelo Mercado Pago.</p>');
+  } else if (paymentReturn === 'failed') {
+    setStatus('warning', '<strong>Pagamento não concluído.</strong><p>Seu carrinho foi mantido para você tentar novamente.</p>');
+  }
   renderItems();
   refreshPreview();
 })();
