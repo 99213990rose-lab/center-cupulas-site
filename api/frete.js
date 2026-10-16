@@ -1,4 +1,5 @@
-// Never use a guessed shipping origin: an incorrect CEP can undercharge delivery.\nconst ORIGIN_CEP = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '');
+// Never use a guessed shipping origin: an incorrect CEP can undercharge delivery.
+const ORIGIN_CEP = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '');
 const FRENET_TOKEN = process.env.FRENET_TOKEN || '';
 
 function cleanCep(value) {
@@ -17,7 +18,11 @@ function round(value, decimals = 2) {
 
 function normalizePackages(packages) {
   if (!Array.isArray(packages) || !packages.length || packages.length > 30) return [];
-  if (packages.some((pack) => {\n    const d = pack?.dimensions_cm || {};\n    return ![d.width, d.length, d.height].every((v) => Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 300);\n  })) return [];\n  return packages.map((pack, index) => {
+  if (packages.some((pack) => {
+    const d = pack?.dimensions_cm || {};
+    return ![d.width, d.length, d.height].every((v) => Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 300);
+  })) return [];
+  return packages.map((pack, index) => {
     const dims = pack?.dimensions_cm || {};
     const width = Math.max(1, Math.ceil(number(dims.width)));
     const length = Math.max(1, Math.ceil(number(dims.length)));
