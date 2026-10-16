@@ -39,6 +39,10 @@ jobs:
             quote_status: response.quote_status || null
           };
           console.log('Diagnostic:',JSON.stringify(result));
+          if(Array.isArray(response.options)) {
+            const carriers=[...new Set(response.options.map(x=>String(x.carrier||'').slice(0,80)).filter(Boolean))];
+            console.log('Carrier names (test quote only):',JSON.stringify(carriers));
+          }
           if(status!=='200' || (response.status!=='ok' && response.status!=='no_options') || response.calibration!==true){
             console.error('Freight smoke test needs review; do not enable checkout.');
             process.exitCode=1;
