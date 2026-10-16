@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     });
     const quote = await quoteResponse.json();
     if (!quoteResponse.ok || !quote.submitted) return json(res, 422, { error: 'quote_unavailable' });
-    if (quote.shipping?.status !== 'quoted' || quote.packaging?.status !== 'estimated' ||
+    if (quote.shipping?.status !== 'quoted' || quote.packaging?.status !== 'verified' ||
         !Number.isFinite(Number(quote.total)) || Number(quote.total) <= 0 || !quote.quote_id) {
       return json(res, 422, { error: 'shipping_or_packaging_needs_review', quote_code: quote.quote_code });
     }
