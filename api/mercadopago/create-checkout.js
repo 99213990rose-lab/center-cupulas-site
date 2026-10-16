@@ -1,4 +1,8 @@
 import mpTransport from './transport.cjs';
+const cleanToken = (raw) => String(raw || '').trim()
+  .replace(/^['"]|['"]$/g, '')
+  .replace(/^Bearer\s+/i, '')
+  .replace(/[\r\n\t ]/g, '');
 // Checkout Pro: server-only endpoint. Disabled until production credentials and shipping are validated.
 const SITE = 'https://www.centercupulas.com.br';
 const QUOTE_API = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
@@ -11,7 +15,7 @@ export default async function handler(req, res) {
   if (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, ''))) {
     return json(res, 503, { error: 'shipping_not_configured' });
   }
-  const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+  const token = cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN);
   if (!token || !process.env.MERCADO_PAGO_WEBHOOK_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return json(res, 503, { error: 'payment_not_configured' });
   }

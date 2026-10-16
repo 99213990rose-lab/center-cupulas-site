@@ -288,3 +288,18 @@ test('a provider network failure uses native HTTPS before rejecting checkout',as
 test('native provider transport refuses accidental external hosts',async()=>{
  assert.throws(()=>mpTransport.requestJson('https://example.invalid/payments'),/provider_host_not_allowed/);
 });
+
+
+test('provider access token copied with whitespace uses a valid Authorization header',async(t)=>{
+ t.after(reset);configure();
+ process.env.MERCADO_PAGO_ACCESS_TOKEN='  Bearer APP_USR_test-token-123\n';
+ const original=mpTransport.requestJson;
+ t.after(()=>{mpTransport.requestJson=original;});
+ mpTransport.requestJson=async(url,opts)=>{
+   assert.equal(opts.headers.Authorization,'Bearer APP_USR_test-token-123');
+   return {ok:true,status:200};
+ };
+ const statusResult=response();
+ await status({method:'GET',query:{diagnose:'native'}},statusResult);
+ assert.equal(statusResult.body.provider_connection,'authorized');
+});

@@ -1,4 +1,8 @@
 import mpTransport from './transport.cjs';
+const cleanToken = (raw) => String(raw || '').trim()
+  .replace(/^['"]|['"]$/g, '')
+  .replace(/^Bearer\s+/i, '')
+  .replace(/[\r\n\t ]/g, '');
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const ORG_REF = 'CENTER_CUPULAS:';
@@ -32,7 +36,7 @@ function supabaseHeaders(key) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return respond(res, 405, { error: 'method_not_allowed' });
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-  const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+  const token = cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN);
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret || !token || !url || !key) return respond(res, 503, { error: 'not_configured' });
