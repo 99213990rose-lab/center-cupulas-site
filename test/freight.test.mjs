@@ -142,7 +142,8 @@ test('pending calibration is explicitly marked as preliminary in Frenet response
 test('customer cart does not display preliminary Frenet price as selectable shipping',()=>{
   const src=readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
   assert.ok(src.includes('freightOptions.length && data?.calibration !== false'));
-  assert.ok(src.includes('Nenhuma tarifa'));
+  assert.ok(src.includes('Frete estimado: média'));
+  assert.ok(src.includes('Esta média não é uma tarifa garantida'));
   assert.ok(src.includes('freightOptions = []'));
   assert.ok(src.includes('selectedShipping = null'));
 });
