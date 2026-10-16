@@ -19,9 +19,10 @@ Cadastrar somente na Vercel (Production), sem colocar segredos no GitHub ou no n
 | `SUPABASE_SERVICE_ROLE_KEY` | Chave secreta do servidor Center (`sb_secret_...` aceita) |
 | `FRENET_TOKEN` | Token do cálculo de entrega |
 | `CENTER_CUPULAS_ORIGIN_CEP` | CEP real de coleta/expedição, exatamente oito números |
+| `CENTER_SHIPPING_VALIDATED` | `true` somente após conferência presencial de dimensões, peso, embalagem, transportadora e custos. Até lá, ausente ou `false`. |
 | `CENTER_CHECKOUT_ENABLED` | `false` até homologação; `true` para liberar após testes |
 
-O frete não usa mais CEP de origem presumido. Sem Frenet/token/CEP válido o pagamento fica bloqueado; os pedidos de orçamento continuam funcionando.
+O frete não usa mais CEP de origem presumido. Sem Frenet/token/CEP válido ou sem `CENTER_SHIPPING_VALIDATED=true` o pagamento fica bloqueado; os pedidos de orçamento continuam funcionando.
 
 **Importante:** não trocar a URL global do webhook da aplicação Métodos Digitais de forma cega: ela pode receber pagamentos daquele projeto. As preferências da Center incluem `notification_url` específica:
 `https://www.centercupulas.com.br/api/mercadopago/webhook`.
@@ -60,3 +61,10 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 - Índice único em `(organization_id,quote_id)` evita duplicação de pedidos. Reenvio do webhook devolve o mesmo pedido.
 - Teste transacional no banco confirmou criação, vínculo e idempotência. Todas as alterações do teste foram revertidas com `ROLLBACK`; nenhum pagamento nem pedido fictício permaneceu.
 - Nenhum pedido antigo foi alterado. O fluxo Checkout Pro permanece desativado em produção até homologação de frete e webhook.
+
+## Trava adicional de embalagem e frete — 16/10/2026
+- A fábrica precisa validar caixas reais e peso de expedição, não apenas o peso volumétrico estimado.
+- O endpoint `/api/frete` informa `calibration:true` até aprovação expressa via `CENTER_SHIPPING_VALIDATED=true`.
+- `GET /api/mercadopago/status`, a criação de preferência e a Edge Function `public-cart-checkout` (v6) recusam cobrar sem essa aprovação.
+- `CENTER_SHIPPING_VALIDATED` **não foi ativado**; não presumir que os valores da Frenet estão homologados.
+- São necessárias **duas** autorizações de produção, `CENTER_SHIPPING_VALIDATED=true` e `CENTER_CHECKOUT_ENABLED=true`, com nova publicação na Vercel após os testes.
