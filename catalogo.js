@@ -961,7 +961,24 @@
 
   applySearch();
 
-  const requestedReference = new URLSearchParams(window.location.search).get('ref');
+  // Links from SEO category pages can open a preselected format. Never accept
+  // arbitrary keys or override an explicit reference link.
+  const catalogQuery = new URLSearchParams(window.location.search);
+  const requestedFormat = catalogQuery.get('formato');
+  const allowedFormats = new Set([
+    'conica', 'drum', 'bell', 'piramidal-quadrada',
+    'cubo', 'oval', 'piramidal-retangular'
+  ]);
+  if (!catalogQuery.has('ref') && requestedFormat && allowedFormats.has(requestedFormat)) {
+    pageConfigurator?.setConfiguration({
+      format: requestedFormat,
+      measureMode: 'custom',
+      material: 'Juta',
+      color: 'Preto'
+    });
+  }
+
+  const requestedReference = catalogQuery.get('ref');
   if (requestedReference) {
     const reference = getReference(requestedReference);
     const requestedCard = grid.querySelector('[data-reference="' + reference.reference + '"]');
