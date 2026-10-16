@@ -320,6 +320,11 @@ Deno.serve(async(req:Request)=>{
         }
         const options=Array.isArray(freightData.options)?freightData.options:[];
         if(options.length){
+          // A manual request must never require selecting an unapproved tariff.
+          // Payment requests are checked again below and always need approval.
+          if(action==="submit" && freightData.calibration!==false){
+            freightProviderStatus="needs_review";
+          } else {
           freightProviderStatus="available";
           if(!requestedShipping?.code){
             return json({error:"shipping_service_required",shipping_options:options},400,origin);
@@ -329,6 +334,7 @@ Deno.serve(async(req:Request)=>{
             return json({error:"shipping_service_invalid",shipping_options:options},400,origin);
           }
           freightProviderStatus="quoted";
+          }
         }
       }else if(freightResponse.status!==503){
         freightProviderStatus="provider_error";
