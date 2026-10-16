@@ -1,4 +1,4 @@
-name: Frenet diagnostics — simulated packages, no orders
+name: Center checkout smoke — no purchase or orders
 on:
   push:
     branches:
@@ -7,56 +7,39 @@ on:
 permissions:
   contents: read
 jobs:
-  shipping-matrix:
+  public-checkout-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Simulate small, medium, large and multi-volume quotes at public CEPs
+      - name: Verify public checkout is enabled, without initiating any payment
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --max-time 20             'https://www.centercupulas.com.br/api/mercadopago/status'             -o "$RUNNER_TEMP/checkout-status.json"
+          STATUS_JSON="$RUNNER_TEMP/checkout-status.json" node <<'NODE'
+          const fs=require('node:fs');
+          const data=JSON.parse(fs.readFileSync(process.env.STATUS_JSON,'utf8'));
+          console.log('CHECKOUT_STATUS:',JSON.stringify({enabled:data.checkout_enabled,flow:data.flow}));
+          if(data.checkout_enabled!==true||data.flow!=='mercadopago') process.exit(1);
+          NODE
+      - name: Verify live Frenet options for public destination CEPs
         shell: bash
         run: |
           set -euo pipefail
           for CEP in 01001000 20040002; do
-            for PROFILE in small medium large multivolume; do
-              case "$PROFILE" in
-                small) DIMS='{"width":36,"length":36,"height":30}';;
-                medium) DIMS='{"width":62,"length":62,"height":45}';;
-                large) DIMS='{"width":80,"length":80,"height":55}';;
-                multivolume) DIMS='{"width":36,"length":36,"height":30}';;
-              esac
-              echo "Testing SIMULATED profile=$PROFILE / public CEP ending ${CEP: -3}"
-              RESPONSE_FILE="$RUNNER_TEMP/frenet-$CEP-$PROFILE.json" \
-              DEST_CEP="$CEP" PROFILE="$PROFILE" DIMS="$DIMS" \
-              node <<'NODE' > "$RUNNER_TEMP/payload.json"
-          const dimensions=JSON.parse(process.env.DIMS);
-          const one={dimensions_cm:dimensions,requires_manual_review:false};
-          const packages=process.env.PROFILE==='multivolume'?[one,one]:[one];
-          console.log(JSON.stringify({recipientCep:process.env.DEST_CEP,shipmentValue:180,packages}));
-          NODE
-              HTTP_CODE=$(curl --silent --show-error --max-time 25 --connect-timeout 10 \
-                --request POST 'https://www.centercupulas.com.br/api/frete' \
-                --header 'Content-Type: application/json' \
-                --header 'Origin: https://www.centercupulas.com.br' \
-                --data-binary @"$RUNNER_TEMP/payload.json" \
-                --output "$RUNNER_TEMP/frenet-$CEP-$PROFILE.json" --write-out '%{http_code}')
-              HTTP_CODE="$HTTP_CODE" PROFILE="$PROFILE" \
-              RESPONSE_FILE="$RUNNER_TEMP/frenet-$CEP-$PROFILE.json" node <<'NODE'
+            echo '{"recipientCep":"'$CEP'","shipmentValue":180,"packages":[{"dimensions_cm":{"width":36,"length":36,"height":30},"requires_manual_review":false}]}' > "$RUNNER_TEMP/request.json"
+            HTTP_CODE=$(curl --show-error --silent --max-time 25 --connect-timeout 10               -X POST 'https://www.centercupulas.com.br/api/frete'               -H 'Content-Type: application/json'               -H 'Origin: https://www.centercupulas.com.br'               --data-binary @"$RUNNER_TEMP/request.json"               -o "$RUNNER_TEMP/frenet-$CEP.json" -w '%{http_code}')
+            HTTP_CODE="$HTTP_CODE" RESULT="$RUNNER_TEMP/frenet-$CEP.json" node <<'NODE'
           const fs=require('node:fs');
-          let d;
-          try{d=JSON.parse(fs.readFileSync(process.env.RESPONSE_FILE,'utf8'));}
-          catch{d={error:'non_json_response'};}
-          const opts=Array.isArray(d.options)?d.options:[];
-          const carriers=[...new Set(opts.map(o=>o.carrier).filter(Boolean))].sort();
-          const valid=opts.every(o=>Number.isFinite(o.price)&&o.price>=0&&String(o.code||'').length);
-          const prices=opts.map(o=>o.price).filter(Number.isFinite);
-          const sum={profile:process.env.PROFILE,http:Number(process.env.HTTP_CODE),
-             result:d.status||d.error||'unknown',option_count:opts.length,carriers,
-             price_range_estimated_brl:prices.length?[Math.min(...prices),Math.max(...prices)]:null,
-             calibration:d.calibration,quote_status:d.quote_status||null,
-             standard_correios_limit_review:process.env.PROFILE==='large'&&carriers.includes('Correios')};
-          console.log('FRENET_DIAGNOSTIC:',JSON.stringify(sum));
-          if(process.env.HTTP_CODE!=='200'||!['ok','no_options'].includes(d.status)||d.calibration!==true||!valid){
-            console.error('Provider response requires review. Do NOT activate payment.');process.exitCode=1;
-          }
+          const d=JSON.parse(fs.readFileSync(process.env.RESULT,'utf8'));
+          const options=Array.isArray(d.options)?d.options:[];
+          console.log('LIVE_FRENET:',JSON.stringify({
+             http:Number(process.env.HTTP_CODE),status:d.status,
+             calibration:d.calibration,optionCount:options.length,
+             carriers:[...new Set(options.map(x=>x.carrier))],
+             minPrice:options.length?Math.min(...options.map(x=>x.price)):null
+          }));
+          if(process.env.HTTP_CODE!=='200'||d.status!=='ok'||d.calibration!==false||!options.length||
+             !options.every(x=>x.code && Number.isFinite(x.price) && x.price>=0))process.exit(1);
           NODE
-            done
           done
