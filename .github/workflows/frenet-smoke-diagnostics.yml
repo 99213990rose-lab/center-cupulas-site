@@ -16,7 +16,7 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --show-error --silent --max-time 20 \
-            'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=connection' \
+            'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=native' \
             --output "$RUNNER_TEMP/mp-health.json"
           HEALTH_FILE="$RUNNER_TEMP/mp-health.json" node <<'NODE'
           const fs=require('node:fs');
