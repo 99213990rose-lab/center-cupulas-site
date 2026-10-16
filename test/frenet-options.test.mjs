@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeFrenetOptions} from '../api/frenet-options.mjs';
+import { readFileSync } from 'node:fs';
+import {normalizeFrenetOptions} from '../api/frete.js';
 
 test('normalizes valid shipping quotes and preserves zero-price free delivery',()=>{
  const options=normalizeFrenetOptions({ShippingSevicesArray:[
@@ -41,4 +42,11 @@ test('rejects ambiguous duplicate service codes and invalid delivery estimates',
 test('malformed provider success responses do not become zero options',()=>{
  assert.equal(normalizeFrenetOptions({}),null);
  assert.equal(normalizeFrenetOptions(null),null);
+});
+
+
+test('production Vercel endpoint embeds the Frenet normalizer directly',()=>{
+  const source=readFileSync(new URL('../api/frete.js',import.meta.url),'utf8');
+  assert.ok(source.includes('export function normalizeFrenetOptions(data)'));
+  assert.doesNotMatch(source,/from ['"]\.\/frenet-options\.mjs['"]/);
 });
