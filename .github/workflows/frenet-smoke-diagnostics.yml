@@ -23,7 +23,8 @@ jobs:
           const data=JSON.parse(fs.readFileSync(process.env.HEALTH_FILE,'utf8'));
           console.log('PAYMENT_CONNECTION_DIAGNOSTIC:',JSON.stringify({
             checkout_enabled:data.checkout_enabled,
-            provider_connection:data.provider_connection||'not_reported'
+            provider_connection:data.provider_connection||'not_reported',
+            connection_issue:data.connection_issue||'none'
           }));
           if(data.provider_connection!=='authorized')process.exitCode=1;
           NODE
