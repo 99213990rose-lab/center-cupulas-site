@@ -4330,3 +4330,9 @@ p { text-wrap: pretty; }
   .info-section p { font-size: .91rem; }
   .info-bottom__inner { align-items: flex-start; flex-direction: column; }
 }
+
+/* Footer with clear customer-information destinations on every page. */
+.footer__grid { grid-template-columns: minmax(220px,1.35fr) repeat(3,minmax(0,1fr)); gap: clamp(24px,3.6vw,56px); }
+.footer__grid > div:not(.footer__brand) p { color:#b0a298; font-size:.76rem; line-height:1.7; }
+@media (max-width: 900px) { .footer__grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 620px) { .footer__grid { grid-template-columns: 1fr; } }
