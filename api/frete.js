@@ -142,7 +142,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       status: options.length ? 'ok' : 'no_options',
       provider: 'Frenet',
-      calibration: true,
+      calibration: process.env.CENTER_SHIPPING_VALIDATED !== 'true',
       origin_cep: ORIGIN_CEP,
       recipient_cep: recipientCep,
       package_count: packages.length,
