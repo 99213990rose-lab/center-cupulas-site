@@ -1,7 +1,8 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { calculateBoxPurchaseBudget } from "./box-costs.mjs";
+import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.mjs";
+import { addBoxesToPrices } from "./price-with-box.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -214,18 +215,25 @@ Deno.serve(async(req:Request)=>{
 
     const data=await loadData();
     const priced=items.map((x:Item)=>priceItem(x,data));
-    const subtotalBefore=round2(priced.reduce((sum,x)=>sum+x.line_list_total,0));
+    // Cost of purchasing the planned boxes is already inside the product lines.
+    // The manufacturing discount never discounts that embedded cost.
+    const lineBoxes=priced.map(x=>estimateBoxCostForItem(x,data.packaging));
     const threshold=n(data.rules.discount_threshold),discountPct=n(data.rules.discount_pct);
-    const unlocked=subtotalBefore>=threshold;
-    const multiplier=unlocked?(1-discountPct/100):1;
-    const pricedFinal=priced.map(x=>({
-      ...x,
-      unit_price:round2(x.unit_list_price*multiplier),
-      line_total:round2(x.line_list_total*multiplier)
-    }));
-    const productTotal=round2(pricedFinal.reduce((sum,x)=>sum+x.line_total,0));
+    const pricedQuote=addBoxesToPrices(priced,lineBoxes,threshold,discountPct);
+    if(pricedQuote.status!=="ok"){
+      return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
+    }
+    const pricedFinal=pricedQuote.items;
+    const manufacturerSubtotal=pricedQuote.manufacturerSubtotal;
+    const subtotalBefore=pricedQuote.subtotalBeforeDiscount;
+    const productTotal=pricedQuote.productTotal;
+    const unlocked=pricedQuote.discountUnlocked;
     const packaging=estimatePackaging(pricedFinal,data.packaging);
     const boxBudget=calculateBoxPurchaseBudget(packaging,pricedFinal,data.packaging);
+    const expectedBoxCost=pricedQuote.totalBoxCost;
+    if(boxBudget.status!=="estimate" || Math.abs(n(boxBudget.total_cost_brl)-expectedBoxCost)>0.001){
+      return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
+    }
 
     const preview={
       status:"ok",
@@ -241,10 +249,10 @@ Deno.serve(async(req:Request)=>{
         unlocked,
         percent:discountPct,
         threshold:round2(threshold),
-        amount:round2(subtotalBefore-productTotal),
-        amount_to_unlock:round2(Math.max(0,threshold-subtotalBefore))
+        amount:pricedQuote.discountAmount,
+        amount_to_unlock:round2(Math.max(0,threshold-manufacturerSubtotal))
       },
-      note:"Preços dos produtos calculados; frete sujeito à confirmação quando não houver cotação automática."
+      note:"Os valores das cúpulas já incluem os custos previstos das caixas. O frete é confirmado separadamente."
     };
     if(action==="preview")return json(preview,200,origin);
 
@@ -371,11 +379,12 @@ Deno.serve(async(req:Request)=>{
     const insertedQuote=await sb.from("quotes").insert({
       organization_id:ORG_ID,lead_id:leadId,code,status:"draft",line_items:lineItems,
       subtotal:productTotal,freight:freightValue,total:finalTotal,currency:"BRL",
-      customer_name:name,customer_phone:phone,shipping:{...shipping,box_purchase_budget:boxBudget},
+      customer_name:name,customer_phone:phone,shipping:{...shipping,box_purchase_budget:{...boxBudget,included_in_products:true}},
       notes:[
         "Checkout do site — preços calculados pelo motor comercial.",
         verifiedFreight?("Frete: "+verifiedFreight.carrier+" / "+verifiedFreight.service+" — R$ "+freightValue.toFixed(2)):"Frete ainda não calculado.",
         "Prévia de embalagem: "+packaging.package_count+" volume(s).",
+        "Custo previsto das caixas já embutido nos preços das cúpulas; não acrescentar novamente.",
         boxBudget.status==="estimate"
           ?("Custo interno estimado das caixas: R$ "+boxBudget.total_cost_brl.toFixed(2)+" ("+
             boxBudget.counts.pequena+" pequena(s), "+boxBudget.counts.media+" média(s), "+

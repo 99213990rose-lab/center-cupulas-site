@@ -268,33 +268,19 @@
         progressEl.hidden = true;
       } else if (data.discount?.unlocked) {
         progressEl.hidden = false;
-        progressEl.textContent = discountLabel + ' de desconto aplicado automaticamente.';
+        progressEl.textContent = discountLabel + ' de desconto aplicado ao valor de fabricação.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else {
         progressEl.hidden = false;
-        progressEl.textContent = 'Faltam ' + money(data.discount?.amount_to_unlock || 0) + ' em produtos para liberar ' + discountLabel + ' de desconto.';
+        progressEl.textContent = 'Faltam ' + money(data.discount?.amount_to_unlock || 0) + ' em produtos para liberar ' + discountLabel + ' de desconto sobre a fabricação.';
         progressEl.className = 'cart-progress';
       }
     }
     if (totalEl) totalEl.textContent = money(data.product_total);
     updateGrandTotal();
-    if (packagingSummary && packagingBody && data.packaging) {
+    if (packagingSummary && packagingBody) {
       packagingSummary.hidden = false;
-      const packs = Array.isArray(data.packaging.packages) ? data.packaging.packages : [];
-      if (!packs.length) {
-        packagingBody.innerHTML = '<p>Embalagem a confirmar manualmente.</p>';
-      } else {
-        const previewPacks = packs.slice(0, 6).map((pack, index) => {
-          const d = pack.dimensions_cm || {};
-          return '<div class="packaging-line"><span>Volume ' + (index + 1) + ' · ' + Number(pack.units || 1) + (Number(pack.units || 1) === 1 ? ' peça' : ' peças') + '</span><b>' +
-            Number(d.width || 0) + ' × ' + Number(d.length || 0) + ' × ' + Number(d.height || 0) + ' cm</b></div>';
-        }).join('');
-        const extra = packs.length > 6 ? '<p>+' + (packs.length - 6) + ' volume(s) adicionais.</p>' : '';
-        const warning = data.packaging.status === 'review'
-          ? '<p class="packaging-warning">A embalagem precisa de revisão manual antes da cotação do frete.</p>'
-          : '<p>Prévia para organizar o frete. Medidas da caixa serão confirmadas pela fábrica.</p>';
-        packagingBody.innerHTML = '<strong>' + Number(data.packaging.package_count || packs.length) + ' volume(s) estimado(s)</strong>' + previewPacks + extra + warning;
-      }
+      packagingBody.innerHTML = '<p><strong>Embalagem já incluída no preço das cúpulas.</strong> O número de volumes e os detalhes do envio serão definidos pela equipe antes do despacho.</p>';
     }
     updateCheckoutAvailability();
     if (onlyDigits(cepInput?.value).length === 8) refreshFreight();

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateBoxPurchaseBudget } from '../supabase/functions/public-cart-checkout/box-costs.mjs';
+import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from '../supabase/functions/public-cart-checkout/box-costs.mjs';
 
 const rules = {
   box_small_cost_brl: 10, box_medium_cost_brl: 12, box_large_cost_brl: 15,
@@ -50,4 +50,25 @@ test('missing measured product configuration never yields a misleading zero cost
 test('invalid price rules do not create misleading cost estimates',()=>{
   const result=calculateBoxPurchaseBudget(preview([pack('a')]),[item('a',25,25,25)],{...rules,box_medium_cost_brl:-5});
   assert.equal(result.status,'requires_review');
+});
+
+test('single product budget matches the planned multi-volume budget', () => {
+  for (const [format,top,bottom,height,quantity] of [
+    ['conica',20,35,22,1],['conica',20,35,22,8],
+    ['drum',45,45,31,3],['piramidal-quadrada',20,60,32,4],['cubo',35,35,35,2]
+  ]) {
+    const item={id:'a',format,top,bottom,height,quantity};
+    const result=estimateBoxCostForItem(item,{...rules,
+      max_nested_per_package:4,max_package_dimension_cm:100,
+      side_padding_cm:6,height_padding_cm:6,nested_height_increment_cm:3});
+    assert.equal(result.status,'estimate',JSON.stringify(item));
+    assert.ok(result.total_cost_brl >= 0);
+  }
+});
+
+test('unusual or oversized products do not receive a fabricated box budget',()=>{
+  const bad=estimateBoxCostForItem({format:'oval',top:50,bottom:50,height:25,quantity:1},{...rules,
+    max_nested_per_package:4,max_package_dimension_cm:100,
+    side_padding_cm:6,height_padding_cm:6,nested_height_increment_cm:3});
+  assert.equal(bad.status,'requires_review');
 });
