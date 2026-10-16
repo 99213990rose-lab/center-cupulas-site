@@ -1,11 +1,15 @@
 import mpTransport from './transport.cjs';
+const cleanToken = (raw) => String(raw || '').trim()
+  .replace(/^['"]|['"]$/g, '')
+  .replace(/^Bearer\s+/i, '')
+  .replace(/[\r\n\t ]/g, '');
 // Public feature-status endpoint. Does not expose credentials or customer information.
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
   const originCep = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '');
   const enabled = process.env.CENTER_CHECKOUT_ENABLED === 'true' &&
-    Boolean(process.env.MERCADO_PAGO_ACCESS_TOKEN) &&
+    Boolean(cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)) &&
     Boolean(process.env.MERCADO_PAGO_WEBHOOK_SECRET) &&
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) &&
     Boolean(process.env.SUPABASE_URL) &&
@@ -14,11 +18,11 @@ export default async function handler(req, res) {
     /^\d{8}$/.test(originCep);
   if (req.query?.diagnose === 'connection' || req.query?.diagnose === 'native') {
     // Read-only credential probe; never return token, account data or method details.
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+    if (!cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)) {
       return res.status(200).json({ checkout_enabled: enabled, provider_connection: 'not_configured' });
     }
     const healthUrl='https://api.mercadopago.com/v1/payment_methods';
-    const opts={method:'GET',headers:{Authorization:'Bearer '+process.env.MERCADO_PAGO_ACCESS_TOKEN}};
+    const opts={method:'GET',headers:{Authorization:'Bearer '+cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)}};
     const nativeOnly=req.query?.diagnose==='native';
     try {
       let probe;
