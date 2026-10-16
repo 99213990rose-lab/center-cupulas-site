@@ -7,7 +7,7 @@ import status from '../api/mercadopago/status.js';
 
 const keys = [
   'CENTER_CHECKOUT_ENABLED','MERCADO_PAGO_ACCESS_TOKEN','MERCADO_PAGO_WEBHOOK_SECRET',
-  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP'
+  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_SHIPPING_VALIDATED'
 ];
 const baseline = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 const originalFetch = globalThis.fetch;
@@ -34,6 +34,7 @@ function configure() {
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_test_placeholder';
   process.env.FRENET_TOKEN = 'frenet_test';
+  process.env.CENTER_SHIPPING_VALIDATED = 'true';
   process.env.CENTER_CUPULAS_ORIGIN_CEP = '13421548';
 }
 function signedRequest(id='1234') {
@@ -132,4 +133,16 @@ test('checkout refuses missing freight settings or foreign origins', async (t) =
   res=response();
   await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{}},res);
   assert.equal(res.statusCode,503);
+});
+
+test('online payment stays disabled with freight settings but without shipping calibration', async (t) => {
+  t.after(reset); configure();
+  delete process.env.CENTER_SHIPPING_VALIDATED;
+  const res = response();
+  status({method:'GET'},res);
+  assert.equal(res.body.checkout_enabled,false);
+  const result = response();
+  await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{}},result);
+  assert.equal(result.statusCode,503);
+  assert.equal(result.body.error,'shipping_not_validated');
 });
