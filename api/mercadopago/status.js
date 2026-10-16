@@ -9,7 +9,7 @@ export default function handler(req, res) {
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) &&
     Boolean(process.env.SUPABASE_URL) &&
     Boolean(process.env.FRENET_TOKEN) &&
-    process.env.CENTER_SHIPPING_VALIDATED === 'true' &&
+    process.env.CENTER_USE_LIVE_FRENET_RATES === 'true' &&
     /^\d{8}$/.test(originCep);
   return res.status(200).json({ checkout_enabled: enabled, flow: enabled ? 'mercadopago' : 'manual' });
 }

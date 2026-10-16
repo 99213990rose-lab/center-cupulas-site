@@ -134,3 +134,13 @@ A Center Cúpulas prefere não exigir o peso medido individualmente em todos os 
 - Com ausência de ofertas, CEP sem cobertura ou falha do serviço, manter **frete sob consulta**. Para cúpulas grandes e várias caixas, confirmar custo e restrições manualmente.
 - O custo de compra da embalagem (R$ 10/12/15) continua **embutido no preço das cúpulas**, sem cobrança em separado.
 - Comprovantes de SEDEX da fábrica de 14/10/2026 são evidência histórica: R$ 64,12 em 28×37×39 cm e R$ 29,04 em 32×47×47 cm. Eles não devem ser usados para calcular média de qualquer destino sem CEP comparável.
+
+
+## Compra direta com transportadora escolhida (16/10/2026)
+A Center Cúpulas aceita o preço ao vivo da opção retornada pela Frenet mesmo com possível diferença futura na despesa de transporte. Não cobrar média: o cliente escolhe o serviço e vê o respectivo valor e o total com entrega.
+- `CENTER_USE_LIVE_FRENET_RATES=true`: usa serviços disponíveis para o CEP; `CENTER_CHECKOUT_ENABLED=true`: libera Checkout Pro após testes.
+- O servidor reconsulta a Frenet e reavalia produtos antes de criar a preferência de pagamento. Se o total mudou desde que o cliente viu, retorna HTTP 409 (`price_changed`), sem cobrar; o carrinho atualiza os preços.
+- Sem cobertura, erro da Frenet ou embalagem acima dos limites, fica disponível o orçamento, nunca um frete inventado.
+- A massa de cálculo do protótipo é estimada por volume e não uma pesagem real; a fábrica aceita o risco comercial.
+- Os custos das caixas (R$10/12/15) seguem dentro das cúpulas, nunca incluídos novamente no frete.
+- Notificações assinadas e conciliação idempotente são mantidas. `CENTER_SHIPPING_VALIDATED` antigo não é mais a autorização de tarifa; não confundir com validação física.

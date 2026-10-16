@@ -128,11 +128,11 @@
     const productTotal = Number(preview?.product_total);
     const freight = hasFreight ? Number(selectedShipping.price) : 0;
     if (freightEl) freightEl.textContent = hasFreight ? money(freight) : 'A confirmar';
-    if (grandTotalLabel) grandTotalLabel.textContent = hasFreight ? 'Total com frete estimado' : 'Total (frete a confirmar)';
+    if (grandTotalLabel) grandTotalLabel.textContent = hasFreight ? 'Total com frete' : 'Total (frete a confirmar)';
     if (grandTotalEl) grandTotalEl.textContent = !Number.isFinite(productTotal)
       ? 'Calculando…' : hasFreight ? money(productTotal + freight) : money(productTotal) + ' + frete';
     if (freightNote) freightNote.textContent = hasFreight
-      ? 'Frete estimado com a opção selecionada. O valor será conferido pelo servidor antes de qualquer pagamento.'
+      ? 'Frete da transportadora selecionada, incluído no total do pedido.'
       : 'O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.';
   };
 
@@ -211,7 +211,7 @@
         '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · prazo informado: ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
         '<strong>' + money(option.price) + '</strong>' +
       '</label>';
-    }).join('') + '<p class="shipping-calibration-note">Opções consultadas na Frenet. Prazo informado pela transportadora, sujeito à confirmação na finalização do pedido.</p>';
+    }).join('') + '<p class="shipping-calibration-note">Escolha a opção de entrega e confira o total antes de pagar.</p>';
 
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -508,7 +508,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code } })
+          body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code, price: Number(selectedShipping.price), productTotal: Number(preview.product_total) } })
         });
         const data = await response.json();
         if (!response.ok || !data.checkout_url) throw new Error(data.error || 'payment_unavailable');
@@ -559,11 +559,13 @@
       );
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
-      const message = error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
+      const message = error?.message === 'price_changed' ? 'O valor foi atualizado. Confira novamente o frete e o total antes de pagar.'
+        : error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
         : error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'
         : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
-      setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
+      if (error?.message === 'price_changed') refreshPreview();
+      setStatus('error', '<strong>Confira os dados do pedido.</strong><p>' + escapeHtml(message) + '</p>');
       isSubmitting = false;
       checkoutButton.textContent = checkoutProEnabled ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
       updateCheckoutAvailability();

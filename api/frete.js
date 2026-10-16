@@ -188,7 +188,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'invalid_freight_provider_response', provider: 'Frenet' });
     }
 
-    const calibration = process.env.CENTER_SHIPPING_VALIDATED !== 'true';
+    const calibration = process.env.CENTER_USE_LIVE_FRENET_RATES !== 'true';
     return res.status(200).json({
       status: options.length ? 'ok' : 'no_options',
       provider: 'Frenet',
@@ -198,7 +198,7 @@ export default async function handler(req, res) {
       recipient_cep: recipientCep,
       package_count: packages.length,
       weight_basis: 'peso_volumetrico_conservador',
-      quote_status: process.env.CENTER_SHIPPING_VALIDATED === 'true' ? 'carrier_calculated' : 'pending_validation',
+      quote_status: calibration ? 'pending_validation' : 'carrier_calculated',
       options
     });
   } catch (error) {

@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
   // No origin CEP/token or verified packaging: do not create a payable order.
-  if (process.env.CENTER_SHIPPING_VALIDATED !== 'true') return json(res, 503, { error: 'shipping_not_validated' });
+  if (process.env.CENTER_USE_LIVE_FRENET_RATES !== 'true') return json(res, 503, { error: 'carrier_rates_not_enabled' });
   if (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, ''))) {
     return json(res, 503, { error: 'shipping_not_configured' });
   }
@@ -18,7 +18,9 @@ export default async function handler(req, res) {
   if (![SITE, 'https://centercupulas.com.br'].includes(origin)) return json(res, 403, { error: 'invalid_origin' });
   try {
     const { items, customer, shippingSelection } = req.body || {};
-    if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code) {
+    if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code ||
+        typeof shippingSelection?.price !== 'number' || !Number.isFinite(shippingSelection.price) || shippingSelection.price < 0 ||
+        typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0) {
       return json(res, 400, { error: 'complete_order_and_shipping_required' });
     }
     // Current Center backend recalculates each item and verifies selected freight on submission.
@@ -32,6 +34,12 @@ export default async function handler(req, res) {
     if (quote.shipping?.status !== 'quoted' || quote.packaging?.status !== 'estimated' ||
         !Number.isFinite(Number(quote.total)) || Number(quote.total) <= 0 || !quote.quote_id) {
       return json(res, 422, { error: 'shipping_or_packaging_needs_review', quote_code: quote.quote_code });
+    }
+    // A new live carrier rate or product price must never silently raise the amount shown.
+    const expectedCents = Math.round((shippingSelection.productTotal + shippingSelection.price) * 100);
+    const serverCents = Math.round(Number(quote.total) * 100);
+    if (!Number.isSafeInteger(expectedCents) || !Number.isSafeInteger(serverCents) || expectedCents !== serverCents) {
+      return json(res, 409, {error:'price_changed'});
     }
     const total = Number(Number(quote.total).toFixed(2));
     if (quote.shipping?.freight == null || !Number.isSafeInteger(Math.round(total * 100)) || total <= 0) return json(res, 422, { error: 'unverified_total' });
