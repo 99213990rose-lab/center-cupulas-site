@@ -27,5 +27,7 @@ jobs:
           node --check api/frete.js
           node --check carrinho.js
           node --check catalogo.js
+          node --check script.js
+          node --check privacy-consent.js
       - name: Run checkout unit tests
         run: node --test test/*.test.mjs
