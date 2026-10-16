@@ -1,4 +1,4 @@
-name: Mercado Pago credential diagnostic (read only)
+name: Center Cupulas post-payment security smoke — no orders
 on:
   push:
     branches:
@@ -7,24 +7,40 @@ on:
 permissions:
   contents: read
 jobs:
-  payment-connection:
+  safe-checkout:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 4
     steps:
-      - name: Check live seller provider connection without creating payments
+      - name: Check active payment configuration without a transaction
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --show-error --silent --max-time 20 \
-            'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=native' \
-            --output "$RUNNER_TEMP/mp-health.json"
-          HEALTH_FILE="$RUNNER_TEMP/mp-health.json" node <<'NODE'
-          const fs=require('node:fs');
-          const data=JSON.parse(fs.readFileSync(process.env.HEALTH_FILE,'utf8'));
-          console.log('PAYMENT_CONNECTION_DIAGNOSTIC:',JSON.stringify({
-            checkout_enabled:data.checkout_enabled,
-            provider_connection:data.provider_connection||'not_reported',
-            connection_issue:data.connection_issue||'none'
-          }));
-          if(data.provider_connection!=='authorized')process.exitCode=1;
+          curl -fsS --max-time 15 'https://www.centercupulas.com.br/api/mercadopago/status' -o "$RUNNER_TEMP/status.json"
+          RESULT="$RUNNER_TEMP/status.json" node <<'NODE'
+          const d=JSON.parse(require('fs').readFileSync(process.env.RESULT,'utf8'));
+          console.log('CHECKOUT:',JSON.stringify({enabled:d.checkout_enabled,flow:d.flow}));
+          if(d.checkout_enabled!==true || d.flow!=='mercadopago')process.exit(1);
+          NODE
+      - name: Reject unauthorized order status lookups
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl -sS --max-time 15 -o "$RUNNER_TEMP/reject.json" -w '%{http_code}' \
+             -X POST 'https://www.centercupulas.com.br/api/mercadopago/order-status' \
+             -H 'Origin: https://www.centercupulas.com.br' -H 'Content-Type: application/json' \
+             --data '{"reference":"11111111-1111-4111-8111-111111111111","proof":"0000000000000000000000000000000000000000000000000000000000000000"}')
+          CODE="$code" FILE="$RUNNER_TEMP/reject.json" node <<'NODE'
+          const d=JSON.parse(require('fs').readFileSync(process.env.FILE,'utf8'));
+          console.log('ORDER_STATUS_SECURITY:',JSON.stringify({http:Number(process.env.CODE),error:d.error}));
+          if(process.env.CODE!=='403' || d.error!=='invalid_receipt')process.exit(1);
+          NODE
+      - name: Confirm refreshed checkout content is published
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 15 'https://www.centercupulas.com.br/carrinho.js' -o "$RUNNER_TEMP/cart.js"
+          CART="$RUNNER_TEMP/cart.js" node <<'NODE'
+          const s=require('fs').readFileSync(process.env.CART,'utf8');
+          console.log('POST_PAYMENT_UI:',JSON.stringify({verifiedStatus:s.includes("fetch('/api/mercadopago/order-status'"),signedSession:s.includes('center-cupulas-payment-receipt')}));
+          if(!s.includes("fetch('/api/mercadopago/order-status'")||!s.includes('center-cupulas-payment-receipt'))process.exit(1);
           NODE
