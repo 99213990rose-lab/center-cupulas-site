@@ -1,63 +1,102 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-const ORG_ID = 'e3cb8002-ebaa-4d3a-acd3-46a678815e7b';
-const respond = (res, status, body) => res.status(status).setHeader('Cache-Control', 'no-store').json(body);
-function signatureOk(req, secret) {
-  const signature = String(req.headers['x-signature'] || '');
-  const requestId = String(req.headers['x-request-id'] || '');
-  const ts = signature.match(/(?:^|,)\s*ts=([^,]+)/)?.[1];
-  const v1 = signature.match(/(?:^|,)\s*v1=([0-9a-f]+)/i)?.[1];
-  const dataId = String(req.query['data.id'] || req.body?.data?.id || '');
-  if (!ts || !v1 || !requestId || !/^\d+$/.test(dataId)) return false;
-  const expected = createHmac('sha256', secret).update('id:' + dataId.toLowerCase() + ';request-id:' + requestId + ';ts:' + ts + ';').digest('hex');
-  const actualBytes = Buffer.from(v1, 'hex');
-  const expectedBytes = Buffer.from(expected, 'hex');
-  return actualBytes.length === expectedBytes.length && timingSafeEqual(actualBytes, expectedBytes);
+const ORG_REF = 'CENTER_CUPULAS:';
+const respond = (res, code, data) => res.status(code).setHeader('Cache-Control', 'no-store').json(data);
+
+function getNotificationId(req) {
+  const raw = req.query?.['data.id'] ?? req.body?.data?.id;
+  const id = String(raw ?? '');
+  return /^[0-9]{1,30}$/.test(id) ? id : null;
 }
+
+function validSignature(req, secret, id) {
+  const raw = String(req.headers['x-signature'] || '');
+  const requestId = String(req.headers['x-request-id'] || '');
+  const ts = raw.match(/(?:^|,)\s*ts=([0-9]+)(?:,|$)/)?.[1];
+  const signature = raw.match(/(?:^|,)\s*v1=([a-f0-9]{64})(?:,|$)/i)?.[1];
+  if (!id || !ts || !signature || !requestId || requestId.length > 200) return false;
+  const manifest = `id:${id.toLowerCase()};request-id:${requestId};ts:${ts};`;
+  const expected = createHmac('sha256', secret).update(manifest).digest();
+  const supplied = Buffer.from(signature, 'hex');
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+function supabaseHeaders(key) {
+  // Modern sb_secret_ keys are NOT JWTs: never send them as Authorization: Bearer.
+  const headers = { 'apikey': key, 'Content-Type': 'application/json' };
+  if (!key.startsWith('sb_secret_')) headers.Authorization = 'Bearer ' + key;
+  return headers;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return respond(res, 405, { error: 'method_not_allowed' });
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-  const supaUrl = process.env.SUPABASE_URL;
-  const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret || !token || !supaUrl || !supaKey) return respond(res, 503, { error: 'not_configured' });
-  if (!signatureOk(req, secret)) return respond(res, 401, { error: 'invalid_signature' });
-  const eventType = String(req.body?.type || req.query.type || '').toLowerCase();
-  if (eventType && eventType !== 'payment') return respond(res, 200, { received: true, ignored: true });
-  const id = String(req.query['data.id'] || req.body?.data?.id || '');
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret || !token || !url || !key) return respond(res, 503, { error: 'not_configured' });
+
+  const id = getNotificationId(req);
+  if (!validSignature(req, secret, id)) return respond(res, 401, { error: 'invalid_signature' });
+  const type = String(req.body?.type || req.query?.type || 'payment').toLowerCase();
+  if (type !== 'payment' && !type.startsWith('payment.')) {
+    return respond(res, 200, { received: true, ignored: true });
+  }
+
   try {
-    const paymentRes = await fetch('https://api.mercadopago.com/v1/payments/' + encodeURIComponent(id), {
-      headers: { Authorization: 'Bearer ' + token }
+    const response = await fetch('https://api.mercadopago.com/v1/payments/' + id, {
+      headers: { Authorization: 'Bearer ' + token },
+      signal: AbortSignal.timeout(10000)
     });
-    if (!paymentRes.ok) return respond(res, 502, { error: 'payment_lookup_failed' });
-    const payment = await paymentRes.json();
-    const reference = String(payment.external_reference || '');
-    if (!reference.startsWith('CENTER_CUPULAS:')) return respond(res, 200, { received: true, ignored: true });
-    const quoteId = reference.slice('CENTER_CUPULAS:'.length);
-    if (!/^[0-9a-f-]{36}$/i.test(quoteId)) return respond(res, 400, { error: 'invalid_reference' });
-    const base = supaUrl.replace(/\/$/, '') + '/rest/v1/quotes';
-    const headers = { apikey: supaKey, Authorization: 'Bearer ' + supaKey, 'Content-Type': 'application/json' };
-    const query = '?id=eq.' + encodeURIComponent(quoteId) + '&organization_id=eq.' + ORG_ID + '&select=id,status,total,currency,notes';
-    const found = await fetch(base + query, { headers });
-    if (!found.ok) return respond(res, 502, { error: 'order_lookup_failed' });
-    const quotes = await found.json();
-    const quote = quotes[0];
-    if (!quote) return respond(res, 200, { received: true, ignored: true });
-    const expectedCents = Math.round(Number(quote.total) * 100);
-    const receivedCents = Math.round(Number(payment.transaction_amount) * 100);
-    if (payment.status !== 'approved') return respond(res, 200, { received: true, payment_status: payment.status });
-    if (!Number.isSafeInteger(expectedCents) || expectedCents <= 0 || receivedCents !== expectedCents ||
-        String(payment.currency_id) !== String(quote.currency || 'BRL')) {
-      return respond(res, 409, { error: 'payment_amount_mismatch' });
+    if (!response.ok) {
+      console.error('center-webhook payment lookup failed', response.status);
+      return respond(res, 503, { error: 'payment_lookup_failed' });
     }
-    if (quote.status === 'paid') return respond(res, 200, { received: true, already_processed: true });
-    const paidNote = 'Mercado Pago aprovado; payment_id=' + String(payment.id).slice(0, 64);
-    const update = await fetch(base + '?id=eq.' + encodeURIComponent(quoteId) + '&organization_id=eq.' + ORG_ID + '&status=neq.paid', {
-      method: 'PATCH',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify({ status: 'paid', notes: [quote.notes || '', paidNote].filter(Boolean).join(' | ').slice(0, 5000) })
+    const payment = await response.json();
+    if (String(payment.id) !== id) return respond(res, 409, { error: 'payment_identity_mismatch' });
+    const reference = String(payment.external_reference || '');
+    if (!reference.startsWith(ORG_REF)) return respond(res, 200, { received: true, ignored: true });
+    const quoteId = reference.slice(ORG_REF.length);
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(quoteId)) {
+      return respond(res, 409, { error: 'invalid_order_reference' });
+    }
+    if (payment.status !== 'approved') {
+      return respond(res, 200, { received: true, payment_status: String(payment.status || 'unknown') });
+    }
+    const cents = Math.round(Number(payment.transaction_amount) * 100);
+    if (!Number.isSafeInteger(cents) || cents <= 0 || payment.currency_id !== 'BRL') {
+      console.error('center-webhook invalid currency or amount', id);
+      return respond(res, 409, { error: 'invalid_payment_amount' });
+    }
+
+    // One atomic operation verifies total and currency, prevents duplicate confirmations,
+    // records the payment ID and marks the quote paid under a row lock.
+    const saved = await fetch(url.replace(/\/$/, '') + '/rest/v1/rpc/confirm_center_checkout_payment', {
+      method: 'POST',
+      headers: supabaseHeaders(key),
+      body: JSON.stringify({
+        p_quote_id: quoteId,
+        p_payment_id: id,
+        p_amount_cents: cents,
+        p_currency: 'BRL'
+      }),
+      signal: AbortSignal.timeout(10000)
     });
-    if (!update.ok) return respond(res, 502, { error: 'order_update_failed' });
-    return respond(res, 200, { received: true, paid: true });
-  } catch { return respond(res, 502, { error: 'verification_failed' }); }
+    if (!saved.ok) {
+      console.error('center-webhook reconciliation failed', saved.status, id);
+      return respond(res, saved.status >= 500 ? 503 : 409, { error: 'reconciliation_failed' });
+    }
+    const result = await saved.json();
+    if (result?.status === 'duplicate_charge') {
+      console.error('CENTER PAYMENT REQUIRES REVIEW: duplicate approved charge', id);
+    }
+    return respond(res, 200, {
+      received: true,
+      reconciliation: String(result?.status || 'unknown'),
+      idempotent: Boolean(result?.idempotent)
+    });
+  } catch (error) {
+    console.error('center-webhook temporarily unavailable', error?.name || 'request_error');
+    return respond(res, 503, { error: 'temporary_failure' });
+  }
 }
