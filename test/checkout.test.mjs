@@ -225,3 +225,14 @@ test('Mercado Pago unauthorized response gives actionable error without a redire
  assert.equal(res.body.error,'payment_account_authentication_failed');
  assert.equal(calls,2);
 });
+
+
+test('diagnostic classification distinguishes a network timeout without disclosing exception internals',async(t)=>{
+ t.after(reset);configure();
+ globalThis.fetch=async()=>{const failure=new TypeError('secret-network-message');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure};
+ const res=response();
+ await status({method:'GET',query:{diagnose:'connection'}},res);
+ assert.equal(res.body.provider_connection,'unavailable');
+ assert.equal(res.body.connection_issue,'connect_timeout');
+ assert.equal(JSON.stringify(res.body).includes('secret-network-message'),false);
+});

@@ -153,3 +153,7 @@ A Center Cúpulas aceita o preço ao vivo da opção retornada pela Frenet mesmo
 - `GET /api/mercadopago/status?diagnose=connection` executa **somente GET read-only** na API de métodos de pagamento do Mercado Pago e devolve categorias limitadas `authorized`, `unauthorized`, `rate_limited`, `provider_error`, `unavailable`; não retorna token, dados da conta ou método de pagamento.
 - A criação de preferência classifica códigos conhecidos do MP, registra nos logs somente categoria e HTTP status sem dados de pagamento ou cliente e apresenta mensagem recuperável. A conta precisa corrigir eventual pendência de identidade/credencial no próprio Mercado Pago.
 - Os orçamentos em draft de tentativas anteriores **não são pagamento e não se devem marcar como pagos**. Não gerar pagamentos fictícios na investigação.
+
+
+### Leitura de conectividade aprofundada
+Em teste GET read-only, `provider_connection=unavailable`: a função Vercel não obteve resposta HTTP do Mercado Pago. Adicionado `connection_issue` com categorias fechadas (DNS, timeout, reset, TLS), sem divulgar segredos ou mensagens brutas. Não atribuir automaticamente o problema ao token nem pedir troca de credenciais antes de classificar a conexão. Sem pagamento criado.
