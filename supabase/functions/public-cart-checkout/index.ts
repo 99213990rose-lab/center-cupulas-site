@@ -2,6 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.mjs";
+import { addBoxesToPrices } from "./price-with-box.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -214,33 +215,22 @@ Deno.serve(async(req:Request)=>{
 
     const data=await loadData();
     const priced=items.map((x:Item)=>priceItem(x,data));
-    // Box procurement is part of the cúpulas' price, never a checkout surcharge.
-    // Discounts apply to manufactured products, not to the embedded cost of boxes.
-    const manufacturerSubtotal=round2(priced.reduce((sum,x)=>sum+x.line_list_total,0));
+    // Cost of purchasing the planned boxes is already inside the product lines.
+    // The manufacturing discount never discounts that embedded cost.
     const lineBoxes=priced.map(x=>estimateBoxCostForItem(x,data.packaging));
-    if(lineBoxes.some(x=>x.status!=="estimate")){
+    const threshold=n(data.rules.discount_threshold),discountPct=n(data.rules.discount_pct);
+    const pricedQuote=addBoxesToPrices(priced,lineBoxes,threshold,discountPct);
+    if(pricedQuote.status!=="ok"){
       return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
     }
-    const threshold=n(data.rules.discount_threshold),discountPct=n(data.rules.discount_pct);
-    const unlocked=manufacturerSubtotal>=threshold;
-    const multiplier=unlocked?(1-discountPct/100):1;
-    const pricedFinal=priced.map((x,i)=>{
-      const embeddedCost=n(lineBoxes[i].total_cost_brl);
-      const lineListTotal=round2(x.line_list_total+embeddedCost);
-      const lineTotal=round2(round2(x.line_list_total*multiplier)+embeddedCost);
-      return {
-        ...x,
-        unit_list_price:round2(lineListTotal/x.quantity),
-        line_list_total:lineListTotal,
-        unit_price:round2(lineTotal/x.quantity),
-        line_total:lineTotal
-      };
-    });
-    const subtotalBefore=round2(pricedFinal.reduce((sum,x)=>sum+x.line_list_total,0));
-    const productTotal=round2(pricedFinal.reduce((sum,x)=>sum+x.line_total,0));
+    const pricedFinal=pricedQuote.items;
+    const manufacturerSubtotal=pricedQuote.manufacturerSubtotal;
+    const subtotalBefore=pricedQuote.subtotalBeforeDiscount;
+    const productTotal=pricedQuote.productTotal;
+    const unlocked=pricedQuote.discountUnlocked;
     const packaging=estimatePackaging(pricedFinal,data.packaging);
     const boxBudget=calculateBoxPurchaseBudget(packaging,pricedFinal,data.packaging);
-    const expectedBoxCost=round2(lineBoxes.reduce((sum,x)=>sum+n(x.total_cost_brl),0));
+    const expectedBoxCost=pricedQuote.totalBoxCost;
     if(boxBudget.status!=="estimate" || Math.abs(n(boxBudget.total_cost_brl)-expectedBoxCost)>0.001){
       return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
     }
@@ -259,7 +249,7 @@ Deno.serve(async(req:Request)=>{
         unlocked,
         percent:discountPct,
         threshold:round2(threshold),
-        amount:round2(subtotalBefore-productTotal),
+        amount:pricedQuote.discountAmount,
         amount_to_unlock:round2(Math.max(0,threshold-manufacturerSubtotal))
       },
       note:"Os valores das cúpulas já incluem os custos previstos das caixas. O frete é confirmado separadamente."
