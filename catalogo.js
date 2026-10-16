@@ -469,6 +469,9 @@
     let currentStep = 0;
     let lastPriceQuote = null;
     let pricingRequestId = 0;
+    let lastPriceConfigKey = '';
+    let pendingPriceConfigKey = '';
+    let pricingTimer = 0;
     const defaultEyebrow = mode === 'reference' ? 'Configuração da referência' : 'Configurador de produto';
     const defaultTitle = mode === 'reference' ? 'Configure esta medida' : 'Defina sua cúpula';
 
@@ -589,8 +592,15 @@
 
     const formatMoney = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
+    const pricingKey = (configuration) => JSON.stringify([
+      configuration.formatData.key, configuration.material,
+      configuration.upper, configuration.lower, configuration.height,
+      Number(configuration.quantity || 1)
+    ]);
+
     const renderPriceEstimate = (quote) => {
       lastPriceQuote = quote;
+      lastPriceConfigKey = pendingPriceConfigKey;
       if (!fields.priceBody || !fields.priceBadge) return;
 
       if (!quote || quote.status === 'error') {
@@ -610,10 +620,12 @@
       const badge = quote.exact_reference ? 'Referência direta' : 'Estimativa';
       fields.priceBadge.textContent = badge;
       submitButton.innerHTML = 'Adicionar ao pedido <span aria-hidden="true">→</span>';
-      const discount = quote.discount?.unlocked
-        ? '<span class="public-price__benefit">10% de desconto aplicado neste pedido</span>'
-        : quote.discount?.amount_to_unlock > 0
-          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar 10% de desconto.</span>'
+      const discountPercent = Math.max(0, Math.min(99, Number(quote.discount?.percent || 0)));
+      const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
+      const discount = discountPercent > 0 && quote.discount?.unlocked
+        ? '<span class="public-price__benefit">' + discountLabel + ' de desconto aplicado na estimativa</span>'
+        : discountPercent > 0 && quote.discount?.amount_to_unlock > 0
+          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar ' + discountLabel + ' de desconto.</span>'
           : '';
 
       fields.priceBody.innerHTML =
@@ -631,7 +643,10 @@
     const requestPriceEstimate = async (configuration) => {
       if (!fields.priceBody || !fields.priceBadge) return;
       const requestId = ++pricingRequestId;
+      pendingPriceConfigKey = pricingKey(configuration);
       lastPriceQuote = null;
+      lastPriceConfigKey = '';
+      submitButton.disabled = true;
       fields.priceBadge.textContent = 'Calculando';
       fields.priceBody.innerHTML = '<strong>Calculando preço…</strong><p>Isso leva só alguns instantes.</p>';
 
@@ -642,6 +657,7 @@
 
       if (![upper, lower, height].every(Number.isFinite)) {
         renderPriceEstimate({ status: 'consult' });
+        submitButton.disabled = false;
         return;
       }
 
@@ -670,6 +686,7 @@
         renderPriceEstimate({ status: 'error' });
       } finally {
         window.clearTimeout(timer);
+        if (requestId === pricingRequestId) submitButton.disabled = false;
       }
     };
 
@@ -732,7 +749,11 @@
       submitButton.hidden = currentStep !== panels.length - 1;
       stepStatus.textContent = 'Etapa ' + (currentStep + 1) + ' de ' + panels.length;
       update();
-      if (currentStep === panels.length - 1) requestPriceEstimate(getConfiguration());
+      if (currentStep === panels.length - 1) {
+        const configuration = getConfiguration();
+        const key = pricingKey(configuration);
+        if (lastPriceConfigKey !== key && pendingPriceConfigKey !== key) requestPriceEstimate(configuration);
+      }
       if (focusHeading) panels[currentStep].querySelector('[data-step-title]')?.focus({ preventScroll: true });
     };
 
@@ -742,11 +763,28 @@
       if (!open && restoreFocus) fields.measureHelpToggle.focus();
     };
 
+    const refreshIfPriceChanged = () => {
+      if (currentStep !== panels.length - 1) return;
+      const configuration = getConfiguration();
+      const key = pricingKey(configuration);
+      if (lastPriceConfigKey === key || pendingPriceConfigKey === key) return;
+      ++pricingRequestId; // discard any response from the old configuration
+      pendingPriceConfigKey = '';
+      lastPriceQuote = null;
+      lastPriceConfigKey = '';
+      submitButton.disabled = true;
+      window.clearTimeout(pricingTimer);
+      pricingTimer = window.setTimeout(() => requestPriceEstimate(getConfiguration()), 250);
+    };
     form.addEventListener('input', (event) => {
       if (event.target.matches('[aria-invalid="true"]')) clearStepError(currentStep);
       update();
+      refreshIfPriceChanged();
     });
-    form.addEventListener('change', update);
+    form.addEventListener('change', () => {
+      update();
+      refreshIfPriceChanged();
+    });
     fields.measureHelpToggle.addEventListener('click', () => {
       setMeasureHelpOpen(fields.measureHelp.hidden);
     });
@@ -781,14 +819,19 @@
       }
 
       for (let step = 0; step < panels.length - 1; step += 1) {
-        showStep(step, false);
         if (!validateStep(step)) {
+          showStep(step);
           return;
         }
       }
-      showStep(panels.length - 1, false);
-
+      // Keep the quote already fetched for the summary. Previously, reopening
+      // the summary here reset lastPriceQuote and prevented adding to the cart.
       const configuration = getConfiguration();
+      if (lastPriceConfigKey !== pricingKey(configuration)) {
+        window.clearTimeout(pricingTimer);
+        requestPriceEstimate(configuration);
+        return;
+      }
 
       if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' && window.CenterCupulasCart) {
         window.CenterCupulasCart.add({

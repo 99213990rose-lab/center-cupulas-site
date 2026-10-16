@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, 'improve/**']
+    branches: [main, 'improve/**', 'fix/**']
   workflow_dispatch:
 
 permissions:
@@ -26,5 +26,6 @@ jobs:
           node --check api/mercadopago/status.js
           node --check api/frete.js
           node --check carrinho.js
+          node --check catalogo.js
       - name: Run checkout unit tests
         run: node --test test/*.test.mjs

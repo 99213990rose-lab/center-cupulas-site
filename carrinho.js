@@ -260,11 +260,19 @@
     if (discountRow) discountRow.hidden = !data.discount?.unlocked;
     if (discountEl) discountEl.textContent = data.discount?.unlocked ? '- ' + money(data.discount.amount) : money(0);
     if (progressEl) {
-      if (data.discount?.unlocked) {
-        progressEl.textContent = '10% de desconto aplicado automaticamente.';
+      const discountPercent = Math.max(0, Math.min(99, Number(data.discount?.percent || 0)));
+      const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
+      if (discountPercent <= 0) {
+        progressEl.textContent = '';
+        progressEl.className = 'cart-progress';
+        progressEl.hidden = true;
+      } else if (data.discount?.unlocked) {
+        progressEl.hidden = false;
+        progressEl.textContent = discountLabel + ' de desconto aplicado automaticamente.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else {
-        progressEl.textContent = 'Faltam ' + money(data.discount?.amount_to_unlock || 0) + ' em produtos para liberar 10% de desconto.';
+        progressEl.hidden = false;
+        progressEl.textContent = 'Faltam ' + money(data.discount?.amount_to_unlock || 0) + ' em produtos para liberar ' + discountLabel + ' de desconto.';
         progressEl.className = 'cart-progress';
       }
     }
