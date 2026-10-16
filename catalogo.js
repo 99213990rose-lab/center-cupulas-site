@@ -620,10 +620,12 @@
       const badge = quote.exact_reference ? 'Referência direta' : 'Estimativa';
       fields.priceBadge.textContent = badge;
       submitButton.innerHTML = 'Adicionar ao pedido <span aria-hidden="true">→</span>';
-      const discount = quote.discount?.unlocked
-        ? '<span class="public-price__benefit">10% de desconto aplicado neste pedido</span>'
-        : quote.discount?.amount_to_unlock > 0
-          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar 10% de desconto.</span>'
+      const discountPercent = Math.max(0, Math.min(99, Number(quote.discount?.percent || 0)));
+      const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
+      const discount = discountPercent > 0 && quote.discount?.unlocked
+        ? '<span class="public-price__benefit">' + discountLabel + ' de desconto aplicado na estimativa</span>'
+        : discountPercent > 0 && quote.discount?.amount_to_unlock > 0
+          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar ' + discountLabel + ' de desconto.</span>'
           : '';
 
       fields.priceBody.innerHTML =
