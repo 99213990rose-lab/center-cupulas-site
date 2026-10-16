@@ -56,7 +56,8 @@ test('sitemap lists all indexable editorial and product pages',()=>{
 test('critical infrastructure remains protected and checkout is not activated by static UI',()=>{
   const status=readFileSync('api/mercadopago/status.js','utf8');
   assert.ok(status.includes("process.env.CENTER_CHECKOUT_ENABLED === 'true'"));
-  assert.ok(status.includes("process.env.CENTER_SHIPPING_VALIDATED === 'true'"));
+  assert.ok(status.includes("process.env.CENTER_USE_LIVE_FRENET_RATES === 'true'"));
+  assert.ok(status.includes("process.env.CENTER_CHECKOUT_ENABLED === 'true'"));
   for(const file of ['cotador.html','salesops.html'])
     assert.match(readFileSync(file,'utf8'),/noindex,nofollow,noarchive/);
 });
