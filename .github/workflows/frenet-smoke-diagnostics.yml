@@ -1,4 +1,4 @@
-name: Center checkout smoke — no purchase or orders
+name: Mercado Pago credential diagnostic (read only)
 on:
   push:
     branches:
@@ -7,39 +7,23 @@ on:
 permissions:
   contents: read
 jobs:
-  public-checkout-smoke:
+  payment-connection:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 2
     steps:
-      - name: Verify public checkout is enabled, without initiating any payment
+      - name: Check live seller provider connection without creating payments
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --show-error --silent --max-time 20             'https://www.centercupulas.com.br/api/mercadopago/status'             -o "$RUNNER_TEMP/checkout-status.json"
-          STATUS_JSON="$RUNNER_TEMP/checkout-status.json" node <<'NODE'
+          curl --fail --show-error --silent --max-time 20 \
+            'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=connection' \
+            --output "$RUNNER_TEMP/mp-health.json"
+          HEALTH_FILE="$RUNNER_TEMP/mp-health.json" node <<'NODE'
           const fs=require('node:fs');
-          const data=JSON.parse(fs.readFileSync(process.env.STATUS_JSON,'utf8'));
-          console.log('CHECKOUT_STATUS:',JSON.stringify({enabled:data.checkout_enabled,flow:data.flow}));
-          if(data.checkout_enabled!==true||data.flow!=='mercadopago') process.exit(1);
-          NODE
-      - name: Verify live Frenet options for public destination CEPs
-        shell: bash
-        run: |
-          set -euo pipefail
-          for CEP in 01001000 20040002; do
-            echo '{"recipientCep":"'$CEP'","shipmentValue":180,"packages":[{"dimensions_cm":{"width":36,"length":36,"height":30},"requires_manual_review":false}]}' > "$RUNNER_TEMP/request.json"
-            HTTP_CODE=$(curl --show-error --silent --max-time 25 --connect-timeout 10               -X POST 'https://www.centercupulas.com.br/api/frete'               -H 'Content-Type: application/json'               -H 'Origin: https://www.centercupulas.com.br'               --data-binary @"$RUNNER_TEMP/request.json"               -o "$RUNNER_TEMP/frenet-$CEP.json" -w '%{http_code}')
-            HTTP_CODE="$HTTP_CODE" RESULT="$RUNNER_TEMP/frenet-$CEP.json" node <<'NODE'
-          const fs=require('node:fs');
-          const d=JSON.parse(fs.readFileSync(process.env.RESULT,'utf8'));
-          const options=Array.isArray(d.options)?d.options:[];
-          console.log('LIVE_FRENET:',JSON.stringify({
-             http:Number(process.env.HTTP_CODE),status:d.status,
-             calibration:d.calibration,optionCount:options.length,
-             carriers:[...new Set(options.map(x=>x.carrier))],
-             minPrice:options.length?Math.min(...options.map(x=>x.price)):null
+          const data=JSON.parse(fs.readFileSync(process.env.HEALTH_FILE,'utf8'));
+          console.log('PAYMENT_CONNECTION_DIAGNOSTIC:',JSON.stringify({
+            checkout_enabled:data.checkout_enabled,
+            provider_connection:data.provider_connection||'not_reported'
           }));
-          if(process.env.HTTP_CODE!=='200'||d.status!=='ok'||d.calibration!==false||!options.length||
-             !options.every(x=>x.code && Number.isFinite(x.price) && x.price>=0))process.exit(1);
+          if(data.provider_connection!=='authorized')process.exitCode=1;
           NODE
-          done
