@@ -67,6 +67,13 @@
       return;
     }
     activate();
+    if (marketingLoaded && enabled('marketing') && typeof window.gtag === 'function') {
+      window.gtag('consent', 'update', {
+        ad_storage: 'granted',
+        analytics_storage: enabled('analytics') ? 'granted' : 'denied',
+        ad_user_data: 'granted', ad_personalization: 'granted'
+      });
+    }
     dispatch();
   }
 
