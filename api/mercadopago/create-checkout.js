@@ -5,7 +5,8 @@ const json = (res, status, body) => res.status(status).setHeader('Cache-Control'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
-  // No origin CEP/token: no verified shipping and therefore no payable order.
+  // No origin CEP/token or verified packaging: do not create a payable order.
+  if (process.env.CENTER_SHIPPING_VALIDATED !== 'true') return json(res, 503, { error: 'shipping_not_validated' });
   if (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, ''))) {
     return json(res, 503, { error: 'shipping_not_configured' });
   }
