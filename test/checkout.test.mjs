@@ -4,6 +4,7 @@ import { createHmac } from 'node:crypto';
 import webhook from '../api/mercadopago/webhook.js';
 import createCheckout from '../api/mercadopago/create-checkout.js';
 import status from '../api/mercadopago/status.js';
+import mpTransport from '../api/mercadopago/transport.cjs';
 
 const keys = [
   'CENTER_CHECKOUT_ENABLED','MERCADO_PAGO_ACCESS_TOKEN','MERCADO_PAGO_WEBHOOK_SECRET',
@@ -229,10 +230,61 @@ test('Mercado Pago unauthorized response gives actionable error without a redire
 
 test('diagnostic classification distinguishes a network timeout without disclosing exception internals',async(t)=>{
  t.after(reset);configure();
+ const originalTransport=mpTransport.requestJson;
+ t.after(()=>{mpTransport.requestJson=originalTransport;});
+ mpTransport.requestJson=async()=>{const failure=new TypeError('native_https_failed');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure;};
  globalThis.fetch=async()=>{const failure=new TypeError('secret-network-message');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure};
  const res=response();
  await status({method:'GET',query:{diagnose:'connection'}},res);
  assert.equal(res.body.provider_connection,'unavailable');
  assert.equal(res.body.connection_issue,'connect_timeout');
  assert.equal(JSON.stringify(res.body).includes('secret-network-message'),false);
+});
+
+
+test('read-only native HTTPS probe succeeds when Undici is failing',async(t)=>{
+ t.after(reset);configure();
+ const original=mpTransport.requestJson;
+ t.after(()=>{mpTransport.requestJson=original;});
+ globalThis.fetch=()=>{throw Error('should never use fetch for native-only diagnostic')};
+ mpTransport.requestJson=async(url,opts)=>{
+   assert.equal(url,'https://api.mercadopago.com/v1/payment_methods');
+   assert.ok(opts.headers.Authorization.startsWith('Bearer '));
+   return {ok:true,status:200};
+ };
+ const res=response();
+ await status({method:'GET',query:{diagnose:'native'}},res);
+ assert.equal(res.body.provider_connection,'authorized');
+ assert.equal(res.body.transport,'node_https');
+});
+
+test('a provider network failure uses native HTTPS before rejecting checkout',async(t)=>{
+ t.after(reset);configure();let calls=0;
+ const original=mpTransport.requestJson;
+ t.after(()=>{mpTransport.requestJson=original;});
+ globalThis.fetch=async()=>{
+   calls++;
+   if(calls===1)return Response.json({
+     status:'ok',submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',
+     quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
+     packaging:{status:'estimated'}});
+   throw TypeError('Undici unavailable');
+ };
+ mpTransport.requestJson=async(url,options)=>{
+   assert.equal(url,'https://api.mercadopago.com/checkout/preferences');
+   assert.equal(options.method,'POST');
+   return Response.json({init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=test'});
+ };
+ const res=response();
+ await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{
+   items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+   customer:{name:'Teste'},shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}
+ }},res);
+ assert.equal(res.statusCode,200);
+ assert.ok(res.body.checkout_url.startsWith('https://'));
+ assert.equal(calls,2);
+});
+
+test('native provider transport refuses accidental external hosts',async()=>{
+ assert.throws(()=>mpTransport.requestJson('https://example.invalid/payments'),/provider_host_not_allowed/);
 });
