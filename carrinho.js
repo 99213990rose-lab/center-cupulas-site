@@ -307,10 +307,13 @@
             Number(d.width || 0) + ' × ' + Number(d.length || 0) + ' × ' + Number(d.height || 0) + ' cm</b></div>';
         }).join('');
         const extra = packs.length > 6 ? '<p>+' + (packs.length - 6) + ' volume(s) adicionais.</p>' : '';
-        const warning = data.packaging.status === 'review'
-          ? '<p class="packaging-warning">A embalagem precisa de revisão manual antes da cotação do frete.</p>'
-          : '<p>Prévia para organizar o frete. Medidas da caixa serão confirmadas pela fábrica.</p>';
-        packagingBody.innerHTML = '<strong>' + Number(data.packaging.package_count || packs.length) + ' volume(s) estimado(s)</strong>' + previewPacks + extra + warning;
+        const verified = data.packaging.status === 'verified';
+        const warning = verified
+          ? '<p>Medidas e peso das embalagens já cadastrados e aprovados pela fábrica. O transporte depende da disponibilidade da transportadora.</p>'
+          : data.packaging.status === 'review'
+            ? '<p class="packaging-warning">A embalagem precisa de revisão manual antes da cotação do frete.</p>'
+            : '<p>Prévia para organizar o frete. Medidas e peso serão confirmados pela fábrica.</p>';
+        packagingBody.innerHTML = '<strong>' + Number(data.packaging.package_count || packs.length) + (verified ? ' volume(s) com embalagem conferida' : ' volume(s) estimado(s)') + '</strong>' + previewPacks + extra + warning;
       }
     }
     updateCheckoutAvailability();
