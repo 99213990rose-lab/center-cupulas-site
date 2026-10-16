@@ -7,7 +7,7 @@ import status from '../api/mercadopago/status.js';
 
 const keys = [
   'CENTER_CHECKOUT_ENABLED','MERCADO_PAGO_ACCESS_TOKEN','MERCADO_PAGO_WEBHOOK_SECRET',
-  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_SHIPPING_VALIDATED'
+  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_USE_LIVE_FRENET_RATES'
 ];
 const baseline = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 const originalFetch = globalThis.fetch;
@@ -34,7 +34,7 @@ function configure() {
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_test_placeholder';
   process.env.FRENET_TOKEN = 'frenet_test';
-  process.env.CENTER_SHIPPING_VALIDATED = 'true';
+  process.env.CENTER_USE_LIVE_FRENET_RATES = 'true';
   process.env.CENTER_CUPULAS_ORIGIN_CEP = '13421548';
 }
 function signedRequest(id='1234') {
@@ -115,7 +115,7 @@ test('payment preference uses server-repriced quote and explicit payable action'
   await createCheckout({
     method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
     body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
-      customer:{name:'Cliente de Teste'},shippingSelection:{code:'FRENET-1'}}
+      customer:{name:'Cliente de Teste'},shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}}
   },res);
   assert.equal(res.statusCode,200);
   assert.equal(calls.length,2);
@@ -137,12 +137,30 @@ test('checkout refuses missing freight settings or foreign origins', async (t) =
 
 test('online payment stays disabled with freight settings but without shipping calibration', async (t) => {
   t.after(reset); configure();
-  delete process.env.CENTER_SHIPPING_VALIDATED;
+  delete process.env.CENTER_USE_LIVE_FRENET_RATES;
   const res = response();
   status({method:'GET'},res);
   assert.equal(res.body.checkout_enabled,false);
   const result = response();
   await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{}},result);
   assert.equal(result.statusCode,503);
-  assert.equal(result.body.error,'shipping_not_validated');
+  assert.equal(result.body.error,'carrier_rates_not_enabled');
+});
+
+test('if live freight changed, the customer never goes to Mercado Pago with a higher total',async(t)=>{
+ t.after(reset);configure();let calls=0;
+ globalThis.fetch=async()=>{calls++;return Response.json({status:'ok',submitted:true,
+   quote_id:'11111111-1111-4111-8111-111111111111',
+   quote_code:'WEB-TEST',total:107,shipping:{status:'quoted',freight:17},packaging:{status:'estimated'}});};
+ const res=response();
+ await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{
+ items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+ customer:{name:'Teste'},shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}}},res);
+ assert.equal(res.statusCode,409);assert.equal(res.body.error,'price_changed');assert.equal(calls,1);
+});
+test('the legacy shipping flag is not required after the seller enables live Frenet rates',async(t)=>{
+ t.after(reset);configure();delete process.env.CENTER_SHIPPING_VALIDATED;
+ const res=response();status({method:'GET'},res);assert.equal(res.body.checkout_enabled,true);
+ delete process.env.CENTER_USE_LIVE_FRENET_RATES;
+ const disabled=response();status({method:'GET'},disabled);assert.equal(disabled.body.checkout_enabled,false);
 });

@@ -5,11 +5,11 @@ import { readFileSync } from 'node:fs';
 const originals = {
   FRENET_TOKEN: process.env.FRENET_TOKEN,
   CENTER_CUPULAS_ORIGIN_CEP: process.env.CENTER_CUPULAS_ORIGIN_CEP,
-  CENTER_SHIPPING_VALIDATED: process.env.CENTER_SHIPPING_VALIDATED,
+  CENTER_USE_LIVE_FRENET_RATES: process.env.CENTER_USE_LIVE_FRENET_RATES,
   fetch: globalThis.fetch
 };
 function restore() {
-  for (const key of ['FRENET_TOKEN', 'CENTER_CUPULAS_ORIGIN_CEP', 'CENTER_SHIPPING_VALIDATED']) {
+  for (const key of ['FRENET_TOKEN', 'CENTER_CUPULAS_ORIGIN_CEP', 'CENTER_USE_LIVE_FRENET_RATES']) {
     if (originals[key] === undefined) delete process.env[key];
     else process.env[key] = originals[key];
   }
@@ -87,7 +87,7 @@ test('freight filters negative carrier prices and returns normalized valid optio
     count:1,mean_price:48.35,min_price:48.35,max_price:48.35,
     basis:'live_frenet_carrier_quotes',payable:false
   });
-  process.env.CENTER_SHIPPING_VALIDATED='true';
+  process.env.CENTER_USE_LIVE_FRENET_RATES='true';
   const reviewed=makeRes();
   await freight(validRequest(),reviewed);
   assert.equal(reviewed.body.calibration,false);
@@ -126,7 +126,7 @@ test('pending calibration is explicitly marked as preliminary in Frenet response
   t.after(restore);
   process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
   process.env.FRENET_TOKEN='test-token';
-  delete process.env.CENTER_SHIPPING_VALIDATED;
+  delete process.env.CENTER_USE_LIVE_FRENET_RATES;
   const {default: freight}=await import('../api/frete.js?test=preliminary');
   globalThis.fetch=async()=>Response.json({ShippingSevicesArray:[
     {ServiceCode:'PAC',Carrier:'Correios',ServiceDescription:'PAC',ShippingPrice:'28.50',DeliveryTime:'7',Error:'false'}
@@ -153,7 +153,7 @@ test('average is based on quoted carrier prices for the given CEP, not a fixed g
  t.after(restore);
  process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
  process.env.FRENET_TOKEN='test-token';
- delete process.env.CENTER_SHIPPING_VALIDATED;
+ delete process.env.CENTER_USE_LIVE_FRENET_RATES;
  const {default: freight}=await import('../api/frete.js?test=indicative-mean');
  globalThis.fetch=async()=>Response.json({ShippingSevicesArray:[
   {ServiceCode:'A',ShippingPrice:30.00,Carrier:'Correios'},
@@ -179,5 +179,5 @@ test('unvalidated estimates cannot be selected or included as charged freight',(
  assert.ok(src.includes('selectedShipping = null'));
  assert.ok(src.includes('freightOptions = []'));
  const status=readFileSync(new URL('../api/mercadopago/status.js',import.meta.url),'utf8');
- assert.ok(status.includes("process.env.CENTER_SHIPPING_VALIDATED === 'true'"));
+ assert.ok(status.includes("process.env.CENTER_USE_LIVE_FRENET_RATES === 'true'"));
 });
