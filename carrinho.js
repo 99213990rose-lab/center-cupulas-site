@@ -499,7 +499,9 @@
 
     checkoutButton.disabled = true;
     checkoutButton.textContent = checkoutProEnabled ? 'Preparando pagamento…' : 'Enviando…';
-    setStatus('info', '<strong>Enviando seu pedido para a Center Cúpulas…</strong>');
+    setStatus('info', checkoutProEnabled
+      ? '<strong>Preparando seu pagamento seguro…</strong><p>Você será direcionado ao Mercado Pago.</p>'
+      : '<strong>Enviando seu pedido para a Center Cúpulas…</strong>');
 
     try {
       if (checkoutProEnabled) {
@@ -516,7 +518,15 @@
         if (url.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.br)?$/.test(url.hostname)) {
           throw new Error('invalid_payment_url');
         }
-        // Never treat the browser redirect as payment confirmation; the signed webhook decides.
+        // Save only the signed receipt reference in this browser tab, never personal data.
+        // The payment redirect is not proof of an approved transaction.
+        try {
+          if(data.status_reference && data.status_proof){
+            sessionStorage.setItem('center-cupulas-payment-receipt',JSON.stringify({
+              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,at:Date.now()
+            }));
+          }
+        } catch { /* Private browsing may disable session storage. Payment still works. */ }
         window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
         window.location.assign(url.href);
         return;
@@ -600,13 +610,84 @@
     } catch { /* the manual quote flow remains available */ }
   })();
 
+
   const paymentReturn = new URLSearchParams(window.location.search).get('payment');
-  if (paymentReturn === 'return') {
-    setStatus('info', '<strong>Você voltou do Mercado Pago.</strong><p>A compra será confirmada somente após a validação automática do pagamento. Guarde seu comprovante.</p>');
-  } else if (paymentReturn === 'pending') {
-    setStatus('info', '<strong>Pagamento em processamento.</strong><p>A confirmação acontece após a aprovação pelo Mercado Pago.</p>');
-  } else if (paymentReturn === 'failed') {
-    setStatus('warning', '<strong>Pagamento não concluído.</strong><p>Seu carrinho foi mantido para você tentar novamente.</p>');
+  const receiptKey = 'center-cupulas-payment-receipt';
+  let receipt = null;
+  if(['return','pending','failed'].includes(paymentReturn)){
+    try {
+      const stored=JSON.parse(sessionStorage.getItem(receiptKey)||'null');
+      if(stored && typeof stored.reference==='string' && typeof stored.proof==='string' &&
+         Number.isFinite(stored.at) && Date.now()-stored.at<24*60*60*1000) receipt=stored;
+    } catch { /* no stored receipt */ }
+  }
+
+  let statusAttempts=0;
+  let statusTimer=null;
+  let checkingStatus=false;
+  const checkPaymentStatus = async () => {
+    if(!receipt || checkingStatus) return;
+    checkingStatus=true;
+    statusAttempts++;
+    try{
+      const response=await fetch('/api/mercadopago/order-status',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        cache:'no-store',
+        body:JSON.stringify({reference:receipt.reference,proof:receipt.proof})
+      });
+      const result=await response.json();
+      if(response.ok && result.state==='confirmed'){
+        if(statusTimer)window.clearTimeout(statusTimer);
+        try{sessionStorage.removeItem(receiptKey)}catch{}
+        receipt=null;
+        // Only a verified paid order registered in the production queue clears the cart.
+        cart.clear();
+        renderItems();
+        setStatus('success','<strong>Pagamento confirmado!</strong><p>Pedido '+
+          escapeHtml(result.order_code||result.reference_code||'')+
+          ' registrado e encaminhado à fila de produção. Obrigado por comprar na Center Cúpulas.</p>');
+        return;
+      }
+      if(response.ok && result.state==='processing'){
+        setStatus('info','<strong>Pagamento identificado.</strong><p>Estamos finalizando o registro do pedido na produção. '+
+          'Você não precisa pagar novamente.</p><button type="button" class="button" data-check-payment-status>Consultar situação</button>');
+      } else if(response.ok && result.state==='pending'){
+        setStatus('info','<strong>Aguardando confirmação do Mercado Pago.</strong><p>Se você pagou, '+
+          'a atualização pode levar alguns instantes. Não realize outro pagamento enquanto aguarda.</p>'+
+          '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
+      } else {
+        setStatus('info','<strong>Não foi possível consultar o pedido agora.</strong><p>Seu pagamento '+
+          'não será presumido como aprovado. Tente consultar novamente.</p>'+
+          '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
+      }
+    }catch {
+      setStatus('info','<strong>Consulta temporariamente indisponível.</strong>'+
+        '<p>Se você pagou, aguarde a confirmação. Não pague novamente enquanto verifica.</p>'+
+        '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
+    }finally{
+      checkingStatus=false;
+      if(receipt && statusAttempts<24 && document.visibilityState!=='hidden'){
+        statusTimer=window.setTimeout(checkPaymentStatus,5000);
+      }
+    }
+  };
+  statusBox?.addEventListener('click',(event)=>{
+    if(event.target?.closest?.('[data-check-payment-status]')){
+      if(statusTimer)window.clearTimeout(statusTimer);
+      statusAttempts=0;
+      void checkPaymentStatus();
+    }
+  });
+
+  if(paymentReturn==='return'||paymentReturn==='pending'){
+    setStatus('info','<strong>Consultando a confirmação do pedido…</strong>'+
+      '<p>O Mercado Pago confirma a compra antes da entrada em produção.</p>');
+    if(receipt)void checkPaymentStatus();
+    else setStatus('info','<strong>Você voltou do Mercado Pago.</strong><p>A confirmação '+
+      'depende da aprovação do pagamento. Se pagou, guarde o comprovante.</p>');
+  }else if(paymentReturn==='failed'){
+    setStatus('warning','<strong>Pagamento não concluído.</strong>'+
+      '<p>Seu carrinho foi mantido. Confira a situação no Mercado Pago antes de tentar novamente.</p>');
   }
   renderItems();
   refreshPreview();

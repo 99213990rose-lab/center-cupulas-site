@@ -1,8 +1,11 @@
 # Checkout Pro — operação da Center Cúpulas
 
-## Estado de implantação (16/10/2026)
-- O checkout online é protegido por `CENTER_CHECKOUT_ENABLED` (atualmente **false**).
-- Enquanto estiver desligado, o carrinho mantém o fluxo de orçamento/WhatsApp.
+## Estado operacional verificado em 16/10/2026
+- **Checkout habilitado em Production** (`CENTER_CHECKOUT_ENABLED=true` e `CENTER_USE_LIVE_FRENET_RATES=true`); preview permanece sem pagamentos.
+- Mercado Pago abriu uma preferência real para um pedido, sem cobrar durante a verificação. Frenet devolveu Correios/Jadlog.
+- O redirecionamento e o valor na preferência foram verificados, mas **a conciliação após um pagamento real aprovado ainda não foi observada** (zero entradas em `center_checkout_payments` nesta auditoria). Não afirmar que o pós-pagamento foi homologado.
+- O comprador agora recebe uma consulta privada do andamento após retornar do Checkout Pro, sem considerar o redirecionamento como comprovante.
+- Este documento contém **histórico de decisões antigas**; trechos abaixo sobre `CENTER_SHIPPING_VALIDATED` e checkout desligado refletem o estágio inicial e **não** a configuração de produção atual.
 - O novo `GET /api/mercadopago/status` só responde `checkout_enabled: true`
   quando todas as credenciais e a configuração do frete estiverem presentes.
 - O novo webhook e a migração de banco NÃO dependem do status dessa chave:
@@ -22,7 +25,7 @@ Cadastrar somente na Vercel (Production), sem colocar segredos no GitHub ou no n
 | `CENTER_SHIPPING_VALIDATED` | `true` somente após conferência presencial de dimensões, peso, embalagem, transportadora e custos. Até lá, ausente ou `false`. |
 | `CENTER_CHECKOUT_ENABLED` | `false` até homologação; `true` para liberar após testes |
 
-O frete não usa mais CEP de origem presumido. Sem Frenet/token/CEP válido ou sem `CENTER_SHIPPING_VALIDATED=true` o pagamento fica bloqueado; os pedidos de orçamento continuam funcionando.
+O frete parte do CEP confirmado 08265-220 (Itaquera/SP). O checkout exige Frenet/token/CEP válido e `CENTER_USE_LIVE_FRENET_RATES=true`; `CENTER_SHIPPING_VALIDATED` é legado histórico e não controla a tarifa aceita pela empresa.
 
 **Importante:** não trocar a URL global do webhook da aplicação Métodos Digitais de forma cega: ela pode receber pagamentos daquele projeto. As preferências da Center incluem `notification_url` específica:
 `https://www.centercupulas.com.br/api/mercadopago/webhook`.
@@ -166,3 +169,12 @@ Os testes de conexão em produção mostraram `provider_connection=unavailable` 
 - A preferência Checkout Pro tenta `fetch`; se houver falha de conexão, tenta uma vez o transporte nativo mantendo idempotency key, total e referência do orçamento.
 - O webhook de confirmação também tem recuperação de transporte. Continua recusando assinaturas inválidas e conferindo dados por RPC atômica. Em indisponibilidade, retorna 503 para reentrega.
 - Testes unitários validam o fallback e a restrição rígida de host. Não interpretar diagnóstico bem-sucedido como pagamento integral homologado até uma transação real verificada.
+
+
+## Acompanhamento privado do cliente após o Checkout Pro (16/10/2026)
+
+- Ao criar uma preferência de pagamento validada, o servidor devolve também `status_reference` (UUID do orçamento) e `status_proof` (HMAC-SHA256 de domínio separado, derivado da chave secreta **somente no servidor**). A prova fica exclusivamente no `sessionStorage` da aba que iniciou o checkout, não no URL, cookies ou logs.
+- Após voltar do Mercado Pago com `?payment=return` ou `?payment=pending`, o carrinho pode chamar `POST /api/mercadopago/order-status` para consulta **read-only** de `quotes`, `orders` e `production_jobs`, filtrando a organização Center e o UUID comprovado. Pedido desconhecido ou prova adulterada não devolve dados.
+- Só exibe **Pagamento confirmado** quando o registro está efetivamente `paid`, o pedido foi gravado como pago e existe uma entrada na produção. Não marca nada como pago a partir de parâmetros da URL ou ações do cliente.
+- Enquanto o Mercado Pago não confirma, mostra **Aguardando confirmação** e oferece reconsulta. Ao confirmar, limpa o carrinho da aba. O preço/frete continuam sendo cotados ao vivo antes da criação da preferência.
+- Esta consulta não testa nem cria pagamentos. A validação real da entrega das notificações e a conciliação continua aguardando a primeira compra legítima aprovada.
