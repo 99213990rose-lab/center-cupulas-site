@@ -3,7 +3,7 @@ const ORIGIN_CEP = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/
 const FRENET_TOKEN = process.env.FRENET_TOKEN || '';
 
 function cleanCep(value) {
-  return String(value || '').replace(/\D/g, '').slice(0, 8);
+  return String(value || '').replace(/\D/g, '');
 }
 
 function number(value, fallback = 0) {
@@ -58,18 +58,21 @@ function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'no-store');
+  return !origin || allowed;
 }
 
 export default async function handler(req, res) {
-  setCors(req, res);
+  const trustedOrigin = setCors(req, res);
+  if (!trustedOrigin) return res.status(403).json({ error: 'invalid_origin' });
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
   const recipientCep = cleanCep(req.body?.recipientCep);
-  const shipmentValue = Math.max(1, number(req.body?.shipmentValue));
+  const shipmentValue = Number(req.body?.shipmentValue);
   const packages = normalizePackages(req.body?.packages);
 
   if (!/^\d{8}$/.test(recipientCep)) return res.status(400).json({ error: 'invalid_recipient_cep' });
+  if (!Number.isFinite(shipmentValue) || shipmentValue <= 0 || shipmentValue > 1000000) return res.status(400).json({ error: 'invalid_shipment_value' });
   if (!/^\d{8}$/.test(ORIGIN_CEP)) return res.status(503).json({ error: 'origin_cep_not_configured' });
   if (!packages.length) return res.status(400).json({ error: 'invalid_packages' });
 
@@ -101,7 +104,8 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
         token: FRENET_TOKEN
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(12000)
     });
 
     const rawText = await response.text();
@@ -109,7 +113,7 @@ export default async function handler(req, res) {
     try { data = rawText ? JSON.parse(rawText) : {}; } catch {}
 
     if (!response.ok) {
-      console.error('Frenet quote error', response.status, rawText.slice(0, 1000));
+      console.error('Frenet quote error', response.status);
       return res.status(502).json({ error: 'freight_provider_error', provider: 'Frenet' });
     }
 
@@ -120,7 +124,7 @@ export default async function handler(req, res) {
         : [];
 
     const options = services
-      .filter((service) => !service?.Error && Number.isFinite(Number(service?.ShippingPrice)))
+      .filter((service) => !service?.Error && String(service?.ServiceCode ?? '').trim() && Number.isFinite(Number(service?.ShippingPrice)) && Number(service.ShippingPrice) >= 0)
       .map((service) => ({
         code: String(service.ServiceCode || ''),
         carrier: String(service.Carrier || ''),

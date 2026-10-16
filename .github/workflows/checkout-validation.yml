@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, improve/checkout-hardening-20261016]
+    branches: [main, 'improve/**']
   workflow_dispatch:
 
 permissions:
@@ -27,4 +27,4 @@ jobs:
           node --check api/frete.js
           node --check carrinho.js
       - name: Run checkout unit tests
-        run: node --test test/checkout.test.mjs
+        run: node --test test/*.test.mjs
