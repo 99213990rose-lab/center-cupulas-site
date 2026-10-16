@@ -86,3 +86,17 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 - A antiga implementação experimental de medições de caixas foi abandonada e **não deve ser publicada**.
 
 **Exemplos:** uma caixa prevista para uma cúpula de 30 cm → R$ 10; 50 cm → R$ 12; 75 cm → R$ 15. A fábrica pode redefinir as faixas no banco quando padronizar suas compras.
+
+## Política de preço com caixa embutida — atualização de 16/10/2026
+
+**Decisão da Center Cúpulas:** o custo previsto de compra das caixas passa a integrar o preço das cúpulas. Não criar taxa, item adicional nem linha de embalagem cobrada à parte.
+
+- Valores de custo internos em `packaging_rules`: **pequena R$ 10**, **média R$ 12**, **grande R$ 15**. São custos iniciais e podem ser atualizados.
+- Classificação inicial por tamanho da cúpula (não medidas físicas das caixas): maior medida até **35 cm = pequena**; acima de 35 até **65 cm = média**; acima = grande.
+- O sistema estima **quantos volumes** serão usados com a lógica existente de agrupamento e embute a soma do custo desses volumes nas linhas das cúpulas. Isso permite repartir uma caixa entre várias peças sem cobrar uma caixa inteira por unidade.
+- **Desconto de volume** continua apenas sobre a parte de fabricação, preservando o valor incorporado das caixas. O catálogo e o carrinho usam o mesmo módulo de cálculo (`price-with-box.mjs`). Os textos comerciais explicam o desconto sobre fabricação.
+- O `subtotal_before_discount`, `product_total` e os `line_total` já incluem o orçamento das caixas; o `finalTotal` adiciona **somente frete da transportadora** a esse total de produtos.
+- Informações de custo de embalagem permanecem **internas** em `quotes.shipping.box_purchase_budget` com `included_in_products: true`. Os clientes veem a informação "embalagem incluída" e não uma cobrança separada.
+- Regras de preço base da fábrica (`pricing_reference_prices`) **não foram alteradas**, assim como cotações já registradas anteriormente.
+- O novo orçamento exige classificação válida; formatos/volumes não estimáveis retornam para avaliação manual, nunca custo R$ 0 presumido.
+- Custos das caixas **não substituem o frete**: cotação com transportadora permanece pendente. `CENTER_CHECKOUT_ENABLED=false` continua em produção até homologação.
