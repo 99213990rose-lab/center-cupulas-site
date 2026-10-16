@@ -122,6 +122,9 @@
   };
 
   const readAttribution = () => {
+    if (!window.CenterPrivacyConsent?.enabled('analytics')) {
+      return { source: 'direct', medium: 'none', campaign: '', firstTouch: null, referrerHost: '' };
+    }
     const params = new URLSearchParams(window.location.search);
     const referrer = inferReferrerAttribution();
     const hasGoogleClick = Boolean(params.get('gclid') || params.get('gbraid') || params.get('wbraid'));
@@ -168,9 +171,9 @@
     };
   };
 
-  const attribution = readAttribution();
-  const sessionId = getSessionId();
-  const landingPage = attribution.firstTouch?.landingPage || window.location.pathname + window.location.search;
+  let attribution = readAttribution();
+  let sessionId = window.CenterPrivacyConsent?.enabled('analytics') ? getSessionId() : null;
+  const currentLandingPage = () => attribution.firstTouch?.landingPage || window.location.pathname;
 
   const placementFor = (element) => {
     if (!element) return 'unknown';
@@ -187,6 +190,8 @@
   };
 
   const sendWebEvent = (eventType, details = {}) => {
+    if (!window.CenterPrivacyConsent?.enabled('analytics')) return null;
+    if (!sessionId) { attribution = readAttribution(); sessionId = getSessionId(); }
     const payload = {
       event_id: 'cc-' + Date.now().toString(36) + '-' + randomToken(5),
       session_id: sessionId,
@@ -200,7 +205,7 @@
       content: attribution.content || '',
       term: attribution.term || '',
       referrer_host: attribution.referrerHost || '',
-      landing_page: landingPage,
+      landing_page: currentLandingPage(),
       occurred_at: new Date().toISOString(),
       metadata: {
         has_google_click_id: Boolean(attribution.hasGoogleClick),
@@ -234,11 +239,11 @@
   const trackWhatsAppConversion = (details = {}) => {
     const leadRef = details.leadRef || createLeadRef();
 
-    if (typeof window.gtag === 'function') {
+    if (window.CenterPrivacyConsent?.enabled('marketing') && typeof window.gtag === 'function') {
       window.gtag('event', 'conversion', { send_to: 'AW-18466593229/dGyVCITQ_IAdEM2zx-VE' });
     }
 
-    if (typeof window.va === 'function') {
+    if (window.CenterPrivacyConsent?.enabled('analytics') && typeof window.va === 'function') {
       window.va('event', {
         name: 'WhatsApp Click',
         data: {
@@ -275,7 +280,7 @@
     }
   };
 
-  if (typeof window.va === 'function' && attribution.source !== 'direct') {
+  if (window.CenterPrivacyConsent?.enabled('analytics') && typeof window.va === 'function' && attribution.source !== 'direct') {
     window.va('event', {
       name: 'Campaign Visit',
       data: {
@@ -288,6 +293,16 @@
   }
 
   sendWebEvent('page_view', { placement: 'page' });
+  window.addEventListener('center-privacy-consent', () => {
+    if (!window.CenterPrivacyConsent?.enabled('analytics')) {
+      attribution = { source: 'direct', medium: 'none', campaign: '', firstTouch: null, referrerHost: '' };
+      sessionId = null;
+      return;
+    }
+    attribution = readAttribution();
+    sessionId = getSessionId();
+    sendWebEvent('page_view', { placement: 'page' });
+  });
 
   window.CenterCupulas = {
     observeReveals,
