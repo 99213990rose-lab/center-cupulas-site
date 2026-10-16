@@ -4,10 +4,11 @@ import assert from 'node:assert/strict';
 const originals = {
   FRENET_TOKEN: process.env.FRENET_TOKEN,
   CENTER_CUPULAS_ORIGIN_CEP: process.env.CENTER_CUPULAS_ORIGIN_CEP,
+  CENTER_SHIPPING_VALIDATED: process.env.CENTER_SHIPPING_VALIDATED,
   fetch: globalThis.fetch
 };
 function restore() {
-  for (const key of ['FRENET_TOKEN', 'CENTER_CUPULAS_ORIGIN_CEP']) {
+  for (const key of ['FRENET_TOKEN', 'CENTER_CUPULAS_ORIGIN_CEP', 'CENTER_SHIPPING_VALIDATED']) {
     if (originals[key] === undefined) delete process.env[key];
     else process.env[key] = originals[key];
   }
@@ -80,4 +81,9 @@ test('freight filters negative carrier prices and returns normalized valid optio
   assert.equal(res.body.options.length,1);
   assert.equal(res.body.options[0].price,48.35);
   assert.equal(res.body.origin_cep,'08265220');
+  assert.equal(res.body.calibration,true);
+  process.env.CENTER_SHIPPING_VALIDATED='true';
+  const reviewed=makeRes();
+  await freight(validRequest(),reviewed);
+  assert.equal(reviewed.body.calibration,false);
 });
