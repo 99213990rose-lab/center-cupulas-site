@@ -20,6 +20,10 @@
   const checkoutForm = document.querySelector('[data-checkout-form]');
   const checkoutButton = document.querySelector('[data-checkout-submit]');
   const statusBox = document.querySelector('[data-checkout-status]');
+  const flowNote = document.querySelector('[data-checkout-flow-note]');
+  const freightNote = document.querySelector('[data-cart-freight-note]');
+  const grandTotalLabel = document.querySelector('[data-cart-grand-label]');
+  const heroDescription = document.querySelector('[data-cart-hero-description]');
   const packagingSummary = document.querySelector('[data-packaging-summary]');
   const packagingBody = document.querySelector('[data-packaging-body]');
   const cepInput = checkoutForm?.querySelector('[name="cep"]');
@@ -39,6 +43,11 @@
   let selectedShipping = null;
   let freightProviderConfigured = false;
   let checkoutProEnabled = false;
+  let previewLoading = false;
+  let isSubmitting = false;
+  let cepLookupSeq = 0;
+  let lastKnownCep = '';
+  let autoFilledAddress = {};
 
   const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
@@ -73,6 +82,7 @@
     if (!statusBox) return;
     statusBox.className = 'checkout-status checkout-status--' + type;
     statusBox.innerHTML = html;
+    statusBox.setAttribute('role', type === 'error' ? 'alert' : 'status');
     statusBox.hidden = false;
   };
 
@@ -114,15 +124,21 @@
   };
 
   const updateGrandTotal = () => {
-    const productTotal = Number(preview?.product_total || 0);
-    const freight = Number(selectedShipping?.price || 0);
-    if (freightEl) freightEl.textContent = selectedShipping ? money(freight) : 'A confirmar';
-    if (grandTotalEl) grandTotalEl.textContent = money(productTotal + freight);
+    const hasFreight = selectedShipping && Number.isFinite(Number(selectedShipping.price));
+    const productTotal = Number(preview?.product_total);
+    const freight = hasFreight ? Number(selectedShipping.price) : 0;
+    if (freightEl) freightEl.textContent = hasFreight ? money(freight) : 'A confirmar';
+    if (grandTotalLabel) grandTotalLabel.textContent = hasFreight ? 'Total com frete estimado' : 'Total (frete a confirmar)';
+    if (grandTotalEl) grandTotalEl.textContent = !Number.isFinite(productTotal)
+      ? 'Calculando…' : hasFreight ? money(productTotal + freight) : money(productTotal) + ' + frete';
+    if (freightNote) freightNote.textContent = hasFreight
+      ? 'Frete estimado com a opção selecionada. O valor será conferido pelo servidor antes de qualquer pagamento.'
+      : 'O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.';
   };
 
   const updateCheckoutAvailability = () => {
     if (!checkoutButton) return;
-    if (!preview || preview.status !== 'ok') {
+    if (isSubmitting || previewLoading || !preview || preview.status !== 'ok') {
       checkoutButton.disabled = true;
       return;
     }
@@ -141,7 +157,7 @@
       freightProviderConfigured = false;
       selectedShipping = null;
       if (shippingProvider) shippingProvider.textContent = 'em ativação';
-      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Cotação automática preparada.</strong> Falta apenas ativar a conexão com a transportadora. Por enquanto o frete será confirmado pela equipe.</p>';
+      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Frete sob consulta.</strong> Nossa equipe confirmará as opções de transporte e o valor antes de finalizar o pedido.</p>';
       updateGrandTotal();
       updateCheckoutAvailability();
       return;
@@ -150,7 +166,9 @@
     if (data?.status === 'no_options' || !freightOptions.length) {
       selectedShipping = null;
       if (shippingProvider) shippingProvider.textContent = data?.provider || 'transportadoras';
-      shippingOptionsHost.innerHTML = '<p class="shipping-note">Nenhuma opção automática encontrada para este CEP. A equipe vai cotar o frete manualmente.</p>';
+      shippingOptionsHost.innerHTML = data?.error
+        ? '<p class="shipping-note">Não foi possível consultar a entrega agora. Nossa equipe poderá calcular o frete manualmente.</p>'
+        : '<p class="shipping-note">Nenhuma opção de entrega automática encontrada para este CEP. Nossa equipe poderá calcular o frete manualmente.</p>';
       updateGrandTotal();
       updateCheckoutAvailability();
       return;
@@ -165,7 +183,7 @@
         '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · até ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
         '<strong>' + money(option.price) + '</strong>' +
       '</label>';
-    }).join('') + '<p class="shipping-calibration-note">Frete calculado com a embalagem estimada e peso volumétrico conservador. A cobrança online continua bloqueada até a calibração logística.</p>';
+    }).join('') + '<p class="shipping-calibration-note">Prazo e valor estimados com base na embalagem prevista. A confirmação final depende da validação logística.</p>';
 
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -180,6 +198,7 @@
   };
 
   const refreshFreight = async () => {
+    const seq = ++freightRequestSeq;
     const cep = onlyDigits(cepInput?.value);
     if (!preview?.packaging?.packages?.length || cep.length !== 8) {
       selectedShipping = null;
@@ -191,7 +210,6 @@
       return;
     }
 
-    const seq = ++freightRequestSeq;
     selectedShipping = null;
     freightOptions = [];
     if (shippingBox) shippingBox.hidden = false;
@@ -218,17 +236,18 @@
         return;
       }
       if (!response.ok) {
-        renderFreightState({ status: 'no_options', provider: 'Frete' });
+        renderFreightState({ status: 'no_options', provider: 'Frete', error: 'unavailable' });
         return;
       }
       renderFreightState(data);
     } catch {
       if (seq !== freightRequestSeq) return;
-      renderFreightState({ status: 'no_options', provider: 'Frete' });
+      renderFreightState({ status: 'no_options', provider: 'Frete', error: 'unavailable' });
     }
   };
 
   const renderPreview = (data) => {
+    previewLoading = false;
     preview = data;
     if (!data || data.status !== 'ok') return;
     const byId = new Map((data.items || []).map((item) => [item.id, item]));
@@ -275,17 +294,20 @@
 
   const refreshPreview = async () => {
     const items = apiItems();
+    const seq = ++requestSeq;
+    ++freightRequestSeq;
+    selectedShipping = null;
+    freightOptions = [];
+    freightProviderConfigured = false;
+    preview = null;
+    previewLoading = items.length > 0;
+    updateGrandTotal();
     if (!items.length) {
-      preview = null;
-      selectedShipping = null;
-      freightOptions = [];
-      freightProviderConfigured = false;
       if (shippingBox) shippingBox.hidden = true;
       if (checkoutButton) checkoutButton.disabled = true;
       updateGrandTotal();
       return;
     }
-    const seq = ++requestSeq;
     if (checkoutButton) checkoutButton.disabled = true;
     if (totalEl) totalEl.textContent = 'Calculando…';
     try {
@@ -298,6 +320,7 @@
       const data = await response.json();
       if (seq !== requestSeq) return;
       if (!response.ok || data.status !== 'ok') {
+        previewLoading = false;
         setStatus('warning', '<strong>Este pedido precisa de revisão.</strong><p>Uma das configurações ainda não tem segurança suficiente para preço automático. Você pode falar com a equipe pelo WhatsApp.</p>');
         if (totalEl) totalEl.textContent = 'Sob consulta';
         return;
@@ -306,6 +329,7 @@
       renderPreview(data);
     } catch {
       if (seq !== requestSeq) return;
+      previewLoading = false;
       setStatus('warning', '<strong>Não foi possível atualizar o preço agora.</strong><p>Tente novamente em instantes ou continue pelo WhatsApp.</p>');
       if (totalEl) totalEl.textContent = 'Indisponível';
     }
@@ -317,9 +341,15 @@
   };
 
   window.addEventListener('center-cart-change', () => {
+    ++requestSeq;
+    ++freightRequestSeq;
+    previewLoading = true;
+    preview = null;
     selectedShipping = null;
     freightOptions = [];
     freightProviderConfigured = false;
+    updateGrandTotal();
+    updateCheckoutAvailability();
     renderItems();
     schedulePreview();
   });
@@ -329,6 +359,21 @@
   const formatCep = (value) => {
     const digits = onlyDigits(value).slice(0, 8);
     return digits.length > 5 ? digits.slice(0, 5) + '-' + digits.slice(5) : digits;
+  };
+
+  const addressFields = {
+    street: streetInput,
+    neighborhood: neighborhoodInput,
+    city: cityInput,
+    state: stateInput
+  };
+
+  // Remove only values populated by the CEP service; never discard manual edits.
+  const clearAutoFilledAddress = () => {
+    for (const [field, value] of Object.entries(autoFilledAddress)) {
+      if (addressFields[field]?.value === value) addressFields[field].value = '';
+    }
+    autoFilledAddress = {};
   };
 
   const lookupCep = async () => {
@@ -342,7 +387,8 @@
       }
       return;
     }
-
+    if (lastKnownCep === cep) return;
+    const seq = ++cepLookupSeq;
     if (cepStatus) {
       cepStatus.textContent = 'Buscando endereço…';
       cepStatus.className = 'field-inline-status is-loading';
@@ -356,18 +402,25 @@
         body: JSON.stringify({ cep })
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'cep_error');
-      if (streetInput && !streetInput.value.trim()) streetInput.value = data.street || '';
-      if (neighborhoodInput && !neighborhoodInput.value.trim()) neighborhoodInput.value = data.neighborhood || '';
-      if (cityInput) cityInput.value = data.city || cityInput.value;
-      if (stateInput) stateInput.value = data.state || stateInput.value;
+      if (seq !== cepLookupSeq || onlyDigits(cepInput.value) !== cep) return;
+      if (!response.ok) throw new Error('cep_error');
+
+      clearAutoFilledAddress();
+      for (const [field, input] of Object.entries(addressFields)) {
+        const value = String(data[field] || '').trim();
+        if (input && !input.value.trim() && value) {
+          input.value = field === 'state' ? value.toUpperCase().slice(0, 2) : value;
+          autoFilledAddress[field] = input.value;
+        }
+      }
+      lastKnownCep = cep;
       if (cepStatus) {
-        cepStatus.textContent = 'Endereço encontrado.';
+        cepStatus.textContent = 'Endereço encontrado. Confira o número e os demais dados.';
         cepStatus.className = 'field-inline-status is-ok';
       }
       refreshFreight();
-      checkoutForm?.querySelector('[name="number"]')?.focus();
     } catch {
+      if (seq !== cepLookupSeq || onlyDigits(cepInput.value) !== cep) return;
       if (cepStatus) {
         cepStatus.textContent = 'Não encontramos o CEP. Preencha o endereço manualmente.';
         cepStatus.className = 'field-inline-status is-warning';
@@ -376,21 +429,36 @@
   };
 
   cepInput?.addEventListener('input', () => {
-    cepInput.value = formatCep(cepInput.value);
+    const cep = onlyDigits(cepInput.value);
+    cepInput.value = formatCep(cep);
+    ++cepLookupSeq;
+    ++freightRequestSeq;
+    if (lastKnownCep !== cep) {
+      clearAutoFilledAddress();
+      lastKnownCep = '';
+    }
     selectedShipping = null;
     freightOptions = [];
     freightProviderConfigured = false;
     updateGrandTotal();
-    if (onlyDigits(cepInput.value).length === 8) lookupCep();
-    else if (shippingBox) shippingBox.hidden = true;
+    updateCheckoutAvailability();
+    if (cep.length === 8) lookupCep();
+    else {
+      if (shippingBox) shippingBox.hidden = true;
+      if (cepStatus) {
+        cepStatus.textContent = cep.length ? 'Digite os 8 números do CEP.' : '';
+        cepStatus.className = 'field-inline-status';
+      }
+    }
   });
   cepInput?.addEventListener('blur', lookupCep);
 
   checkoutForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const items = apiItems();
-    if (!items.length) return;
+    if (isSubmitting || !items.length) return;
     if (!checkoutForm.reportValidity()) return;
+    isSubmitting = true;
 
     const formData = new FormData(checkoutForm);
     const customer = {
@@ -474,8 +542,9 @@
         ? 'Escolha uma opção de frete para enviar o pedido.'
         : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
       setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
-      checkoutButton.disabled = false;
+      isSubmitting = false;
       checkoutButton.textContent = checkoutProEnabled ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
+      updateCheckoutAvailability();
     }
   });
 
@@ -487,6 +556,12 @@
       if (!response.ok) return;
       const data = await response.json();
       checkoutProEnabled = data.checkout_enabled === true;
+      if (flowNote) flowNote.textContent = checkoutProEnabled
+        ? 'Pagamento seguro pelo Mercado Pago. O frete e os valores serão validados antes de cobrar. O pedido só é confirmado após a aprovação.'
+        : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
+      if (heroDescription) heroDescription.textContent = checkoutProEnabled
+        ? 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.'
+        : 'Ajuste quantidades e confira os dados. O preço é calculado automaticamente e a entrega é confirmada antes da produção.';
       if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
         ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
       updateCheckoutAvailability();
