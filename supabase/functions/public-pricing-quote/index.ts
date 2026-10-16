@@ -205,7 +205,7 @@ Deno.serve(async (req: Request) => {
     const commercialBase = factory * pct(rules.owner_margin_pct) * pct(rules.site_cost_pct);
     const discountPct = n(rules.discount_pct);
     const listUnit = discountPct < 100 ? commercialBase / (1 - discountPct / 100) : commercialBase;
-    const manufacturedSubtotal = round2(round2(listUnit) * quantity);
+    const manufacturedSubtotal = round2(listUnit * quantity);
     const boxBudget = estimateBoxCostForItem({
       format: publicFormat, top, bottom, height, quantity
     }, packaging);
