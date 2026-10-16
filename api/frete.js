@@ -93,6 +93,22 @@ function normalizePackages(packages) {
   });
 }
 
+// Averages describe offers from the actual carrier quote for this destination.
+// They are indicative only: never a selectable service or payable freight.
+export function summarizeIndicativeFreight(options) {
+  if (!Array.isArray(options) || !options.length) return null;
+  const prices = options.map(o=>o?.price);
+  if (prices.some(price=>typeof price!=='number' || !Number.isFinite(price) || price<0)) return null;
+  return {
+    count:prices.length,
+    mean_price:round(prices.reduce((total,price)=>total+price,0)/prices.length),
+    min_price:round(Math.min(...prices)),
+    max_price:round(Math.max(...prices)),
+    basis:'live_frenet_carrier_quotes',
+    payable:false
+  };
+}
+
 function setCors(req, res) {
   const origin = req.headers.origin || '';
   const allowed =
@@ -172,10 +188,12 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'invalid_freight_provider_response', provider: 'Frenet' });
     }
 
+    const calibration = process.env.CENTER_SHIPPING_VALIDATED !== 'true';
     return res.status(200).json({
       status: options.length ? 'ok' : 'no_options',
       provider: 'Frenet',
-      calibration: process.env.CENTER_SHIPPING_VALIDATED !== 'true',
+      calibration,
+      indicative_estimate: calibration ? summarizeIndicativeFreight(options) : null,
       origin_cep: ORIGIN_CEP,
       recipient_cep: recipientCep,
       package_count: packages.length,

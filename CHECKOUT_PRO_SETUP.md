@@ -122,3 +122,15 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 
 ### Verificação
 Executar `node --test test/frenet-options.test.mjs test/freight.test.mjs` e a suíte de checkout. Não fazer chamadas com o token real em testes automatizados públicos.
+
+## Prévia de frete por média de transportadoras — decisão operacional de 16/10/2026
+
+A Center Cúpulas prefere não exigir o peso medido individualmente em todos os pedidos. A equipe autorizou **usar média das tarifas cotadas pelas transportadoras como referência de orçamento**, sem convertê-la em tarifa final automática.
+
+- Com origem `08265220`, destino informado e dimensões estimadas do pedido, `/api/frete` obtém as tarifas atuais dos serviços efetivamente oferecidos pela **Frenet** e devolve `indicative_estimate`: número de serviços, **média aritmética**, menor e maior preço.
+- Essa é uma **média das ofertas da consulta atual**, não uma pesquisa genérica de mercado nem promessa de que qualquer serviço custará esse valor. Ex.: o serviço mais barato pode ter prazo e cobertura distintos do mais caro.
+- Durante `calibration=true`, a interface apresenta a média e a faixa de valores apenas para orientação. **Não** cria opção de frete selecionável, **não** soma a média ao pedido pagável e **não** autoriza `CENTER_SHIPPING_VALIDATED=true` ou `CENTER_CHECKOUT_ENABLED=true`.
+- O peso enviado no protótipo continua aproximado usando o volume; isso serve a cotações preliminares, **não** é medição física e será revisado quando houver dados representativos da fábrica. A Frenet pode recalcular cubagem pela transportadora e o custo final pode variar. Nunca apresentar o peso como real.
+- Com ausência de ofertas, CEP sem cobertura ou falha do serviço, manter **frete sob consulta**. Para cúpulas grandes e várias caixas, confirmar custo e restrições manualmente.
+- O custo de compra da embalagem (R$ 10/12/15) continua **embutido no preço das cúpulas**, sem cobrança em separado.
+- Comprovantes de SEDEX da fábrica de 14/10/2026 são evidência histórica: R$ 64,12 em 28×37×39 cm e R$ 29,04 em 32×47×47 cm. Eles não devem ser usados para calcular média de qualquer destino sem CEP comparável.

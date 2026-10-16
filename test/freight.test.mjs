@@ -83,10 +83,15 @@ test('freight filters negative carrier prices and returns normalized valid optio
   assert.equal(res.body.options[0].price,48.35);
   assert.equal(res.body.origin_cep,'08265220');
   assert.equal(res.body.calibration,true);
+  assert.deepEqual(res.body.indicative_estimate,{
+    count:1,mean_price:48.35,min_price:48.35,max_price:48.35,
+    basis:'live_frenet_carrier_quotes',payable:false
+  });
   process.env.CENTER_SHIPPING_VALIDATED='true';
   const reviewed=makeRes();
   await freight(validRequest(),reviewed);
   assert.equal(reviewed.body.calibration,false);
+  assert.equal(reviewed.body.indicative_estimate,null);
 });
 
 
@@ -140,4 +145,38 @@ test('customer cart does not display preliminary Frenet price as selectable ship
   assert.ok(src.includes('Nenhuma tarifa'));
   assert.ok(src.includes('freightOptions = []'));
   assert.ok(src.includes('selectedShipping = null'));
+});
+
+
+test('average is based on quoted carrier prices for the given CEP, not a fixed guess', async(t)=>{
+ t.after(restore);
+ process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
+ process.env.FRENET_TOKEN='test-token';
+ delete process.env.CENTER_SHIPPING_VALIDATED;
+ const {default: freight}=await import('../api/frete.js?test=indicative-mean');
+ globalThis.fetch=async()=>Response.json({ShippingSevicesArray:[
+  {ServiceCode:'A',ShippingPrice:30.00,Carrier:'Correios'},
+  {ServiceCode:'B',ShippingPrice:48.00,Carrier:'Jadlog'},
+  {ServiceCode:'C',ShippingPrice:33.00,Carrier:'Correios'}
+ ]});
+ const res=makeRes();
+ await freight(validRequest(),res);
+ assert.equal(res.statusCode,200);
+ assert.equal(res.body.calibration,true);
+ assert.equal(res.body.indicative_estimate.mean_price,37.00);
+ assert.equal(res.body.indicative_estimate.min_price,30);
+ assert.equal(res.body.indicative_estimate.max_price,48);
+ assert.equal(res.body.indicative_estimate.count,3);
+ assert.equal(res.body.indicative_estimate.payable,false);
+});
+
+test('unvalidated estimates cannot be selected or included as charged freight',()=>{
+ const src=readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
+ assert.ok(src.includes('indicative?.payable === false'));
+ assert.ok(src.includes('Frete estimado: média'));
+ assert.ok(src.includes('Esta média não é uma tarifa garantida'));
+ assert.ok(src.includes('selectedShipping = null'));
+ assert.ok(src.includes('freightOptions = []'));
+ const status=readFileSync(new URL('../api/mercadopago/status.js',import.meta.url),'utf8');
+ assert.ok(status.includes("process.env.CENTER_SHIPPING_VALIDATED === 'true'"));
 });
