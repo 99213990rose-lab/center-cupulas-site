@@ -143,7 +143,7 @@
       return;
     }
     checkoutButton.disabled = checkoutProEnabled
-      ? (!selectedShipping || preview?.packaging?.status !== 'estimated')
+      ? (!selectedShipping || preview?.packaging?.status !== 'verified')
       : Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
   };
 
