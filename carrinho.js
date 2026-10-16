@@ -153,6 +153,23 @@
     freightOptions = Array.isArray(data?.options) ? data.options : [];
     freightProviderConfigured = data?.status === 'ok' || data?.status === 'no_options';
 
+    // Prices calculated from estimated boxes are not an offer to ship at that price.
+    // Keep the manual quotation workflow available until physical packing is approved.
+    if (data?.calibration === true) {
+      freightOptions = [];
+      freightProviderConfigured = false;
+      selectedShipping = null;
+      if (shippingProvider) shippingProvider.textContent = 'sob consulta';
+      shippingOptionsHost.innerHTML =
+        '<p class="shipping-note"><strong>Frete sob avaliação.</strong> ' +
+        'As embalagens deste pedido ainda precisam de medição e confirmação ' +
+        'da equipe. Envie seu pedido para receber as opções de transporte antes ' +
+        'de qualquer pagamento.</p>';
+      updateGrandTotal();
+      updateCheckoutAvailability();
+      return;
+    }
+
     if (data?.error === 'frenet_not_configured') {
       freightProviderConfigured = false;
       selectedShipping = null;
