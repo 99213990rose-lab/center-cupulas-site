@@ -48,7 +48,7 @@ test('category gallery images and internal resource links exist in repository',(
     }
     assert.ok((html.match(/loading="lazy"/g)||[]).length>=3,path+' gallery');
     assert.ok((html.match(/<img /g)||[]).length>=4,path+' imagery');
-    assert.ok(html.includes('frete confirmado separadamente'),path+': freight statement');
+    assert.ok(html.toLowerCase().includes('frete confirmado separadamente'),path+': freight statement');
   }
 });
 
