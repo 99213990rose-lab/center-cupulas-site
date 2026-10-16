@@ -47,7 +47,7 @@
         <nav class="breadcrumb" aria-label="Navegação estrutural"><a href="index.html">Center Cúpulas</a><span aria-hidden="true">›</span><a href="modelos.html">Modelos</a><span aria-hidden="true">›</span><span aria-current="page">Seu pedido</span></nav>
         <p class="eyebrow">Seu pedido</p>
         <h1>Revise as cúpulas antes de enviar</h1>
-        <p>Você pode ajustar quantidades. O preço é recalculado automaticamente e o frete será confirmado pela equipe antes da produção.</p>
+        <p data-cart-hero-description>Você pode ajustar quantidades. O preço é recalculado automaticamente e o frete será confirmado pela equipe antes da produção.</p>
       </div>
     </section>
 
@@ -71,10 +71,10 @@
               <div data-cart-discount-row hidden><dt>Desconto</dt><dd data-cart-discount>—</dd></div>
               <div><dt>Total dos produtos</dt><dd data-cart-total>Calculando…</dd></div>
               <div data-cart-freight-row><dt>Frete</dt><dd data-cart-freight>A confirmar</dd></div>
-              <div class="cart-totals__total"><dt>Total estimado</dt><dd data-cart-grand-total>Calculando…</dd></div>
+              <div class="cart-totals__total"><dt data-cart-grand-label>Total (frete a confirmar)</dt><dd data-cart-grand-total>Calculando…</dd></div>
             </dl>
             <p class="cart-progress" data-cart-progress></p>
-            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note">Frete não incluído. Ele será confirmado antes da produção.</p>
+            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note" data-cart-freight-note>O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.</p>
           </section>
 
           <section class="checkout-card">
@@ -83,7 +83,7 @@
               <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
               <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
               <label><span>E-mail</span><input name="email" type="email" autocomplete="email" maxlength="180"></label>
-              <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status></small></label>
+              <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status aria-live="polite"></small></label>
               <label><span>Rua / Avenida *</span><input name="street" autocomplete="address-line1" maxlength="160" required></label>
               <div class="checkout-form__row checkout-form__row--address">
                 <label><span>Número *</span><input name="number" autocomplete="address-line2" maxlength="30" required></label>
@@ -100,11 +100,11 @@
               </div>
               <label><span>Observações</span><textarea name="notes" rows="3" maxlength="600" placeholder="Detalhes de entrega, acabamento ou prazo."></textarea></label>
               <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Enviar pedido para confirmação</button>
-              <p class="checkout-payment-lock">Pagamento online ainda não é cobrado nesta etapa. Primeiro a fábrica confirma preço e frete.</p>
+              <p class="checkout-payment-lock" data-checkout-flow-note>Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.</p>
             </form>
           </section>
 
-          <div class="checkout-status" data-checkout-status hidden></div>
+          <div class="checkout-status" data-checkout-status aria-live="polite" hidden></div>
         </aside>
       </div>
     </section>
