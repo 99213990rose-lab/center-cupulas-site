@@ -559,7 +559,15 @@
       );
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
-      const message = error?.message === 'price_changed' ? 'O valor foi atualizado. Confira novamente o frete e o total antes de pagar.'
+      const message = error?.message === 'payment_account_authentication_failed'
+        ? 'O pagamento está temporariamente indisponível. Nossa equipe está ajustando a conexão com o Mercado Pago.'
+        : error?.message === 'payment_account_verification_required'
+        ? 'O Mercado Pago solicitou uma atualização cadastral da loja. Tente novamente mais tarde.'
+        : error?.message === 'payment_provider_unavailable'
+        ? 'O Mercado Pago não conseguiu iniciar o pagamento. Tente novamente em alguns instantes.'
+        : error?.message === 'quote_unavailable'
+        ? 'Não foi possível concluir a preparação do pedido. Tente novamente.'
+        : error?.message === 'price_changed' ? 'O valor foi atualizado. Confira novamente o frete e o total antes de pagar.'
         : error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
         : error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'

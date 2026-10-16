@@ -144,3 +144,12 @@ A Center Cúpulas aceita o preço ao vivo da opção retornada pela Frenet mesmo
 - A massa de cálculo do protótipo é estimada por volume e não uma pesagem real; a fábrica aceita o risco comercial.
 - Os custos das caixas (R$10/12/15) seguem dentro das cúpulas, nunca incluídos novamente no frete.
 - Notificações assinadas e conciliação idempotente são mantidas. `CENTER_SHIPPING_VALIDATED` antigo não é mais a autorização de tarifa; não confundir com validação física.
+
+
+## Diagnóstico de falha na primeira passagem ao pagamento (16/10/2026)
+
+- A captura de tela mostra falha após selecionar SEDEX R$ 23,64; Supabase registrou três orçamentos em `draft` com produtos R$ 47,23 + frete R$ 23,64 = R$ 70,87. `shipping.status=quoted`, `packaging.status=estimated`. **Nenhum pagamento foi registrado**.
+- O navegador apresentava texto genérico sem distinguir falha de credencial, pendência cadastral ou erro na criação da preferência do Mercado Pago.
+- `GET /api/mercadopago/status?diagnose=connection` executa **somente GET read-only** na API de métodos de pagamento do Mercado Pago e devolve categorias limitadas `authorized`, `unauthorized`, `rate_limited`, `provider_error`, `unavailable`; não retorna token, dados da conta ou método de pagamento.
+- A criação de preferência classifica códigos conhecidos do MP, registra nos logs somente categoria e HTTP status sem dados de pagamento ou cliente e apresenta mensagem recuperável. A conta precisa corrigir eventual pendência de identidade/credencial no próprio Mercado Pago.
+- Os orçamentos em draft de tentativas anteriores **não são pagamento e não se devem marcar como pagos**. Não gerar pagamentos fictícios na investigação.

@@ -164,3 +164,64 @@ test('the legacy shipping flag is not required after the seller enables live Fre
  delete process.env.CENTER_USE_LIVE_FRENET_RATES;
  const disabled=response();status({method:'GET'},disabled);assert.equal(disabled.body.checkout_enabled,false);
 });
+
+test('read-only Mercado Pago connection probe distinguishes authorized and unauthorized credentials',async(t)=>{
+ t.after(reset);configure();
+ let calls=0;
+ globalThis.fetch=async(url,options)=>{
+   calls++;assert.equal(url,'https://api.mercadopago.com/v1/payment_methods');
+   assert.equal(options.method,'GET');
+   assert.ok(options.headers.Authorization.startsWith('Bearer '));
+   return {ok:calls===1,status:calls===1?200:401};
+ };
+ let res=response();
+ await status({method:'GET',query:{diagnose:'connection'}},res);
+ assert.equal(res.body.provider_connection,'authorized');
+ assert.equal(Object.hasOwn(res.body,'token'),false);
+ res=response();await status({method:'GET',query:{diagnose:'connection'}},res);
+ assert.equal(res.body.provider_connection,'unauthorized');
+});
+
+test('Mercado Pago identity-approval issue is classified safely without leaking raw payload',async(t)=>{
+ t.after(reset);configure();
+ let calls=0;
+ globalThis.fetch=async(url)=>{
+   calls++;
+   if(calls===1)return Response.json({
+     status:'ok',submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',
+     quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
+     packaging:{status:'estimated'}
+   });
+   return Response.json({error:'collector_does_not_comply_with_current_regulation',
+     message:'hidden personal account details'}, {status:400});
+ };
+ const res=response();
+ await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{
+  items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],customer:{name:'Teste'},
+  shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}
+ }},res);
+ assert.equal(res.statusCode,503);
+ assert.equal(res.body.error,'payment_account_verification_required');
+ assert.equal(res.body.provider_code,'collector_does_not_comply_with_current_regulation');
+ assert.equal(JSON.stringify(res.body).includes('hidden personal'),false);
+});
+
+test('Mercado Pago unauthorized response gives actionable error without a redirect',async(t)=>{
+ t.after(reset);configure();let calls=0;
+ globalThis.fetch=async()=>{
+   calls++;
+   if(calls===1)return Response.json({
+     status:'ok',submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',
+     quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
+     packaging:{status:'estimated'}});
+   return Response.json({error:'unauthorized'},{status:401});
+ };
+ const res=response();
+ await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{
+  items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],customer:{name:'Teste'},
+  shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}
+ }},res);
+ assert.equal(res.statusCode,503);
+ assert.equal(res.body.error,'payment_account_authentication_failed');
+ assert.equal(calls,2);
+});
