@@ -164,16 +164,28 @@
     }
 
     if (freightOptions.length && data?.calibration !== false) {
-      // Frenet may return preliminary tariffs while shipping profiles are under
-      // review. Do not present them as selectable prices to the customer.
+      // Show the mean and range of the REAL Frenet offers for this CEP and the
+      // estimated packages. They are references only, never payment options.
+      const indicative = data?.indicative_estimate;
+      const validEstimate = indicative?.payable === false &&
+        Number.isInteger(indicative.count) && indicative.count === freightOptions.length &&
+        indicative.count > 0 &&
+        [indicative.min_price,indicative.mean_price,indicative.max_price].every(value=>
+          typeof value === 'number' && Number.isFinite(value) && value >= 0) &&
+        indicative.min_price <= indicative.mean_price &&
+        indicative.mean_price <= indicative.max_price;
       freightOptions = [];
       freightProviderConfigured = false;
       selectedShipping = null;
-      if (shippingProvider) shippingProvider.textContent = 'Frenet · em homologação';
-      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Frete sob consulta.</strong> ' +
-        'A Frenet será nossa plataforma principal de entregas, mas os valores ' +
-        'deste pedido ainda precisam ser conferidos pela equipe. Nenhuma tarifa ' +
-        'provisória será cobrada automaticamente.</p>';
+      if (shippingProvider) shippingProvider.textContent = 'Frenet · estimativa';
+      shippingOptionsHost.innerHTML = validEstimate
+        ? '<div class="shipping-note"><strong>Frete estimado: média ' + money(indicative.mean_price) + '.</strong> ' +
+          'Faixa de ' + money(indicative.min_price) + ' a ' + money(indicative.max_price) +
+          ' em ' + indicative.count + ' opção' + (indicative.count === 1 ? '' : 'ões') + ' da Frenet.' +
+          '<p>Consulta para este CEP e a embalagem prevista. O valor final, o serviço e o prazo ' +
+          'serão confirmados pela equipe antes de qualquer cobrança. Esta média não é uma tarifa garantida.</p></div>'
+        : '<p class="shipping-note"><strong>Frete sob consulta.</strong> A Frenet retornou serviços, ' +
+          'mas ainda não há uma estimativa confiável para exibir. A equipe confirmará a entrega.</p>';
       updateGrandTotal();
       updateCheckoutAvailability();
       return;
