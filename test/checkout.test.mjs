@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import webhook from '../api/mercadopago/webhook.js';
 import createCheckout from '../api/mercadopago/create-checkout.js';
+import orderStatus from '../api/mercadopago/order-status.js';
 import status from '../api/mercadopago/status.js';
 import mpTransport from '../api/mercadopago/transport.cjs';
 
@@ -302,4 +304,92 @@ test('provider access token copied with whitespace uses a valid Authorization he
  const statusResult=response();
  await status({method:'GET',query:{diagnose:'native'}},statusResult);
  assert.equal(statusResult.body.provider_connection,'authorized');
+});
+
+const quoteIdForReceipt='11111111-1111-4111-8111-111111111111';
+function statusProofForReceipt(id=quoteIdForReceipt){
+ return createHmac('sha256',process.env.SUPABASE_SERVICE_ROLE_KEY)
+  .update('center-status-v1:'+id).digest('hex');
+}
+function receiptRequest(overrides={}){
+ return {method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
+  body:{reference:quoteIdForReceipt,proof:statusProofForReceipt()},...overrides};
+}
+test('status receipt cannot be used without valid proof or from a foreign origin',async(t)=>{
+ t.after(reset);configure();
+ globalThis.fetch=()=>{throw Error('must not read private database without proof');};
+ let res=response();
+ await orderStatus(receiptRequest({body:{reference:quoteIdForReceipt,proof:'0'.repeat(64)}}),res);
+ assert.equal(res.statusCode,403);
+ res=response();await orderStatus(receiptRequest({headers:{origin:'https://untrusted.example'}}),res);
+ assert.equal(res.statusCode,403);
+ res=response();await orderStatus({method:'GET',headers:{}},res);
+ assert.equal(res.statusCode,405);
+});
+test('payment return page cannot manufacture approval; draft quotes remain pending',async(t)=>{
+ t.after(reset);configure();
+ let calls=0;
+ globalThis.fetch=async(url,opts)=>{
+   calls++;assert.ok(url.includes('quotes?'));assert.ok(url.includes('organization_id=eq.'));
+   assert.ok(opts.headers.apikey);
+   return Response.json([{id:quoteIdForReceipt,status:'draft',code:'WEB-TEST'}]);
+ };
+ const res=response();await orderStatus(receiptRequest(),res);
+ assert.equal(res.statusCode,200);
+ assert.equal(res.body.state,'pending');
+ assert.equal(calls,1);
+});
+test('paid quote only appears confirmed after paid order AND queued production registration',async(t)=>{
+ t.after(reset);configure();
+ const calls=[];
+ globalThis.fetch=async(url,opts)=>{
+  calls.push(url);
+  assert.equal(opts.headers.apikey,'sb_secret_test_placeholder');
+  if(url.includes('/quotes?'))return Response.json([{id:quoteIdForReceipt,status:'paid',code:'WEB-TEST'}]);
+  if(url.includes('/orders?'))return Response.json([{id:'22222222-2222-4222-8222-222222222222',
+    code:'PED-WEB-TEST',payment_status:'paid'}]);
+  if(url.includes('/production_jobs?'))return Response.json([{id:'33333333-3333-4333-8333-333333333333',status:'queued'}]);
+  throw Error('wrong table');
+ };
+ const res=response();await orderStatus(receiptRequest(),res);
+ assert.equal(res.statusCode,200);assert.equal(res.body.state,'confirmed');
+ assert.equal(res.body.order_code,'PED-WEB-TEST');
+ assert.equal(res.body.production_status,'registered');
+ assert.equal(calls.length,3);
+});
+test('paid quote without a production order is never called confirmed',async(t)=>{
+ t.after(reset);configure();
+ globalThis.fetch=async(url)=>url.includes('/quotes?')
+    ? Response.json([{id:quoteIdForReceipt,status:'paid',code:'WEB-TEST'}])
+    : Response.json([]);
+ const res=response();await orderStatus(receiptRequest(),res);
+ assert.equal(res.body.state,'processing');
+});
+test('checkout receipt proof is generated only after a successful provider preference',async(t)=>{
+ t.after(reset);configure();
+ let calls=0;
+ globalThis.fetch=async()=>{
+  calls++;
+  if(calls===1)return Response.json({status:'ok',submitted:true,quote_id:quoteIdForReceipt,
+   quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
+   packaging:{status:'estimated'}});
+  return Response.json({init_point:'https://www.mercadopago.com.br/checkout/mock'});
+ };
+ const res=response();
+ await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
+  body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],customer:{name:'Teste'},
+   shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}}},res);
+ assert.equal(res.statusCode,200);
+ assert.equal(res.body.status_reference,quoteIdForReceipt);
+ assert.equal(res.body.status_proof,statusProofForReceipt());
+ assert.equal(calls,2);
+});
+test('paid return UX checks secure status, never treats query parameters as payment confirmation',()=>{
+ const html=readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
+ assert.ok(html.includes("sessionStorage.setItem('center-cupulas-payment-receipt'"));
+ assert.ok(html.includes("fetch('/api/mercadopago/order-status'"));
+ assert.ok(html.includes("result.state==='confirmed'"));
+ assert.ok(html.includes("cart.clear();"));
+ assert.ok(html.includes('Aguardando confirmação do Mercado Pago.'));
+ assert.ok(!html.includes("paymentReturn === 'return') {\n    cart.clear"));
 });

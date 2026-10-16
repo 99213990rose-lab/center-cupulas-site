@@ -1,4 +1,5 @@
 import mpTransport from './transport.cjs';
+import {createHmac} from 'node:crypto';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
   .replace(/^Bearer\s+/i, '')
@@ -98,7 +99,19 @@ export default async function handler(req, res) {
         provider_code: providerReason
       });
     }
-    return json(res, 200, { checkout_url: preference.init_point, quote_code: quote.quote_code });
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(quote.quote_id))){
+      return json(res,502,{error:'checkout_reference_invalid'});
+    }
+    // A private proof lets this customer see only the status of this specific quote.
+    // It cannot confirm payment: only the signed Mercado Pago webhook can do that.
+    const receiptProof=createHmac('sha256',process.env.SUPABASE_SERVICE_ROLE_KEY)
+      .update('center-status-v1:'+quote.quote_id).digest('hex');
+    return json(res, 200, {
+      checkout_url: preference.init_point,
+      quote_code: quote.quote_code,
+      status_reference: quote.quote_id,
+      status_proof: receiptProof
+    });
   } catch {
     return json(res, 502, { error: 'checkout_unavailable' });
   }
