@@ -68,3 +68,21 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 - `GET /api/mercadopago/status`, a criação de preferência e a Edge Function `public-cart-checkout` (v6) recusam cobrar sem essa aprovação.
 - `CENTER_SHIPPING_VALIDATED` **não foi ativado**; não presumir que os valores da Frenet estão homologados.
 - São necessárias **duas** autorizações de produção, `CENTER_SHIPPING_VALIDATED=true` e `CENTER_CHECKOUT_ENABLED=true`, com nova publicação na Vercel após os testes.
+
+
+## Orçamento interno de caixas por faixa — 16/10/2026
+
+**Diretriz da Center Cúpulas:** não cadastrar medidas físicas de cada caixa nem depender de aprovação individual de embalagens para estimar seu custo de compra. A organização irá adquirir modelos padronizados.
+
+- Pequena: **R$ 10** (faixa de aquisição informada: R$ 7–10).
+- Média: **R$ 12** (faixa informada: R$ 11–12).
+- Grande: **R$ 15**.
+- Regra inicial **ajustável** por maior dimensão da própria cúpula: até **35 cm** pequena; até **65 cm** média; acima disso grande. Esses cortes **não** representam dimensões físicas de caixa nem homologação logística.
+- Quantidade de volumes segue prévia de agrupamento; o custo é por **volume previsto**, não necessariamente por cúpula.
+- Dados em `public.packaging_rules`: `box_small_cost_brl`, `box_medium_cost_brl`, `box_large_cost_brl`, `box_small_product_max_cm`, `box_medium_product_max_cm`.
+- Orçamentos novos registram `quotes.shipping.box_purchase_budget` com totais por categoria. A informação é **interna**; não é somada ao preço de venda nem à tarifa de transporte.
+- Para modelos que exigem revisão, o custo fica `requires_review` em vez de assumir R$ 0.
+- A integração real de frete ainda exige dados operacionais aceitos por uma transportadora. Custo de caixa não é valor de envio; o bloqueio de cobranças reais continua.
+- A antiga implementação experimental de medições de caixas foi abandonada e **não deve ser publicada**.
+
+**Exemplos:** uma caixa prevista para uma cúpula de 30 cm → R$ 10; 50 cm → R$ 12; 75 cm → R$ 15. A fábrica pode redefinir as faixas no banco quando padronizar suas compras.
