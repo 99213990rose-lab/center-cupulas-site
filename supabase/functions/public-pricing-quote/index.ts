@@ -2,6 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { estimateBoxCostForItem } from "./box-costs.mjs";
+import { addBoxesToPrices } from "./price-with-box.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -205,20 +206,21 @@ Deno.serve(async (req: Request) => {
     const commercialBase = factory * pct(rules.owner_margin_pct) * pct(rules.site_cost_pct);
     const discountPct = n(rules.discount_pct);
     const listUnit = discountPct < 100 ? commercialBase / (1 - discountPct / 100) : commercialBase;
-    const manufacturedSubtotal = round2(listUnit * quantity);
     const boxBudget = estimateBoxCostForItem({
       format: publicFormat, top, bottom, height, quantity
     }, packaging);
-    if (boxBudget.status !== "estimate") {
+    const threshold = n(rules.discount_threshold);
+    const computed = addBoxesToPrices([
+      { quantity, line_list_total: round2(listUnit*quantity) }
+    ], [boxBudget], threshold, discountPct);
+    if (computed.status !== "ok") {
       return json({ status: "consult", reason: "packaging_cost_needs_review" }, 200, origin);
     }
-    const boxCost = n(boxBudget.total_cost_brl);
-    const threshold = n(rules.discount_threshold);
-    const discountUnlocked = manufacturedSubtotal >= threshold;
-    const discountedManufacture = round2(manufacturedSubtotal * (discountUnlocked ? (1-discountPct/100) : 1));
-    const subtotal = round2(manufacturedSubtotal + boxCost);
-    const total = round2(discountedManufacture + boxCost);
-    const unitPrice = round2(total / quantity);
+    const manufacturedSubtotal = computed.manufacturerSubtotal;
+    const discountUnlocked = computed.discountUnlocked;
+    const subtotal = computed.subtotalBeforeDiscount;
+    const total = computed.productTotal;
+    const unitPrice = computed.items[0].unit_price;
 
     return json({
       status: "estimate",
