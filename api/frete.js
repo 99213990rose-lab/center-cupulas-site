@@ -29,9 +29,15 @@ function normalizePackages(packages) {
     const height = Math.max(1, Math.ceil(number(dims.height)));
     // Enquanto não medimos o peso real das caixas, usamos peso volumétrico conservador.
     // A cotação fica sempre marcada como "em calibração" e não libera pagamento automático.
-    const volumetricWeight = Math.max(0.3, (width * length * height) / 5000);
+    // Only reviewed, exact-match packaging records have measured gross weights.
+    // Otherwise keep quotes explicitly provisional; no paid checkout can use them.
+    const measuredWeight = Number(pack?.weight_kg);
+    const approvedMeasurement = pack?.validation === 'measured' &&
+      Number.isFinite(measuredWeight) && measuredWeight > 0 && measuredWeight <= 60 &&
+      pack?.requires_manual_review !== true;
+    const provisionalWeight = Math.max(0.3, (width * length * height) / 5000);
     return {
-      Weight: round(volumetricWeight, 3),
+      Weight: round(approvedMeasurement ? measuredWeight : provisionalWeight, 3),
       Length: length,
       Height: height,
       Width: width,
@@ -40,7 +46,8 @@ function normalizePackages(packages) {
       Category: 'Cupulas para iluminacao',
       isFragile: true,
       Quantity: 1,
-      ProductName: 'Volume Center Cupulas ' + (index + 1)
+      ProductName: 'Volume Center Cupulas ' + (index + 1),
+      _verifiedWeight: approvedMeasurement
     };
   });
 }
@@ -70,6 +77,8 @@ export default async function handler(req, res) {
   const recipientCep = cleanCep(req.body?.recipientCep);
   const shipmentValue = Number(req.body?.shipmentValue);
   const packages = normalizePackages(req.body?.packages);
+  const allMeasured = packages.length > 0 && packages.every((pack) => pack._verifiedWeight);
+  const calibration = process.env.CENTER_SHIPPING_VALIDATED !== 'true' || !allMeasured;
 
   if (!/^\d{8}$/.test(recipientCep)) return res.status(400).json({ error: 'invalid_recipient_cep' });
   if (!Number.isFinite(shipmentValue) || shipmentValue <= 0 || shipmentValue > 1000000) return res.status(400).json({ error: 'invalid_shipment_value' });
@@ -93,7 +102,7 @@ export default async function handler(req, res) {
     RecipientCountry: 'BR',
     ShippingServiceCode: null,
     Coupom: null,
-    ShippingItemArray: packages
+    ShippingItemArray: packages.map(({ _verifiedWeight, ...pack }) => pack)
   };
 
   try {
@@ -142,11 +151,11 @@ export default async function handler(req, res) {
     return res.status(200).json({
       status: options.length ? 'ok' : 'no_options',
       provider: 'Frenet',
-      calibration: process.env.CENTER_SHIPPING_VALIDATED !== 'true',
+      calibration,
       origin_cep: ORIGIN_CEP,
       recipient_cep: recipientCep,
       package_count: packages.length,
-      weight_basis: 'peso_volumetrico_conservador',
+      weight_basis: allMeasured ? 'peso_real_medido' : 'peso_volumetrico_conservador',
       options
     });
   } catch (error) {
