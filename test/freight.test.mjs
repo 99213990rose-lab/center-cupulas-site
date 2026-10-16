@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 const originals = {
   FRENET_TOKEN: process.env.FRENET_TOKEN,
@@ -86,4 +87,57 @@ test('freight filters negative carrier prices and returns normalized valid optio
   const reviewed=makeRes();
   await freight(validRequest(),reviewed);
   assert.equal(reviewed.body.calibration,false);
+});
+
+
+test('Frenet HTTP 200 with malformed response fails closed instead of suggesting no-options', async (t) => {
+  t.after(restore);
+  process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
+  process.env.FRENET_TOKEN='test-token';
+  const {default: freight}=await import('../api/frete.js?test=malformed');
+  globalThis.fetch=async()=>Response.json({unexpected:'payload'});
+  const result=makeRes();
+  await freight(validRequest(),result);
+  assert.equal(result.statusCode,502);
+  assert.equal(result.body.error,'invalid_freight_provider_response');
+});
+
+test('manual-review volumes are never quoted automatically to Frenet',async(t)=>{
+  t.after(restore);
+  process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
+  process.env.FRENET_TOKEN='test-token';
+  const {default: freight}=await import('../api/frete.js?test=manual');
+  globalThis.fetch=()=>{throw Error('must not contact carrier for manual-review package');};
+  const result=makeRes();
+  await freight(validRequest({body:{
+    recipientCep:'13421548',shipmentValue:180,
+    packages:[{dimensions_cm:{width:40,length:40,height:40},requires_manual_review:true}]
+  }}),result);
+  assert.equal(result.statusCode,400);
+  assert.equal(result.body.error,'invalid_packages');
+});
+
+test('pending calibration is explicitly marked as preliminary in Frenet response',async(t)=>{
+  t.after(restore);
+  process.env.CENTER_CUPULAS_ORIGIN_CEP='08265220';
+  process.env.FRENET_TOKEN='test-token';
+  delete process.env.CENTER_SHIPPING_VALIDATED;
+  const {default: freight}=await import('../api/frete.js?test=preliminary');
+  globalThis.fetch=async()=>Response.json({ShippingSevicesArray:[
+    {ServiceCode:'PAC',Carrier:'Correios',ServiceDescription:'PAC',ShippingPrice:'28.50',DeliveryTime:'7',Error:'false'}
+  ]});
+  const result=makeRes();
+  await freight(validRequest(),result);
+  assert.equal(result.statusCode,200);
+  assert.equal(result.body.options.length,1);
+  assert.equal(result.body.calibration,true);
+  assert.equal(result.body.quote_status,'pending_validation');
+});
+
+test('customer cart does not display preliminary Frenet price as selectable shipping',()=>{
+  const src=readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
+  assert.ok(src.includes('freightOptions.length && data?.calibration !== false'));
+  assert.ok(src.includes('Nenhuma tarifa'));
+  assert.ok(src.includes('freightOptions = []'));
+  assert.ok(src.includes('selectedShipping = null'));
 });

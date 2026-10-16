@@ -163,6 +163,22 @@
       return;
     }
 
+    if (freightOptions.length && data?.calibration !== false) {
+      // Frenet may return preliminary tariffs while shipping profiles are under
+      // review. Do not present them as selectable prices to the customer.
+      freightOptions = [];
+      freightProviderConfigured = false;
+      selectedShipping = null;
+      if (shippingProvider) shippingProvider.textContent = 'Frenet · em homologação';
+      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Frete sob consulta.</strong> ' +
+        'A Frenet será nossa plataforma principal de entregas, mas os valores ' +
+        'deste pedido ainda precisam ser conferidos pela equipe. Nenhuma tarifa ' +
+        'provisória será cobrada automaticamente.</p>';
+      updateGrandTotal();
+      updateCheckoutAvailability();
+      return;
+    }
+
     if (data?.status === 'no_options' || !freightOptions.length) {
       selectedShipping = null;
       if (shippingProvider) shippingProvider.textContent = data?.provider || 'transportadoras';
@@ -180,10 +196,10 @@
       const prazo = Number(option.delivery_days || 0);
       return '<label class="shipping-option" for="' + id + '">' +
         '<input id="' + id + '" type="radio" name="shipping-service" value="' + escapeHtml(option.code) + '">' +
-        '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · até ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
+        '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · prazo informado: ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
         '<strong>' + money(option.price) + '</strong>' +
       '</label>';
-    }).join('') + '<p class="shipping-calibration-note">Prazo e valor estimados com base na embalagem prevista. A confirmação final depende da validação logística.</p>';
+    }).join('') + '<p class="shipping-calibration-note">Opções consultadas na Frenet. Prazo informado pela transportadora, sujeito à confirmação na finalização do pedido.</p>';
 
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
