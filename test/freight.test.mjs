@@ -83,7 +83,31 @@ test('freight filters negative carrier prices and returns normalized valid optio
   assert.equal(res.body.origin_cep,'08265220');
   assert.equal(res.body.calibration,true);
   process.env.CENTER_SHIPPING_VALIDATED='true';
-  const reviewed=makeRes();
-  await freight(validRequest(),reviewed);
-  assert.equal(reviewed.body.calibration,false);
+  const unmeasured=makeRes();
+  await freight(validRequest(),unmeasured);
+  assert.equal(unmeasured.body.calibration,true);
+  assert.equal(unmeasured.body.weight_basis,'peso_volumetrico_conservador');
+});
+
+test('approved measured packaging uses physical gross weight; one estimated package keeps shipping provisional', async (t) => {
+  t.after(restore);
+  process.env.CENTER_CUPULAS_ORIGIN_CEP = '08265220';
+  process.env.FRENET_TOKEN = 'test-token';
+  process.env.CENTER_SHIPPING_VALIDATED = 'true';
+  const {default: freight} = await import('../api/frete.js?test=measured');
+  const measured={dimensions_cm:{width:40,length:40,height:50},validation:'measured',weight_kg:1.45,requires_manual_review:false};
+  let calls=0;
+  globalThis.fetch=async (_url,opts)=>{
+    calls++;
+    const request=JSON.parse(opts.body);
+    assert.equal(request.ShippingItemArray[0].Weight,1.45);
+    assert.equal(request.ShippingItemArray[0]._verifiedWeight,undefined);
+    return Response.json({ShippingSevicesArray:[{ServiceCode:'3',ShippingPrice:41,Carrier:'Carrier'}]});
+  };
+  const first=makeRes();
+  await freight(validRequest({body:{recipientCep:'13421548',shipmentValue:150,packages:[measured]}}),first);
+  assert.equal(first.statusCode,200);
+  assert.equal(first.body.calibration,false);
+  assert.equal(first.body.weight_basis,'peso_real_medido');
+  assert.equal(calls,1);
 });
