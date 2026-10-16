@@ -1,3 +1,5 @@
+import { normalizeFrenetOptions } from './frenet-options.mjs';
+
 // Never use a guessed shipping origin: an incorrect CEP can undercharge delivery.
 const ORIGIN_CEP = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '');
 const FRENET_TOKEN = process.env.FRENET_TOKEN || '';
@@ -20,7 +22,8 @@ function normalizePackages(packages) {
   if (!Array.isArray(packages) || !packages.length || packages.length > 30) return [];
   if (packages.some((pack) => {
     const d = pack?.dimensions_cm || {};
-    return ![d.width, d.length, d.height].every((v) => Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 300);
+    return pack?.requires_manual_review === true || ![d.width, d.length, d.height].every((v) =>
+      v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 300);
   })) return [];
   return packages.map((pack, index) => {
     const dims = pack?.dimensions_cm || {};
@@ -117,27 +120,12 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'freight_provider_error', provider: 'Frenet' });
     }
 
-    const services = Array.isArray(data.ShippingSevicesArray)
-      ? data.ShippingSevicesArray
-      : Array.isArray(data.ShippingServicesArray)
-        ? data.ShippingServicesArray
-        : [];
-
-    const options = services
-      .filter((service) => !service?.Error && String(service?.ServiceCode ?? '').trim() && Number.isFinite(Number(service?.ShippingPrice)) && Number(service.ShippingPrice) >= 0)
-      .map((service) => ({
-        code: String(service.ServiceCode || ''),
-        carrier: String(service.Carrier || ''),
-        carrier_code: String(service.CarrierCode || ''),
-        service: String(service.ServiceDescription || ''),
-        price: round(service.ShippingPrice),
-        original_price: round(service.OriginalShippingPrice || service.ShippingPrice),
-        delivery_days: Math.max(0, Math.ceil(number(service.DeliveryTime))),
-        original_delivery_days: Math.max(0, Math.ceil(number(service.OriginalDeliveryTime || service.DeliveryTime))),
-        allow_buy_label: Boolean(service.AllowBuyLabel),
-        pickup: service.Pickup || null
-      }))
-      .sort((a, b) => a.price - b.price || a.delivery_days - b.delivery_days);
+    const options = normalizeFrenetOptions(data);
+    if (options === null) {
+      // HTTP 200 with an unexpected schema is an upstream failure, not 'free shipping'
+      // or a reliable statement that no carrier serves the destination.
+      return res.status(502).json({ error: 'invalid_freight_provider_response', provider: 'Frenet' });
+    }
 
     return res.status(200).json({
       status: options.length ? 'ok' : 'no_options',
@@ -147,10 +135,11 @@ export default async function handler(req, res) {
       recipient_cep: recipientCep,
       package_count: packages.length,
       weight_basis: 'peso_volumetrico_conservador',
+      quote_status: process.env.CENTER_SHIPPING_VALIDATED === 'true' ? 'carrier_calculated' : 'pending_validation',
       options
     });
   } catch (error) {
-    console.error('Freight quote exception', error);
+    console.error('Freight quote unavailable:', error?.name || 'request_error');
     return res.status(502).json({ error: 'freight_unavailable', provider: 'Frenet' });
   }
 }

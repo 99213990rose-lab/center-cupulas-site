@@ -63,7 +63,7 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 - Nenhum pedido antigo foi alterado. O fluxo Checkout Pro permanece desativado em produção até homologação de frete e webhook.
 
 ## Trava adicional de embalagem e frete — 16/10/2026
-- A fábrica precisa validar caixas reais e peso de expedição, não apenas o peso volumétrico estimado.
+- A fábrica precisa confirmar as condições logísticas das embalagens padronizadas e o peso de expedição, não apenas o peso volumétrico estimado.
 - O endpoint `/api/frete` informa `calibration:true` até aprovação expressa via `CENTER_SHIPPING_VALIDATED=true`.
 - `GET /api/mercadopago/status`, a criação de preferência e a Edge Function `public-cart-checkout` (v6) recusam cobrar sem essa aprovação.
 - `CENTER_SHIPPING_VALIDATED` **não foi ativado**; não presumir que os valores da Frenet estão homologados.
@@ -100,3 +100,25 @@ Ajustes visuais e automações de acompanhamento podem continuar depois, sem fle
 - Regras de preço base da fábrica (`pricing_reference_prices`) **não foram alteradas**, assim como cotações já registradas anteriormente.
 - O novo orçamento exige classificação válida; formatos/volumes não estimáveis retornam para avaliação manual, nunca custo R$ 0 presumido.
 - Custos das caixas **não substituem o frete**: cotação com transportadora permanece pendente. `CENTER_CHECKOUT_ENABLED=false` continua em produção até homologação.
+
+## Frenet como transportadora principal — 16/10/2026
+
+**Decisão:** usar a Frenet para obter opções de transporte; preços de caixas pequenas/médias/grandes (R$ 10/R$ 12/R$ 15) **continuam incluídos nos preços das cúpulas**. Não somar esses custos ao frete nem apresentar uma linha extra de embalagem.
+
+### Configuração que falta na conta
+1. Acessar o painel Frenet usando a conta da empresa e habilitar os serviços/transportadoras desejados.
+2. Consultar o **API Token** em Dados Cadastrais → Chaves de Acesso, conforme a Central de Ajuda Frenet. Configurar o token **somente na variável secreta** `FRENET_TOKEN` da Vercel (Production). Não colocar token no GitHub, WhatsApp ou mensagens.
+3. Conferir o CEP real de origem já configurado como `CENTER_CUPULAS_ORIGIN_CEP`; a operação deve confirmar que a postagem/coleta efetiva ocorre nesse CEP.
+4. Revisar as estimativas logísticas de cubagem e peso fornecidas à Frenet. **Custos padronizados de compra das caixas não substituem dimensões e peso exigidos pela transportadora.** O site não pede medição física individual a cada pedido; a fábrica precisa confirmar apenas as condições práticas das embalagens padronizadas utilizadas, para evitar cobrar frete menor do que o real.
+5. Cotar vários CEPs e modelos, incluindo pedidos com múltiplos volumes, regiões distantes, serviço indisponível e tamanho acima do aceito. Conferir o preço efetivo de etiqueta/coleta e eventuais acréscimos antes da liberação.
+6. Somente quando as cotações forem consideradas confiáveis, autorizar `CENTER_SHIPPING_VALIDATED=true`. Em etapa **separada**, homologar um pagamento real e autorizar `CENTER_CHECKOUT_ENABLED=true`. Nunca ativar ambas as flags apenas por ter criado o token.
+
+### Segurança e experiência
+- A API `/api/frete` consulta a Frenet diretamente com token secreto no servidor; o visitante não recebe a credencial.
+- Serviços com erros, preços nulos, respostas malformadas e códigos duplicados/ambíguos não ficam disponíveis para compra.
+- Durante a fase de calibração/homologação, a interface **não exibe tarifas provisórias como opções selecionáveis**. O cliente segue recebendo orçamento manual, sem cobrança automática.
+- Não existe cobrança de embalagem em separado. `CENTER_CHECKOUT_ENABLED` permanece `false` até a homologação completa.
+- A referência oficial da API é `https://docs.frenet.com.br/reference/calculateshippingquote` e a obtenção do token é explicada em `https://ajuda.frenet.com.br/knowledge-base/api-frenet`.
+
+### Verificação
+Executar `node --test test/frenet-options.test.mjs test/freight.test.mjs` e a suíte de checkout. Não fazer chamadas com o token real em testes automatizados públicos.
