@@ -55,8 +55,32 @@ export default async function handler(req, res) {
         auto_return: 'approved'
       })
     });
-    const preference = await preferenceResponse.json();
-    if (!preferenceResponse.ok || !preference.init_point) return json(res, 502, { error: 'payment_provider_unavailable' });
+    let preference = {};
+    try { preference = await preferenceResponse.json(); } catch {}
+    if (!preferenceResponse.ok || typeof preference.init_point !== 'string' || !preference.init_point.startsWith('https://')) {
+      // Mercado Pago returns distinct codes for credential/identity checks and
+      // invalid preference fields. Whitelist, never echo arbitrary upstream data.
+      const causes = Array.isArray(preference.cause) ? preference.cause : [];
+      const labels = [preference.error, preference.message, ...causes.map(x => x?.code)];
+      const known = [
+        'invalid_access_token', 'invalid_credentials', 'unauthorized',
+        'collector_does_not_comply_with_current_regulation',
+        'invalid_back_urls', 'invalid_items', 'invalid_payer',
+        'invalid_shipments', 'invalid_payment_methods'
+      ];
+      const providerReason = labels.find(x => typeof x === 'string' && known.includes(x)) || 'other';
+      console.error('center-checkout Mercado Pago preference refused', {
+        status: preferenceResponse.status, reason: providerReason
+      });
+      const accountError = ['invalid_access_token', 'invalid_credentials', 'unauthorized'].includes(providerReason)
+        || [401, 403].includes(preferenceResponse.status);
+      const complianceError = providerReason === 'collector_does_not_comply_with_current_regulation';
+      return json(res, accountError || complianceError ? 503 : 502, {
+        error: accountError ? 'payment_account_authentication_failed'
+          : complianceError ? 'payment_account_verification_required' : 'payment_provider_unavailable',
+        provider_code: providerReason
+      });
+    }
     return json(res, 200, { checkout_url: preference.init_point, quote_code: quote.quote_code });
   } catch {
     return json(res, 502, { error: 'checkout_unavailable' });
