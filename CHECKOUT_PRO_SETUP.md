@@ -31,7 +31,7 @@ Verificar no Mercado Pago quais notificações efetivamente chegam a este endpoi
 1. O servidor calcula o valor e frete novamente usando a função `public-cart-checkout`, ação `payment`. Ela recusa pagamento sem embalagem estimada e frete válido.
 2. Checkout Pro recebe o valor final em BRL e `external_reference=CENTER_CUPULAS:<uuid>`.
 3. Apenas o webhook assinado e validado consulta o pagamento no Mercado Pago.
-4. O webhook chama a função SQL `confirm_center_checkout_payment` para conferir valor, moeda, organização, registrar o ID do pagamento e marcar o orçamento como pago **na mesma transação**.
+4. O webhook chama a função SQL `confirm_center_checkout_payment` para conferir valor, moeda, organização, registrar o ID, marcar o orçamento pago, **criar o pedido confirmado e uma entrada na fila de produção** na mesma transação.
 5. A tabela `center_checkout_payments` guarda o ID único. Duas notificações do mesmo pagamento são idempotentes; um segundo pagamento aprovado para um orçamento já pago gera `duplicate_charge` e exige revisão humana.
 6. Voltar à página de sucesso do navegador **não** altera o status do pedido.
 
@@ -52,3 +52,11 @@ Verificar no Mercado Pago quais notificações efetivamente chegam a este endpoi
 - Consultar periodicamente `reconciliation_status='duplicate_charge'` e reconciliar manualmente; isso pode indicar cobrança dupla que requer atendimento.
 
 Ajustes visuais e automações de acompanhamento podem continuar depois, sem flexibilizar a verificação de pagamentos e frete.
+
+## Automatização de pedido e produção — 16/10/2026
+- A migração `center_checkout_atomic_orders_and_production_queue` foi aplicada no Supabase da Center.
+- Apenas pagamentos validados e aplicados criam registros em `orders` (`status=confirmed`, `payment_status=paid`) e `production_jobs` (`status=queued`, `review_required=true`).
+- A fila **não autoriza fabricar sem revisão humana** das medidas, acabamentos, encaixes, embalagens e prazo.
+- Índice único em `(organization_id,quote_id)` evita duplicação de pedidos. Reenvio do webhook devolve o mesmo pedido.
+- Teste transacional no banco confirmou criação, vínculo e idempotência. Todas as alterações do teste foram revertidas com `ROLLBACK`; nenhum pagamento nem pedido fictício permaneceu.
+- Nenhum pedido antigo foi alterado. O fluxo Checkout Pro permanece desativado em produção até homologação de frete e webhook.
