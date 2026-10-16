@@ -107,7 +107,7 @@ test('payment preference uses server-repriced quote and explicit payable action'
     if (calls.length===1) return Response.json({
       status:'ok',submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',
       quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
-      packaging:{status:'estimated'}
+      packaging:{status:'verified'}
     });
     return Response.json({init_point:'https://www.mercadopago.com.br/checkout/example'});
   };
@@ -145,4 +145,21 @@ test('online payment stays disabled with freight settings but without shipping c
   await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},body:{}},result);
   assert.equal(result.statusCode,503);
   assert.equal(result.body.error,'shipping_not_validated');
+});
+
+test('payment refuses a provisional packaging result even with freight option', async (t) => {
+  t.after(reset); configure();
+  let requested=0;
+  globalThis.fetch=async () => {
+    requested++;
+    return Response.json({submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',quote_code:'WEB-TEMP',
+      total:127.5,shipping:{status:'quoted',freight:27.5},packaging:{status:'estimated'}});
+  };
+  const res=response();
+  await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
+    body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+      customer:{name:'Teste'},shippingSelection:{code:'A'}}},res);
+  assert.equal(res.statusCode,422);
+  assert.equal(res.body.error,'shipping_or_packaging_needs_review');
+  assert.equal(requested,1);
 });
