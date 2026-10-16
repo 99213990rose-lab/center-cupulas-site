@@ -13,7 +13,7 @@
   <meta property="og:url" content="https://www.centercupulas.com.br/entregas-e-trocas.html">
   <meta property="og:image" content="https://www.centercupulas.com.br/assets/social-share-center-cupulas.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96x96.png">
-  <link rel="stylesheet" href="styles.css"><script defer src="privacy-consent.js"></script><script defer src="script.js"></script>
+  <link rel="stylesheet" href="styles.css"><script defer src="privacy-consent.js"></script><script defer src="script.js"></script><script type="module" src="pedido-ajuda.mjs"></script>
 </head>
 <body class="info-page">
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -40,7 +40,7 @@
     <section class="info-main"><div class="container info-layout">
       <div class="info-copy"><section class="info-section" id="etapa-01"><span class="info-number">01</span><div><h2>Prazos de fabricação</h2><p>O prazo é definido após verificar modelo, quantidade, material e disponibilidade. Não há um prazo único para todos os pedidos. Guarde a confirmação fornecida no atendimento.</p></div></section>
 <section class="info-section" id="etapa-02"><span class="info-number">02</span><div><h2>Cálculo e contratação do frete</h2><p>O valor da entrega depende do CEP, transportadora e dimensões da caixa. Quando o cálculo automático não estiver disponível, a equipe confirma as opções e o valor antes de finalizar a encomenda.</p></div></section>
-<section class="info-section" id="etapa-03"><span class="info-number">03</span><div><h2>Acompanhamento da encomenda</h2><p>Para consultar o andamento, entre em contato pelo WhatsApp e informe o código do pedido ou orçamento. A equipe confirma o estágio de produção e as informações de envio disponíveis.</p></div></section>
+<section class="info-section" id="etapa-03"><span class="info-number">03</span><div><h2>Acompanhamento da encomenda</h2><p>Para consultar o andamento, entre em contato pelo WhatsApp e informe o código do pedido ou orçamento. Você também pode <a href="#consulta-pedido">preparar uma consulta com a equipe</a> usando o formulário desta página. A equipe confirma o estágio de produção e as informações de envio disponíveis.</p></div></section>
 <section class="info-section" id="etapa-04"><span class="info-number">04</span><div><h2>Avaria ou divergência</h2><p>Se algo chegar danificado, incorreto ou diferente das especificações confirmadas, preserve a embalagem e entre em contato pelo atendimento com fotos e o código do pedido. A situação será analisada e será indicado o encaminhamento adequado.</p></div></section>
 <section class="info-section" id="etapa-05"><span class="info-number">05</span><div><h2>Troca, devolução e direitos do consumidor</h2><p>Solicitações são avaliadas conforme a legislação aplicável, inclusive o Código de Defesa do Consumidor, e as características do pedido. A fabricação sob medida não elimina automaticamente direitos legais. Entre em contato para receber orientação sobre seu caso.</p></div></section></div>
       <aside class="info-aside" aria-label="Orientações úteis">
@@ -48,6 +48,37 @@
         <a class="button button--dark" href="https://wa.me/5512983216069?text=Ol%C3%A1%2C%20preciso%20de%20orienta%C3%A7%C3%A3o%20sobre%20um%20pedido%20da%20Center%20C%C3%BApulas." target="_blank" rel="noopener noreferrer">Falar com a equipe ↗</a></div>
       </aside>
     </div></section>
+
+    <section class="order-assistance section" id="consulta-pedido" aria-labelledby="order-assistance-heading">
+      <div class="container order-assistance__layout">
+        <div class="order-assistance__intro">
+          <p class="eyebrow">Atendimento após a encomenda</p>
+          <h2 id="order-assistance-heading">Quer saber como está seu pedido?</h2>
+          <p>Prepare uma consulta pelo WhatsApp. Se você recebeu um código de orçamento ou pedido, informe-o para facilitar a localização. A equipe verificará a situação e responderá pelo atendimento.</p>
+          <p class="order-assistance__notice"><strong>Importante:</strong> esta página não mostra um rastreamento em tempo real nem confirma automaticamente a entrega ou a produção. O atendimento verificará as informações disponíveis.</p>
+        </div>
+        <form class="order-assistance__form" data-order-help-form aria-labelledby="order-assistance-form-title">
+          <h3 id="order-assistance-form-title">Consultar com a equipe</h3>
+          <label for="order-help-topic">Sobre o que você quer falar? *</label>
+          <select id="order-help-topic" name="topic" required>
+            <option value="">Selecione o assunto</option>
+            <option value="andamento">Andamento da produção</option>
+            <option value="entrega">Entrega ou frete</option>
+            <option value="alteracao">Conferência ou alteração do pedido</option>
+            <option value="pos_venda">Pós-venda, troca ou divergência</option>
+            <option value="outros">Outra dúvida</option>
+          </select>
+          <label for="order-help-code">Código do pedido ou orçamento (se tiver)</label>
+          <input id="order-help-code" name="code" type="text" maxlength="50" minlength="4" pattern="[A-Za-z0-9_-]{4,50}" autocapitalize="characters" autocomplete="off" placeholder="Ex.: WEB-12345" aria-describedby="order-help-code-hint">
+          <small id="order-help-code-hint">Opcional. Use o código que aparece na confirmação do pedido. Não informe documentos ou senhas.</small>
+          <button class="button button--gold" type="submit">Preparar consulta no WhatsApp ↗</button>
+          <p class="order-assistance__disclaimer">Nada será enviado automaticamente. Confira e envie a mensagem no WhatsApp para iniciar a conversa.</p>
+          <p class="order-assistance__feedback" data-order-help-feedback role="status" aria-live="polite"></p>
+          <a data-order-help-link class="order-assistance__fallback" target="_blank" rel="noopener noreferrer" hidden>Abrir a consulta no WhatsApp novamente ↗</a>
+          <noscript><p>Sem JavaScript, entre em contato pelo <a href="https://wa.me/5512983216069" target="_blank" rel="noopener noreferrer">WhatsApp</a> e informe o código, se tiver.</p></noscript>
+        </form>
+      </div>
+    </section>
     <section class="info-questions"><div class="container"><p class="eyebrow">Dúvidas frequentes</p><h2>Respostas para seguir com tranquilidade</h2><div class="info-faqs"><details class="info-faq"><summary>O frete é cobrado à parte?</summary><p>O valor da entrega deve aparecer separado ou ser confirmado com a equipe antes da contratação.</p></details>
 <details class="info-faq"><summary>Posso retirar uma encomenda no local?</summary><p>A possibilidade de retirada deve ser combinada previamente com a equipe. O endereço de expedição não significa atendimento presencial sem agendamento.</p></details>
 <details class="info-faq"><summary>E se meu modelo precisar ser ajustado?</summary><p>Antes da produção, solicite alterações pelo atendimento. Após a fabricação, a viabilidade depende do andamento e das especificações confirmadas.</p></details>
