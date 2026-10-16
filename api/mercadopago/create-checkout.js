@@ -10,7 +10,9 @@ export default async function handler(req, res) {
     return json(res, 503, { error: 'shipping_not_configured' });
   }
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-  if (!token) return json(res, 503, { error: 'payment_not_configured' });
+  if (!token || !process.env.MERCADO_PAGO_WEBHOOK_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return json(res, 503, { error: 'payment_not_configured' });
+  }
   const origin = req.headers.origin;
   if (![SITE, 'https://centercupulas.com.br'].includes(origin)) return json(res, 403, { error: 'invalid_origin' });
   try {
