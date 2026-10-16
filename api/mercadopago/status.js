@@ -26,8 +26,22 @@ export default async function handler(req, res) {
         : [401,403].includes(probe.status) ? 'unauthorized'
         : probe.status === 429 ? 'rate_limited' : 'provider_error';
       return res.status(200).json({ checkout_enabled: enabled, provider_connection });
-    } catch {
-      return res.status(200).json({ checkout_enabled: enabled, provider_connection: 'unavailable' });
+    } catch (error) {
+      // Sanitize network diagnostics: do not return exception strings or token data.
+      const code = String(error?.cause?.code || error?.cause?.cause?.code || '');
+      const name = String(error?.name || '');
+      const connection_issue = ['UND_ERR_CONNECT_TIMEOUT', 'ETIMEDOUT'].includes(code)
+        ? 'connect_timeout'
+        : ['ECONNRESET', 'UND_ERR_SOCKET'].includes(code)
+        ? 'connection_reset'
+        : ['ENOTFOUND', 'EAI_AGAIN'].includes(code)
+        ? 'dns_failure'
+        : ['CERT_HAS_EXPIRED', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'].includes(code)
+        ? 'tls_validation'
+        : ['TimeoutError', 'AbortError'].includes(name) ? 'request_timeout'
+        : name === 'TypeError' ? 'request_failed' : 'unknown';
+      return res.status(200).json({ checkout_enabled: enabled,
+        provider_connection: 'unavailable', connection_issue });
     }
   }
   return res.status(200).json({ checkout_enabled: enabled, flow: enabled ? 'mercadopago' : 'manual' });
