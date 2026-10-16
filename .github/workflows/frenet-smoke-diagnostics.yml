@@ -1,0 +1,47 @@
+name: Frenet production smoke test (no orders)
+on:
+  push:
+    branches:
+      - 'diagnostics/frenet-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quote-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Test read-only shipping quote for two public CEPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for CEP in 01001000 20040002; do
+            echo "Testing Frenet quote to public postal code ending in ${CEP: -3}."
+            payload=$(printf '{"recipientCep":"%s","shipmentValue":180,"packages":[{"dimensions_cm":{"width":30,"length":30,"height":25},"requires_manual_review":false}]}' "$CEP")
+            response_file="$RUNNER_TEMP/frenet-response-$CEP.json"
+            code=$(curl --silent --show-error --location --max-time 25 --connect-timeout 10 \
+              --request POST 'https://www.centercupulas.com.br/api/frete' \
+              --header 'Content-Type: application/json' \
+              --header 'Origin: https://www.centercupulas.com.br' \
+              --data "$payload" --output "$response_file" --write-out '%{http_code}')
+            HTTP_STATUS="$code" RESPONSE_FILE="$response_file" node <<'NODE'
+          const fs = require('fs');
+          const body = fs.readFileSync(process.env.RESPONSE_FILE, 'utf8');
+          let response;
+          try { response = JSON.parse(body); } catch { response={error:'non_json_response'}; }
+          const status = process.env.HTTP_STATUS;
+          const result = {
+            http_status: Number(status),
+            provider: response.provider || null,
+            result: response.status || response.error || 'unknown',
+            option_count: Array.isArray(response.options) ? response.options.length : null,
+            calibration: response.calibration ?? null,
+            quote_status: response.quote_status || null
+          };
+          console.log('Diagnostic:',JSON.stringify(result));
+          if(status!=='200' || (response.status!=='ok' && response.status!=='no_options') || response.calibration!==true){
+            console.error('Freight smoke test needs review; do not enable checkout.');
+            process.exitCode=1;
+          }
+          NODE
+          done
