@@ -421,7 +421,7 @@
         const data = await response.json();
         if (!response.ok || !data.checkout_url) throw new Error(data.error || 'payment_unavailable');
         const url = new URL(data.checkout_url);
-        if (url.protocol !== 'https:' || !/(^|\\.)mercadopago\\.com(\\.br)?$/.test(url.hostname)) {
+        if (url.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.br)?$/.test(url.hostname)) {
           throw new Error('invalid_payment_url');
         }
         // Never treat the browser redirect as payment confirmation; the signed webhook decides.
