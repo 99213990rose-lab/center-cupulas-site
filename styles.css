@@ -4558,3 +4558,5 @@ p { text-wrap: pretty; }
   .measure-example__formula > div > span { font-size:.62rem; }
   .measure-alert { padding:22px; }
 }
+
+.category-guide__link { text-align:center; font-size:.81rem; font-weight:750; color:#f0d3a6; text-decoration:underline; text-underline-offset:5px; padding:5px 0; }
