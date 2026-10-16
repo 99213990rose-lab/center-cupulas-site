@@ -1,26 +1,54 @@
-# Checkout Pro — Center Cúpulas
+# Checkout Pro — operação da Center Cúpulas
 
-Este desenvolvimento é separado do Métodos Digitais. O valor dos produtos é recalculado no backend da Center, o frete é validado e o Checkout Pro recebe o total. A conta Mercado Pago pode ser a mesma, mas os registros de pedidos continuam no banco da Center.
+## Estado de implantação (16/10/2026)
+- O checkout online é protegido por `CENTER_CHECKOUT_ENABLED` (atualmente **false**).
+- Enquanto estiver desligado, o carrinho mantém o fluxo de orçamento/WhatsApp.
+- O novo `GET /api/mercadopago/status` só responde `checkout_enabled: true`
+  quando todas as credenciais e a configuração do frete estiverem presentes.
+- O novo webhook e a migração de banco NÃO dependem do status dessa chave:
+  pagamentos antigos ainda precisam ser conciliados após uma desativação.
 
-## Arquivos
-- `carrinho.html`, `carrinho.js`: início do checkout e mensagens de retorno.
-- `api/mercadopago/create-checkout.js`: cria a preferência após confirmar preço, frete e embalagem. Retorna apenas a URL do checkout.
-- `api/mercadopago/webhook.js`: valida assinatura da notificação, consulta o pagamento no Mercado Pago, compara valor e moeda e marca o orçamento da Center como `paid`.
+## Ambientes e credenciais
+Cadastrar somente na Vercel (Production), sem colocar segredos no GitHub ou no navegador:
 
-## Variáveis de ambiente da Center Cúpulas (Vercel)
-- `MERCADO_PAGO_ACCESS_TOKEN` — segredo, servidor; usar a conta autorizada.
-- `MERCADO_PAGO_WEBHOOK_SECRET` — segredo de assinatura de webhook da **aplicação de checkout usada pela Center**.
-- `SUPABASE_URL` — URL do Supabase da Center.
-- `SUPABASE_SERVICE_ROLE_KEY` — segredo do backend da Center. **Não** colocar em frontend.
-- `CENTER_CHECKOUT_ENABLED` — `true` somente depois dos testes; ausente ou `false` impede cobranças novas.
+| Variável | Propósito |
+| --- | --- |
+| `MERCADO_PAGO_ACCESS_TOKEN` | Acesso do vendedor ao Mercado Pago |
+| `MERCADO_PAGO_WEBHOOK_SECRET` | Assinatura do webhook de **produção** da aplicação |
+| `SUPABASE_URL` | Projeto Supabase da Center, nunca o do Métodos Digitais |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave secreta do servidor Center (`sb_secret_...` aceita) |
+| `FRENET_TOKEN` | Token do cálculo de entrega |
+| `CENTER_CUPULAS_ORIGIN_CEP` | CEP real de coleta/expedição, exatamente oito números |
+| `CENTER_CHECKOUT_ENABLED` | `false` até homologação; `true` para liberar após testes |
 
-## Antes de publicar
-1. Revisar e testar preço final das cúpulas, desconto, frete da Frenet e embalagem; itens sem frete válido ficam bloqueados.
-2. Confirmar com o titular autorizado as credenciais do Mercado Pago e cadastrar webhook HTTPS em `https://www.centercupulas.com.br/api/mercadopago/webhook`, evento Pagamentos.
-3. Configurar todas as variáveis na Vercel, preservando a separação dos pedidos do Métodos Digitais.
-4. Testar em ambiente de testes: aprovação, pendência, falha, webhook duplicado, assinatura inválida, alteração de preços pelo cliente, CEP sem transportadora e erro de cotação.
-5. Verificar que um retorno do navegador **nunca** confirma pagamento; somente o webhook validado atualiza o orçamento.
-6. Conferir se o painel de pedidos reconhece o status `paid` e não inicia produção antes da aprovação.
-7. Revisar o PR e publicar. Só então definir `CENTER_CHECKOUT_ENABLED=true` na produção.
+O frete não usa mais CEP de origem presumido. Sem Frenet/token/CEP válido o pagamento fica bloqueado; os pedidos de orçamento continuam funcionando.
 
-**Status:** implementação em branch e PR de rascunho. Não está pronta para habilitação de cobrança real antes da validação de credenciais, ambiente e fluxo de ponta a ponta.
+**Importante:** não trocar a URL global do webhook da aplicação Métodos Digitais de forma cega: ela pode receber pagamentos daquele projeto. As preferências da Center incluem `notification_url` específica:
+`https://www.centercupulas.com.br/api/mercadopago/webhook`.
+Verificar no Mercado Pago quais notificações efetivamente chegam a este endpoint.
+
+## Regras de confirmação
+1. O servidor calcula o valor e frete novamente usando a função `public-cart-checkout`, ação `payment`. Ela recusa pagamento sem embalagem estimada e frete válido.
+2. Checkout Pro recebe o valor final em BRL e `external_reference=CENTER_CUPULAS:<uuid>`.
+3. Apenas o webhook assinado e validado consulta o pagamento no Mercado Pago.
+4. O webhook chama a função SQL `confirm_center_checkout_payment` para conferir valor, moeda, organização, registrar o ID do pagamento e marcar o orçamento como pago **na mesma transação**.
+5. A tabela `center_checkout_payments` guarda o ID único. Duas notificações do mesmo pagamento são idempotentes; um segundo pagamento aprovado para um orçamento já pago gera `duplicate_charge` e exige revisão humana.
+6. Voltar à página de sucesso do navegador **não** altera o status do pedido.
+
+**Banco:** a migração de auditoria e a função SQL foram implantadas no projeto Supabase Center em 16/10/2026. Não rodar novamente sem primeiro verificar o esquema.
+
+## Testes e ativação
+- Executar `node --test test/checkout.test.mjs` ou aguardar os checks do GitHub Actions.
+- Confirmar origem da expedição e token da Frenet com a empresa.
+- Verificar preços de produtos (inclusive descontos), CEP, embalagem estimada e opções de frete.
+- Confirmar em produção que o webhook recebe a assinatura correta e que o pagamento aprovado insere registro em `center_checkout_payments`, atualiza `quotes.status='paid'`, e não repete atualizações.
+- Validar eventos pendentes, falha, notificação repetida, erro do provedor e CEP sem opção de entrega.
+- Ativar `CENTER_CHECKOUT_ENABLED=true` **somente depois** do teste com credenciais e notificações de produção; fazer redeploy para aplicar a variável.
+
+## Monitoramento e reversão
+- Em falha, retornar `CENTER_CHECKOUT_ENABLED=false` e fazer redeploy. O carrinho volta a receber orçamentos.
+- **Não** desativar webhook quando o checkout estiver suspenso: pagamentos já iniciados ainda podem ser aprovados.
+- Inspecionar logs da Vercel para `center-webhook` e a tabela `center_checkout_payments`.
+- Consultar periodicamente `reconciliation_status='duplicate_charge'` e reconciliar manualmente; isso pode indicar cobrança dupla que requer atendimento.
+
+Ajustes visuais e automações de acompanhamento podem continuar depois, sem flexibilizar a verificação de pagamentos e frete.
