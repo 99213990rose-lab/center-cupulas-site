@@ -125,7 +125,7 @@
       checkoutButton.disabled = true;
       return;
     }
-    checkoutButton.disabled = !selectedShipping || preview?.packaging?.status !== 'estimated';
+    checkoutButton.disabled = Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
   };
 
   const renderFreightState = (data) => {
@@ -162,7 +162,7 @@
         '<span class="shipping-option__main"><b>' + escapeHtml(option.carrier || option.service) + '</b><small>' + escapeHtml(option.service || '') + (prazo ? ' · até ' + prazo + ' dia' + (prazo === 1 ? '' : 's') : '') + '</small></span>' +
         '<strong>' + money(option.price) + '</strong>' +
       '</label>';
-    }).join('') + '<p class="shipping-calibration-note">Frete calculado com a embalagem estimada e peso volumétrico conservador. O pagamento online será habilitado após validar o frete e concluir os testes do checkout.</p>';
+    }).join('') + '<p class="shipping-calibration-note">Frete calculado com a embalagem estimada e peso volumétrico conservador. A cobrança online continua bloqueada até a calibração logística.</p>';
 
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -299,7 +299,7 @@
         if (totalEl) totalEl.textContent = 'Sob consulta';
         return;
       }
-      if (statusBox && !new URLSearchParams(window.location.search).has('payment')) statusBox.hidden = true;
+      if (statusBox) statusBox.hidden = true;
       renderPreview(data);
     } catch {
       if (seq !== requestSeq) return;
@@ -405,42 +405,57 @@
     };
 
     checkoutButton.disabled = true;
-    checkoutButton.textContent = 'Preparando pagamento…';
+    checkoutButton.textContent = 'Enviando…';
     setStatus('info', '<strong>Enviando seu pedido para a Center Cúpulas…</strong>');
 
     try {
-      if (!selectedShipping) throw new Error('Escolha uma opção de frete antes de continuar.');
-      const response = await fetch('/api/mercadopago/create-checkout', {
+      const response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code } })
+        credentials: 'omit',
+        body: JSON.stringify({ action: 'submit', items, customer, shippingSelection: selectedShipping ? { code: selectedShipping.code } : null })
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'checkout_error');
-      const checkoutUrl = new URL(data.checkout_url);
-      if (checkoutUrl.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.br)?$/.test(checkoutUrl.hostname)) {
-        throw new Error('invalid_checkout_url');
+      if (!response.ok && (data.error === 'shipping_service_required' || data.error === 'shipping_service_invalid')) {
+        if (Array.isArray(data.shipping_options)) {
+          renderFreightState({ status: 'ok', provider: 'Frenet', options: data.shipping_options });
+        } else {
+          refreshFreight();
+        }
+        throw new Error('Escolha uma opção de frete antes de continuar.');
       }
-      window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
-      window.location.assign(checkoutUrl.href);
+      if (!response.ok || !data.submitted) throw new Error(data.error || 'checkout_error');
+
+      cart.clear();
+      const message = [
+        'Olá! Acabei de montar um pedido pelo site da Center Cúpulas.',
+        '',
+        'Código: ' + data.quote_code,
+        'Produtos: ' + money(data.product_total),
+        'Frete: ' + (data.freight != null ? money(data.freight) : 'a confirmar'),
+        'Total: ' + money(data.total),
+        '',
+        'Gostaria de confirmar os detalhes para produção.'
+      ].join('\n');
+      const wa = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+
+      document.querySelector('[data-checkout-layout]')?.classList.add('is-complete');
+      setStatus('success',
+        '<strong>Pedido recebido!</strong>' +
+        '<p>Seu código é <b>' + escapeHtml(data.quote_code) + '</b>. Produtos: <b>' + money(data.product_total) + '</b>' + (data.freight != null ? ' · Frete: <b>' + money(data.freight) + '</b> · Total: <b>' + money(data.total) + '</b>.' : '. O frete será confirmado pela equipe.') + '</p>' +
+        '<a class="button button--whatsapp" href="' + wa + '" target="_blank" rel="noopener noreferrer">Continuar pelo WhatsApp <span aria-hidden="true">↗</span></a>'
+      );
+      window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
       const message = error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'
-        : 'Pagamento indisponível neste momento. Revise o frete ou solicite ajuda pelo WhatsApp.';
-      setStatus('error', '<strong>Não conseguimos iniciar o pagamento.</strong><p>' + escapeHtml(message) + '</p>');
+        : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
+      setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
       checkoutButton.disabled = false;
-      checkoutButton.textContent = 'Ir para pagamento seguro';
+      checkoutButton.textContent = 'Enviar pedido para confirmação';
     }
   });
 
-  const paymentReturn = new URLSearchParams(window.location.search).get('payment');
-  if (paymentReturn === 'return') {
-    setStatus('info', '<strong>Você voltou do Mercado Pago.</strong><p>O pedido será confirmado somente após a verificação automática do pagamento. Guarde seu comprovante até a confirmação.</p>');
-  } else if (paymentReturn === 'pending') {
-    setStatus('info', '<strong>Pagamento em processamento.</strong><p>A confirmação ocorrerá após a aprovação pelo Mercado Pago.</p>');
-  } else if (paymentReturn === 'failed') {
-    setStatus('warning', '<strong>Pagamento não concluído.</strong><p>Você pode revisar seu carrinho e tentar novamente.</p>');
-  }
   renderItems();
   refreshPreview();
 })();
