@@ -623,16 +623,16 @@
       const discountPercent = Math.max(0, Math.min(99, Number(quote.discount?.percent || 0)));
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
       const discount = discountPercent > 0 && quote.discount?.unlocked
-        ? '<span class="public-price__benefit">' + discountLabel + ' de desconto aplicado na estimativa</span>'
+        ? '<span class="public-price__benefit">' + discountLabel + ' de desconto aplicado na fabricação</span>'
         : discountPercent > 0 && quote.discount?.amount_to_unlock > 0
-          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar ' + discountLabel + ' de desconto.</span>'
+          ? '<span class="public-price__progress">Faltam ' + formatMoney(quote.discount.amount_to_unlock) + ' em produtos para liberar ' + discountLabel + ' de desconto na fabricação.</span>'
           : '';
 
       fields.priceBody.innerHTML =
         '<div class="public-price__value"><span>Total estimado</span><strong>' + formatMoney(quote.total) + '</strong></div>' +
         '<div class="public-price__unit">' + quote.quantity + (quote.quantity === 1 ? ' unidade' : ' unidades') + ' · ' + formatMoney(quote.unit_price) + ' por unidade</div>' +
         discount +
-        '<p>Frete não incluído. Valor sujeito à confirmação da fábrica.</p>';
+        '<p>O preço das cúpulas já inclui a embalagem. O frete será confirmado separadamente pela fábrica.</p>';
 
       window.CenterCupulas?.sendWebEvent?.('pricing_estimate_view', {
         placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
