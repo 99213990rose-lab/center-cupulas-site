@@ -230,6 +230,9 @@ test('Mercado Pago unauthorized response gives actionable error without a redire
 
 test('diagnostic classification distinguishes a network timeout without disclosing exception internals',async(t)=>{
  t.after(reset);configure();
+ const originalTransport=mpTransport.requestJson;
+ t.after(()=>{mpTransport.requestJson=originalTransport;});
+ mpTransport.requestJson=async()=>{const failure=new TypeError('native_https_failed');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure;};
  globalThis.fetch=async()=>{const failure=new TypeError('secret-network-message');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure};
  const res=response();
  await status({method:'GET',query:{diagnose:'connection'}},res);
