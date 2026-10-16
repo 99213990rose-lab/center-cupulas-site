@@ -1,3 +1,4 @@
+import mpTransport from './transport.cjs';
 // Checkout Pro: server-only endpoint. Disabled until production credentials and shipping are validated.
 const SITE = 'https://www.centercupulas.com.br';
 const QUOTE_API = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
     }
     const total = Number(Number(quote.total).toFixed(2));
     if (quote.shipping?.freight == null || !Number.isSafeInteger(Math.round(total * 100)) || total <= 0) return json(res, 422, { error: 'unverified_total' });
-    const preferenceResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+    const preferenceRequest = {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'X-Idempotency-Key': String(quote.quote_id) },
       body: JSON.stringify({
@@ -54,7 +55,19 @@ export default async function handler(req, res) {
         notification_url: SITE + '/api/mercadopago/webhook',
         auto_return: 'approved'
       })
-    });
+    };
+    let preferenceResponse;
+    try {
+      preferenceResponse=await fetch('https://api.mercadopago.com/checkout/preferences',preferenceRequest);
+    } catch {
+      // Native HTTPS fallback for recoverable Node fetch/Undici connection errors.
+      console.warn('center-checkout using native HTTPS fallback for Mercado Pago');
+      try {
+        preferenceResponse=await mpTransport.requestJson('https://api.mercadopago.com/checkout/preferences',preferenceRequest);
+      } catch {
+        return json(res,502,{error:'payment_provider_unavailable'});
+      }
+    }
     let preference = {};
     try { preference = await preferenceResponse.json(); } catch {}
     if (!preferenceResponse.ok || typeof preference.init_point !== 'string' || !preference.init_point.startsWith('https://')) {

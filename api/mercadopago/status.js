@@ -1,3 +1,4 @@
+import mpTransport from './transport.cjs';
 // Public feature-status endpoint. Does not expose credentials or customer information.
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -11,21 +12,32 @@ export default async function handler(req, res) {
     Boolean(process.env.FRENET_TOKEN) &&
     process.env.CENTER_USE_LIVE_FRENET_RATES === 'true' &&
     /^\d{8}$/.test(originCep);
-  if (req.query?.diagnose === 'connection') {
+  if (req.query?.diagnose === 'connection' || req.query?.diagnose === 'native') {
     // Read-only credential probe; never return token, account data or method details.
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
       return res.status(200).json({ checkout_enabled: enabled, provider_connection: 'not_configured' });
     }
+    const healthUrl='https://api.mercadopago.com/v1/payment_methods';
+    const opts={method:'GET',headers:{Authorization:'Bearer '+process.env.MERCADO_PAGO_ACCESS_TOKEN}};
+    const nativeOnly=req.query?.diagnose==='native';
     try {
-      const probe = await fetch('https://api.mercadopago.com/v1/payment_methods', {
-        method: 'GET',
-        headers: {Authorization: 'Bearer ' + process.env.MERCADO_PAGO_ACCESS_TOKEN},
-        signal: AbortSignal.timeout(7000)
-      });
+      let probe;
+      let transport='fetch';
+      if(nativeOnly) {
+        probe=await mpTransport.requestJson(healthUrl,opts);
+        transport='node_https';
+      } else {
+        try {
+          probe=await fetch(healthUrl,{...opts,signal:AbortSignal.timeout(6500)});
+        } catch {
+          probe=await mpTransport.requestJson(healthUrl,opts);
+          transport='node_https_fallback';
+        }
+      }
       const provider_connection = probe.ok ? 'authorized'
         : [401,403].includes(probe.status) ? 'unauthorized'
         : probe.status === 429 ? 'rate_limited' : 'provider_error';
-      return res.status(200).json({ checkout_enabled: enabled, provider_connection });
+      return res.status(200).json({checkout_enabled:enabled,provider_connection,transport});
     } catch (error) {
       // Sanitize network diagnostics: do not return exception strings or token data.
       const code = String(error?.cause?.code || error?.cause?.cause?.code || '');

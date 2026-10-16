@@ -1,3 +1,4 @@
+import mpTransport from './transport.cjs';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const ORG_REF = 'CENTER_CUPULAS:';
@@ -44,10 +45,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://api.mercadopago.com/v1/payments/' + id, {
-      headers: { Authorization: 'Bearer ' + token },
-      signal: AbortSignal.timeout(10000)
-    });
+    const paymentUrl='https://api.mercadopago.com/v1/payments/' + id;
+    let response;
+    try {
+      response = await fetch(paymentUrl, {
+        headers: { Authorization: 'Bearer ' + token },
+        signal: AbortSignal.timeout(6500)
+      });
+    } catch {
+      // Only a signed payment notification reaches this branch.
+      response=await mpTransport.requestJson(paymentUrl,{
+        headers:{Authorization:'Bearer '+token}
+      });
+    }
     if (!response.ok) {
       console.error('center-webhook payment lookup failed', response.status);
       return respond(res, 503, { error: 'payment_lookup_failed' });

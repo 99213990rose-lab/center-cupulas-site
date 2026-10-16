@@ -157,3 +157,12 @@ A Center Cúpulas aceita o preço ao vivo da opção retornada pela Frenet mesmo
 
 ### Leitura de conectividade aprofundada
 Em teste GET read-only, `provider_connection=unavailable`: a função Vercel não obteve resposta HTTP do Mercado Pago. Adicionado `connection_issue` com categorias fechadas (DNS, timeout, reset, TLS), sem divulgar segredos ou mensagens brutas. Não atribuir automaticamente o problema ao token nem pedir troca de credenciais antes de classificar a conexão. Sem pagamento criado.
+
+
+### Recuperação de conexão Mercado Pago — cliente HTTPS nativo
+Os testes de conexão em produção mostraram `provider_connection=unavailable` e `connection_issue=request_failed` pelo `fetch` do Node na Vercel; o retorno ocorreu **antes de HTTP**, sem prova de erro de credencial. Adicionado transporte alternativo em `api/mercadopago/transport.cjs` com `node:https`, destinado **somente** a `https://api.mercadopago.com`, sem envio de token a outros hosts e com limite de tempo e tamanho de resposta.
+
+- A consulta read-only aceita `?diagnose=native` para testar o transporte alternativo sem pedido, preferência ou pagamento.
+- A preferência Checkout Pro tenta `fetch`; se houver falha de conexão, tenta uma vez o transporte nativo mantendo idempotency key, total e referência do orçamento.
+- O webhook de confirmação também tem recuperação de transporte. Continua recusando assinaturas inválidas e conferindo dados por RPC atômica. Em indisponibilidade, retorna 503 para reentrega.
+- Testes unitários validam o fallback e a restrição rígida de host. Não interpretar diagnóstico bem-sucedido como pagamento integral homologado até uma transação real verificada.
