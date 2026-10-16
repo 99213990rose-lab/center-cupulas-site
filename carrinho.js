@@ -126,7 +126,9 @@
       checkoutButton.disabled = true;
       return;
     }
-    checkoutButton.disabled = Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
+    checkoutButton.disabled = checkoutProEnabled
+      ? (!selectedShipping || preview?.packaging?.status !== 'estimated')
+      : Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
   };
 
   const renderFreightState = (data) => {
@@ -467,7 +469,8 @@
       );
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
-      const message = error?.message === 'Escolha uma opção de frete antes de continuar.'
+      const message = error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
+        : error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'
         : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
       setStatus('error', '<strong>Não conseguimos enviar o pedido.</strong><p>' + escapeHtml(message) + '</p>');
@@ -486,6 +489,7 @@
       checkoutProEnabled = data.checkout_enabled === true;
       if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
         ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
+      updateCheckoutAvailability();
     } catch { /* the manual quote flow remains available */ }
   })();
 
