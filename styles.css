@@ -4485,6 +4485,8 @@ p { text-wrap: pretty; }
 .category-entry__heading h2 { font:500 clamp(2rem,3.1vw,3.4rem)/1.12 var(--serif); max-width:735px; letter-spacing:-.03em; margin:11px 0 0; text-wrap:balance; }
 .category-entry__heading > p { max-width:360px; margin:0; color:#736257; font-size:.9rem; line-height:1.8; }
 .category-entry__grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.category-entry__wholesale { margin:22px 0 0; color:#665748; text-align:center; font-size:.87rem; }
+.category-entry__wholesale a { color:#88531d; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
 .category-entry__tile { min-width:0; display:flex; flex-direction:column; border-radius:16px; border:1px solid #e8ddcf; overflow:hidden; background:#fffdfa; box-shadow:0 11px 32px rgba(33,24,18,.05); transition:transform .2s ease,box-shadow .2s ease; }
 .category-entry__tile:hover { transform:translateY(-3px); box-shadow:0 22px 46px rgba(33,24,18,.1); }
 .category-entry__image { display:block; aspect-ratio:1.13; background:#eae0d4; overflow:hidden; }
