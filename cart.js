@@ -39,6 +39,8 @@
       reference: item.reference || null,
       observations: String(item.observations || ''),
       quote_snapshot: item.quote_snapshot || null,
+      // Local cart presentation only; reject external URLs and arbitrary file paths.
+      preview_image: /^assets\/catalogo\/variants\/[a-z0-9-]+\.webp$/.test(String(item.preview_image || '')) ? String(item.preview_image) : '',
       added_at: new Date().toISOString()
     };
 
@@ -53,8 +55,10 @@
       String(x.observations || '') === normalized.observations
     );
 
-    if (same) same.quantity = Math.min(500, Math.max(1, Number(same.quantity || 1) + normalized.quantity));
-    else items.push(normalized);
+    if (same) {
+      same.quantity = Math.min(500, Math.max(1, Number(same.quantity || 1) + normalized.quantity));
+      if (normalized.preview_image) same.preview_image = normalized.preview_image;
+    } else items.push(normalized);
 
     return write(items);
   };

@@ -110,3 +110,22 @@ test('retangular SEO page is discoverable and shape purchase CTAs avoid empty ca
     assert.ok(!html.includes('Frete confirmado separadamente'), name+' old freight copy removed');
   }
 });
+
+
+test('cart shows selected fabric/shape reference without accepting arbitrary external image URLs',()=>{
+  const wizard = readFileSync('catalogo.js','utf8');
+  const store = readFileSync('cart.js','utf8');
+  const cart = readFileSync('carrinho.js','utf8');
+  const page = readFileSync('carrinho.html','utf8');
+  const css = readFileSync('styles.css','utf8');
+  assert.ok(wizard.includes('preview_image: getCatalogVisual('));
+  assert.ok(store.includes('preview_image: /^assets'));
+  assert.ok(cart.includes('const safeImage = /^assets'));
+  assert.ok(cart.includes('alt="Referência visual da configuração escolhida"'));
+  assert.ok(!/preview_image:\s*item\.preview_image/.test(store),'image must be sanitized');
+  assert.ok(page.includes('class="checkout-assurance" data-cart-assurance'));
+  assert.ok(cart.includes('assurance.hidden = empty'));
+  for(const link of ['como-comprar.html','entregas-e-trocas.html','privacidade.html']) assert.ok(page.includes('href="'+link+'"'));
+  assert.ok(css.includes('.cart-item__visual img'));
+  assert.ok(wizard.includes("heading?.scrollIntoView({ block: 'start', behavior: 'auto' })"));
+});

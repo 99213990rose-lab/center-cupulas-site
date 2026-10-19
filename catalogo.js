@@ -754,7 +754,13 @@
         const key = pricingKey(configuration);
         if (lastPriceConfigKey !== key && pendingPriceConfigKey !== key) requestPriceEstimate(configuration);
       }
-      if (focusHeading) panels[currentStep].querySelector('[data-step-title]')?.focus({ preventScroll: true });
+      if (focusHeading) {
+        // The previous button sits below a long panel on phones. Without scrolling,
+        // the next step can open above the viewport and look like a blank screen.
+        const heading = panels[currentStep].querySelector('[data-step-title]');
+        heading?.focus({ preventScroll: true });
+        heading?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
     };
 
     const setMeasureHelpOpen = (open, restoreFocus = false) => {
@@ -860,6 +866,8 @@
           quantity: Number(configuration.quantity || 1),
           reference: configuration.measureMode === 'suggested' ? configuration.reference.reference : null,
           observations: configuration.observations,
+          // Visual reference only; this is never sent to payment/pricing endpoints.
+          preview_image: getCatalogVisual(configuration.formatData, configuration.material, configuration.visualColor).image,
           quote_snapshot: {
             unit_price: lastPriceQuote.unit_price,
             total: lastPriceQuote.total,
