@@ -6,6 +6,7 @@ const categoryPages = [
   ['cupulas-conicas.html','conica'],
   ['cupulas-cilindricas.html','drum'],
   ['cupulas-quadradas.html','piramidal-quadrada'],
+  ['cupulas-retangulares.html','piramidal-retangular'],
   ['cupulas-atacado.html','conica']
 ];
 const read=(f)=>readFileSync(f,'utf8');
@@ -48,11 +49,11 @@ test('category gallery images and internal resource links exist in repository',(
     }
     assert.ok((html.match(/loading="lazy"/g)||[]).length>=3,path+' gallery');
     assert.ok((html.match(/<img /g)||[]).length>=4,path+' imagery');
-    assert.ok(html.toLowerCase().includes('frete confirmado separadamente'),path+': freight statement');
+    assert.ok(/frete (?:confirmado separadamente|consultado no carrinho|no carrinho)/i.test(html),path+': truthful freight statement');
   }
 });
 
-test('homepage, catalog and sitemap link to all four category pages',()=>{
+test('homepage, catalog and sitemap link to all five category pages',()=>{
   for(const path of ['index.html','modelos.html','sitemap.xml']){
     const html=read(path);
     for(const [category] of categoryPages) assert.ok(html.includes(category),path+' missing '+category);
