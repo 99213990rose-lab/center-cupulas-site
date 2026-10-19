@@ -97,12 +97,18 @@
     itemsHost.innerHTML = items.map((item) => {
       const snapshot = item.quote_snapshot;
       const rough = snapshot?.unit_price ? money(snapshot.unit_price) + ' / un.' : 'Preço será recalculado';
-      return '<article class="cart-item" data-cart-id="' + escapeHtml(item.id) + '">' +
+      // Pictures are only visual references; quote/payment data remains server-calculated.
+      const safeImage = /^assets\/catalogo\/variants\/[a-z0-9-]+\.webp$/.test(String(item.preview_image || ''))
+        ? item.preview_image : '';
+      return '<article class="cart-item"' data-cart-id="' + escapeHtml(item.id) + '">' +
         '<div class="cart-item__main">' +
-          '<span class="cart-item__eyebrow">' + escapeHtml(formatLabel(item)) + '</span>' +
-          '<h3>' + escapeHtml(item.top + ' × ' + item.bottom + ' × ' + item.height + ' cm') + '</h3>' +
-          '<p>' + escapeHtml(item.material + (item.color ? ' · ' + item.color : '')) + '</p>' +
-          (item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
+          (safeImage ? '<div class="cart-item__visual"><img src="' + escapeHtml(safeImage) + '" width="112" height="112" loading="lazy" decoding="async" alt="Referência visual da configuração escolhida"><small>Referência visual</small></div>' : '') +
+          '<div class="cart-item__details">' +
+            '<span class="cart-item__eyebrow">' + escapeHtml(formatLabel(item)) + '</span>' +
+            '<h3>' + escapeHtml(item.top + ' × ' + item.bottom + ' × ' + item.height + ' cm') + '</h3>' +
+            '<p>' + escapeHtml(item.material + (item.color ? ' · ' + item.color : '')) + '</p>' +
+            (item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
+          '</div>' +
         '</div>' +
         '<div class="cart-item__controls">' +
           '<label>Quantidade<input type="number" min="1" max="500" step="1" value="' + Number(item.quantity || 1) + '" data-cart-qty></label>' +
