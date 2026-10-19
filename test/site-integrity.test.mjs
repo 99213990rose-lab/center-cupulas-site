@@ -61,3 +61,15 @@ test('critical infrastructure remains protected and checkout is not activated by
   for(const file of ['cotador.html','salesops.html'])
     assert.match(readFileSync(file,'utf8'),/noindex,nofollow,noarchive/);
 });
+
+
+test('homepage prioritizes the self-service catalogue without removing assisted quotations',()=>{
+  const home=readFileSync('index.html','utf8');
+  const catalog=readFileSync('modelos.html','utf8');
+  assert.match(home,/<a class="button button--sm button--gold header__cta" href="modelos\.html#monte">Comprar pelo site<\/a>/);
+  assert.match(home,/<a class="button hero-slide__button" href="modelos\.html#monte">Configurar e comprar/);
+  assert.match(home,/<h3>Confira preço e frete<\/h3>/);
+  assert.match(home,/>WhatsApp<\/a>/);
+  assert.match(catalog,/id="monte"/);
+  assert.match(catalog,/adicione ao pedido/);
+});
