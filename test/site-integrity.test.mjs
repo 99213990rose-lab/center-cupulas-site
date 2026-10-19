@@ -73,3 +73,21 @@ test('homepage prioritizes the self-service catalogue without removing assisted 
   assert.match(catalog,/id="monte"/);
   assert.match(catalog,/adicione ao pedido/);
 });
+
+
+test('catalogue immediately leads new shoppers to a usable configurator', () => {
+  const html = readFileSync('modelos.html', 'utf8');
+  const cart = readFileSync('cart.js', 'utf8');
+  const css = readFileSync('styles.css', 'utf8');
+  assert.match(html, /class="catalog-hero__actions"/);
+  assert.match(html, /href="#monte">Montar e comprar minha cúpula/);
+  assert.match(html, /data-cart-target-when-empty="#monte"/);
+  assert.match(html, /data-cart-target-with-items="carrinho\.html"/);
+  assert.match(html, /data-cart-empty-label="Montar cúpula"/);
+  assert.match(cart, /data-cart-target-when-empty/);
+  assert.match(cart, /data-cart-target-with-items/);
+  assert.match(css, /\.catalog-hero__actions/);
+  assert.match(html, /id="monte"/);
+  // Payment settings and carrier rules are outside the scope of this change.
+  assert.match(readFileSync('api/mercadopago/status.js', 'utf8'), /CENTER_CHECKOUT_ENABLED/);
+});
