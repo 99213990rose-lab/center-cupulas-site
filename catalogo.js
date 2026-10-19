@@ -408,7 +408,7 @@
                 '<div class="public-price__head"><span>Estimativa do pedido</span><small data-price-badge>Calculando</small></div>',
                 '<div class="public-price__body" data-price-body><strong>Calculando preço…</strong><p>O valor é estimado e será confirmado antes da produção.</p></div>',
               '</div>',
-              '<p class="viability-notice">O valor exibido é uma estimativa automática. A fábrica confirma medidas, acabamento e valor final antes da produção.</p>',
+              '<p class="viability-notice">As peças são produzidas sob encomenda. Preço e frete são conferidos no carrinho, antes do pagamento. Projetos especiais podem exigir avaliação da fábrica.</p>',
             '</div>',
           '</section>',
         '</div>',
@@ -632,7 +632,7 @@
         '<div class="public-price__value"><span>Total estimado</span><strong>' + formatMoney(quote.total) + '</strong></div>' +
         '<div class="public-price__unit">' + quote.quantity + (quote.quantity === 1 ? ' unidade' : ' unidades') + ' · ' + formatMoney(quote.unit_price) + ' por unidade</div>' +
         discount +
-        '<p>O preço das cúpulas já inclui a embalagem. O frete será confirmado separadamente pela fábrica.</p>';
+        '<p>O preço das cúpulas já inclui a embalagem. Consulte o frete para seu CEP no carrinho, antes de pagar.</p>';
 
       window.CenterCupulas?.sendWebEvent?.('pricing_estimate_view', {
         placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
@@ -809,8 +809,23 @@
     });
     previousButton.addEventListener('click', () => showStep(currentStep - 1));
     nextButton.addEventListener('click', () => {
-      if (validateStep(currentStep)) showStep(currentStep + 1);
+      if (!validateStep(currentStep)) return;
+      window.CenterCupulas?.sendWebEvent?.('configurator_step_completed', {
+        placement: form.closest('dialog') ? 'configurator_dialog' : 'configurator_page',
+        ctaText: 'step_' + (currentStep + 1)
+      });
+      showStep(currentStep + 1);
     });
+    if (!form.closest('dialog')) {
+      let started = false;
+      form.addEventListener('change', () => {
+        if (started) return;
+        started = true;
+        window.CenterCupulas?.sendWebEvent?.('configurator_started', {
+          placement: 'configurator_page', ctaText: 'form_interaction'
+        });
+      });
+    }
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       if (currentStep < panels.length - 1) {
@@ -928,6 +943,9 @@
       color: settings.color || 'Preto'
     });
     document.body.classList.add('dialog-open');
+    window.CenterCupulas?.sendWebEvent?.('configurator_started', {
+      placement: 'configurator_dialog', ctaText: 'catalog_reference'
+    });
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
   };
