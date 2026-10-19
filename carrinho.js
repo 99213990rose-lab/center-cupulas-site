@@ -9,6 +9,7 @@
   const itemsHost = document.querySelector('[data-cart-items]');
   const emptyState = document.querySelector('[data-cart-empty]');
   const summary = document.querySelector('[data-cart-summary]');
+  const assurance = document.querySelector('[data-cart-assurance]');
   const subtotalEl = document.querySelector('[data-cart-subtotal]');
   const discountRow = document.querySelector('[data-cart-discount-row]');
   const discountEl = document.querySelector('[data-cart-discount]');
@@ -91,6 +92,7 @@
     const empty = items.length === 0;
     if (emptyState) emptyState.hidden = !empty;
     if (summary) summary.hidden = empty;
+    if (assurance) assurance.hidden = empty;
     if (checkoutForm) checkoutForm.closest('.checkout-card').hidden = empty;
     if (!itemsHost) return;
 

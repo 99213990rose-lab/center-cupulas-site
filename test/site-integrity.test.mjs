@@ -123,7 +123,8 @@ test('cart shows selected fabric/shape reference without accepting arbitrary ext
   assert.ok(cart.includes('const safeImage = /^assets'));
   assert.ok(cart.includes('alt="Referência visual da configuração escolhida"'));
   assert.ok(!/preview_image:\s*item\.preview_image/.test(store),'image must be sanitized');
-  assert.ok(page.includes('class="checkout-assurance"'));
+  assert.ok(page.includes('class="checkout-assurance" data-cart-assurance'));
+  assert.ok(cart.includes('assurance.hidden = empty'));
   for(const link of ['como-comprar.html','entregas-e-trocas.html','privacidade.html']) assert.ok(page.includes('href="'+link+'"'));
   assert.ok(css.includes('.cart-item__visual img'));
   assert.ok(wizard.includes("heading?.scrollIntoView({ block: 'start', behavior: 'auto' })"));
