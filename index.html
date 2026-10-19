@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fábrica de Cúpulas e Aramados para Luminárias | Center Cúpulas</title>
-  <meta name="description" content="Cúpulas e aramados para luminárias sob medida, reformas e encomendas. Peças avulsas, projetos personalizados, lojistas e pedidos em quantidade.">
+  <meta name="description" content="Compre cúpulas para abajur e luminárias na Center Cúpulas. Veja modelos, medidas e preços online ou personalize sua cúpula sob medida. Fabricação artesanal.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#221711">
   <meta name="color-scheme" content="light">
@@ -33,6 +33,7 @@
   <link rel="preload" href="assets/hero/slide-1-mobile.webp" as="image" media="(max-width: 680px)" fetchpriority="high">
   <link rel="preload" href="assets/hero/slide-1-desktop.webp" as="image" media="(min-width: 681px)" imagesrcset="assets/hero/slide-1-desktop.webp 1440w, assets/hero/slide-1-desktop-large.webp 1672w" imagesizes="100vw" fetchpriority="high">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="homepage-shop.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -111,16 +112,8 @@
   
   
 </head>
-<body>
+<body class="home2-page">
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-
-  <div class="topbar" aria-label="Informações comerciais">
-    <div class="container topbar__inner">
-      <span>Fabricação sob encomenda</span>
-      <span>Peças avulsas e atacado</span>
-      <span>Compra online pelo catálogo</span>
-    </div>
-  </div>
 
   <header class="site-header" data-header>
     <div class="container header__inner">
@@ -136,259 +129,117 @@
       </button>
 
       <nav class="nav" id="site-nav" aria-label="Navegação principal">
-        <a href="loja.html">Loja de cúpulas</a>
-        <a href="modelos.html#monte">Montar minha cúpula</a>
-        <a href="reformas.html">Reforma de cúpulas</a>
-        <a href="#capacidade">Fabricação sob medida</a>
+        <a href="index.html" aria-current="page">Início</a>
+        <a href="loja.html">Loja</a>
+        <a href="modelos.html#monte">Personalizar</a>
+        <a href="tecidos-e-acabamentos.html">Tecidos</a>
+        <a href="reformas.html">Reformas</a>
         <a href="cupulas-atacado.html">Atacado</a>
-        <a href="#contato">Contato</a>
       </nav>
-
-      <a class="button button--sm button--gold header__cta" href="loja.html">Comprar pelo site</a>
+      <a class="home2-cart" href="carrinho.html" aria-label="Abrir meu carrinho">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M2 3h2l2.4 12h12.7l2.4-9H5"/></svg>
+        <span class="home2-cart__label">Carrinho</span><span class="cart-count" data-cart-count hidden>0</span>
+      </a>
     </div>
   </header>
 
   <main id="conteudo">
-    <section class="hero hero--carousel" data-hero-carousel aria-roledescription="carrossel" aria-label="Destaques da Center Cúpulas">
-      <div class="hero-carousel__slides" aria-live="polite">
-        <article class="hero-slide hero-slide--premium is-active" data-slide>
-          <picture class="hero-slide__media">
-            <source media="(max-width: 680px)" srcset="assets/hero/slide-1-mobile.webp">
-            <source media="(min-width: 681px)" srcset="assets/hero/slide-1-desktop.webp 1440w, assets/hero/slide-1-desktop-large.webp 1672w" sizes="100vw">
-            <img src="assets/hero/slide-1-desktop.webp" alt="Cúpula para luminária em tecido bege aplicada em ambiente decorado" width="1440" height="810" loading="eager" decoding="async" fetchpriority="high">
-          </picture>
-          <div class="hero-slide__scrim" aria-hidden="true"></div>
-          <div class="container hero-slide__content">
-            <div class="hero-slide__copy">
-              <p class="hero-slide__eyebrow">Fabricação sob medida</p>
-              <h1>Fábrica de cúpulas e aramados para luminárias sob medida</h1>
-              <p class="hero-slide__lead">Peças avulsas, reformas, projetos personalizados e pedidos em quantidade.</p>
-              <a class="button hero-slide__button" href="loja.html">Ver modelos com preço <span aria-hidden="true">→</span></a>
-            </div>
+    <section class="home2-hero" aria-labelledby="home2-hero-title">
+      <picture class="home2-hero__media" aria-hidden="true">
+        <source media="(max-width: 680px)" srcset="assets/hero/slide-1-mobile.webp">
+        <img src="assets/hero/slide-1-desktop.webp" width="1440" height="810" alt="" loading="eager" decoding="async" fetchpriority="high">
+      </picture>
+      <div class="container home2-hero__layout">
+        <div class="home2-hero__copy">
+          <p class="home2-eyebrow">CENTER CÚPULAS · FABRICAÇÃO ARTESANAL</p>
+          <h1 id="home2-hero-title">Cúpulas para abajur,<span>do seu jeito.</span></h1>
+          <p class="home2-hero__lead">Escolha uma cúpula com medidas definidas ou crie a sua sob medida.</p>
+          <div class="home2-hero__actions">
+            <a class="button home2-button home2-button--solid" href="loja.html">Ver produtos <span aria-hidden="true">→</span></a>
+            <a class="button home2-button home2-button--outline" href="modelos.html#monte">Personalizar minha cúpula</a>
+          </div>
+        </div>
+        <ul class="home2-hero__trust" aria-label="Vantagens da Center Cúpulas">
+          <li><span aria-hidden="true">✧</span> Fabricação artesanal</li>
+          <li><span aria-hidden="true">↗</span> Entrega para todo o Brasil</li>
+          <li><span aria-hidden="true">✓</span> Pagamento pelo Mercado Pago</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="home2-section home2-featured" id="modelos" aria-labelledby="home2-featured-title">
+      <div class="container">
+        <div class="home2-section__heading">
+          <div><p class="home2-eyebrow">COMPRA DIRETA</p><h2 id="home2-featured-title">Cúpulas em destaque</h2><p>Escolha o modelo, confira as medidas e compre pelo site.</p></div>
+          <a class="home2-inline-link" href="loja.html">Ver todos os produtos <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="store-grid home2-products" data-store-products data-limit="4"><p role="status">Consultando produtos e preços…</p></div>
+        <p class="home2-featured__note">Produção sob encomenda. Preços consultados no sistema para 1 unidade; o total é recalculado no carrinho.</p>
+      </div>
+    </section>
+
+    <section class="home2-section home2-types" id="tipos" aria-labelledby="home2-types-title">
+      <div class="container">
+        <div class="home2-section__heading home2-section__heading--compact">
+          <div><p class="home2-eyebrow">ENCONTRE SEU FORMATO</p><h2 id="home2-types-title">Escolha o modelo ideal</h2><p>Explore formatos ou monte sua cúpula com medidas próprias.</p></div>
+          <a class="home2-inline-link" href="modelos.html">Todos os formatos <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="home2-types__grid">
+          <a class="category-entry__tile" href="cupulas-conicas.html"><span class="home2-type__image"><img src="assets/catalogo/variants/conica-tricoline-bege.webp" alt="Cúpula cônica de tecido bege" width="300" height="300" loading="lazy" decoding="async"></span><strong>Cônica</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+          <a class="category-entry__tile" href="cupulas-cilindricas.html"><span class="home2-type__image"><img src="assets/catalogo/variants/drum-tricoline-offwhite.webp" alt="Cúpula cilíndrica off-white" width="300" height="300" loading="lazy" decoding="async"></span><strong>Cilíndrica</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+          <a class="category-entry__tile" href="cupulas-quadradas.html"><span class="home2-type__image"><img src="assets/catalogo/variants/piramidal-quadrada-tricoline-branco.webp" alt="Cúpula piramidal quadrada de tecido branco" width="300" height="300" loading="lazy" decoding="async"></span><strong>Piramidal quadrada</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+          <a class="category-entry__tile" href="cupulas-retangulares.html"><span class="home2-type__image"><img src="assets/catalogo/variants/piramidal-retangular-tricoline-offwhite.webp" alt="Cúpula piramidal retangular off-white" width="300" height="300" loading="lazy" decoding="async"></span><strong>Piramidal retangular</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+          <a class="category-entry__tile" href="modelos.html?formato=cubo#monte"><span class="home2-type__image"><img src="assets/catalogo/variants/box-reto-tricoline-offwhite.webp" alt="Cúpula box reta quadrada off-white" width="300" height="300" loading="lazy" decoding="async"></span><strong>Box quadrada</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+          <a class="category-entry__tile" href="modelos.html?formato=bell#monte"><span class="home2-type__image"><img src="assets/catalogo/variants/bell-tricoline-gelo.webp" alt="Cúpula formato sino na cor gelo" width="300" height="300" loading="lazy" decoding="async"></span><strong>Sino</strong><span class="home2-type__arrow" aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home2-section home2-promos" aria-label="Personalização e materiais">
+      <div class="container home2-promos__grid">
+        <article class="home2-promo home2-promo--custom">
+          <div class="home2-promo__photo"><img src="assets/catalogo/variants/conica-juta-natural.webp" alt="Cúpula cônica revestida em juta natural, exemplo de acabamento" width="1254" height="1254" loading="lazy" decoding="async"></div>
+          <div class="home2-promo__copy">
+            <p class="home2-eyebrow">SUA CÚPULA, DO SEU JEITO</p>
+            <h2>Monte sua cúpula personalizada</h2>
+            <p>Escolha o formato, o tecido, a cor e as medidas.</p>
+            <a class="home2-small-button" href="modelos.html#monte">Personalizar agora <span aria-hidden="true">→</span></a>
           </div>
         </article>
-
-        <article class="hero-slide hero-slide--premium" data-slide aria-hidden="true">
-          <picture class="hero-slide__media">
-            <source media="(max-width: 680px)" srcset="assets/hero/slide-2-mobile.webp">
-            <source media="(min-width: 681px)" srcset="assets/hero/slide-2-desktop.webp 1440w, assets/hero/slide-2-desktop-large.webp 2560w" sizes="100vw">
-            <img src="assets/hero/slide-2-desktop.webp" alt="Conjunto de cúpulas para luminárias em diferentes formatos, tecidos e cores" width="1440" height="810" loading="lazy" decoding="async">
-          </picture>
-          <div class="hero-slide__scrim" aria-hidden="true"></div>
-          <div class="container hero-slide__content">
-            <div class="hero-slide__copy">
-              <p class="hero-slide__eyebrow">Modelos e aplicações</p>
-              <h2>Modelos para diferentes projetos de iluminação</h2>
-              <p class="hero-slide__lead">Formatos, tecidos, cores e acabamentos para cada necessidade.</p>
-              <a class="button hero-slide__button" href="modelos.html">Ver modelos de cúpulas <span aria-hidden="true">→</span></a>
-            </div>
-          </div>
-        </article>
-
-        <article class="hero-slide hero-slide--premium" data-slide aria-hidden="true">
-          <picture class="hero-slide__media">
-            <source media="(max-width: 680px)" srcset="assets/hero/slide-3-mobile.webp">
-            <source media="(min-width: 681px)" srcset="assets/hero/slide-3-desktop.webp 1440w, assets/hero/slide-3-desktop-large.webp 2560w" sizes="100vw">
-            <img src="assets/hero/slide-3-desktop.webp" alt="Processo artesanal de acabamento de uma cúpula para luminária" width="1440" height="810" loading="lazy" decoding="async">
-          </picture>
-          <div class="hero-slide__scrim" aria-hidden="true"></div>
-          <div class="container hero-slide__content">
-            <div class="hero-slide__copy">
-              <p class="hero-slide__eyebrow">Fabricação própria</p>
-              <h2>Cuidado em cada etapa</h2>
-              <p class="hero-slide__lead">Produção com atenção ao acabamento, estrutura e proporção.</p>
-              <a class="button hero-slide__button" href="#processo">Como funciona <span aria-hidden="true">→</span></a>
-            </div>
+        <article class="home2-promo home2-promo--fabrics">
+          <div class="home2-promo__photo"><img src="assets/catalogo/variants/drum-tricoline-offwhite.webp" alt="Cúpula cilíndrica de tricoline off-white, exemplo de tecido" width="1254" height="1254" loading="lazy" decoding="async"></div>
+          <div class="home2-promo__copy">
+            <p class="home2-eyebrow">MATERIAIS E ACABAMENTOS</p>
+            <h2>Conheça nossos tecidos</h2>
+            <p>Tricoline, linho e juta em opções para diferentes projetos.</p>
+            <a class="home2-small-button" href="tecidos-e-acabamentos.html">Ver opções <span aria-hidden="true">→</span></a>
           </div>
         </article>
       </div>
+    </section>
 
-      <div class="container hero-carousel__controls">
-        <button class="hero-carousel__arrow hero-carousel__arrow--prev" type="button" data-hero-prev aria-label="Slide anterior">←</button>
-        <div class="hero-carousel__dots" role="group" aria-label="Selecionar destaque">
-          <button class="carousel-dot is-active" type="button" data-slide-to="0" aria-label="Mostrar destaque 1" aria-current="true"></button>
-          <button class="carousel-dot" type="button" data-slide-to="1" aria-label="Mostrar destaque 2"></button>
-          <button class="carousel-dot" type="button" data-slide-to="2" aria-label="Mostrar destaque 3"></button>
-        </div>
-        <button class="hero-carousel__arrow hero-carousel__arrow--next" type="button" data-hero-next aria-label="Próximo slide">→</button>
+    <section class="home2-benefits" id="capacidade" aria-label="Diferenciais da Center Cúpulas">
+      <div class="container home2-benefits__grid" id="processo">
+        <div class="home2-benefit"><span aria-hidden="true" class="home2-benefit__icon">↔</span><div><strong>Medidas sob encomenda</strong><p>Feitas conforme seu projeto.</p></div></div>
+        <div class="home2-benefit"><span aria-hidden="true" class="home2-benefit__icon">✧</span><div><strong>Tecidos e acabamentos</strong><p>Tricoline, linho e juta.</p></div></div>
+        <div class="home2-benefit"><span aria-hidden="true" class="home2-benefit__icon">↗</span><div><strong>Entrega em todo o Brasil</strong><p>Consulte frete no carrinho.</p></div></div>
+        <div class="home2-benefit"><span aria-hidden="true" class="home2-benefit__icon">✓</span><div><strong>Pagamento protegido</strong><p>Mercado Pago.</p></div></div>
       </div>
     </section>
 
-
-    <section class="store-feature section" aria-labelledby="store-feature-title">
-      <div class="container">
-        <div class="store-section-heading"><div><p class="eyebrow">Compra rápida</p><h2 id="store-feature-title">Escolha um modelo com medidas e acabamento definidos</h2></div><p>Consulte o preço vigente, adicione ao carrinho e calcule o frete. Fabricamos sob encomenda; não prometemos peças em estoque.</p></div>
-        <div class="store-grid" data-store-products data-limit="4"><p role="status">Carregando modelos com preço…</p></div>
-        <div class="store-feature__actions"><a class="button button--dark" href="loja.html">Ver todos os produtos da loja →</a><a href="modelos.html#monte">Prefiro montar minha cúpula ↗</a></div>
-      </div>
-    </section>
-
-    <section class="metrics" aria-label="Possibilidades de fabricação">
-      <div class="container metrics__grid" data-stagger>
-        <article data-reveal="up"><strong>40 referências</strong><span>Medidas sugeridas para começar</span></article>
-        <article data-reveal="up"><strong>Formatos livres</strong><span>Geometrias clássicas ou personalizadas</span></article>
-        <article data-reveal="up"><strong>Juta e tricoline</strong><span>Materiais com acabamentos distintos</span></article>
-        <article data-reveal="up"><strong>Avaliação técnica</strong><span>Viabilidade analisada pela fábrica</span></article>
-      </div>
-    </section>
-
-    <section class="section section--models" id="modelos">
-      <div class="container">
-        <div class="section-heading section-heading--collection" data-reveal="up">
-          <div>
-            <p class="eyebrow">Modelos e possibilidades</p>
-            <h2>Uma coleção visual, muitas configurações</h2>
-          </div>
+    <section class="home2-endcap" id="contato" aria-labelledby="home2-endcap-title">
+      <div class="container home2-endcap__inner">
+        <div id="empresa"><p class="home2-eyebrow">TRADIÇÃO E PERSONALIZAÇÃO</p>
+          <h2 id="home2-endcap-title">Qualidade em cada detalhe.</h2>
+          <p>Há 33 anos produzindo cúpulas para abajures e luminárias, peça a peça.</p>
         </div>
-
-        <div class="carousel-shell" data-product-carousel>
-          <div class="product-viewport" data-carousel-viewport>
-            <div class="product-track" data-carousel-track data-stagger>
-            <a class="showcase-card" href="modelos.html?ref=01" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/conica-tricoline-bege.webp" alt="Cúpula cônica em tricoline bege vista em perspectiva" width="1254" height="1254" loading="lazy">
-                <span class="visual-label">Bege</span>
-              </div>
-              <div class="showcase-card__body"><span>Cônica / Empire · Ref. 01</span><strong>11 × 27 × 18</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            <a class="showcase-card showcase-card--wide" href="modelos.html?ref=08" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/piramidal-quadrada-juta-natural.webp" alt="Cúpula piramidal quadrada em juta natural vista em perspectiva" width="1254" height="1254" loading="lazy">
-                <span class="visual-label visual-label--light">Juta natural</span>
-              </div>
-              <div class="showcase-card__body"><span>Piramidal quadrada · Ref. 08</span><strong>25 × 60 × 35</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            <a class="showcase-card" href="modelos.html?ref=05" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/drum-tricoline-offwhite.webp" alt="Cúpula Drum cilíndrica em tricoline off white vista em perspectiva" width="1254" height="1254" loading="lazy">
-                <span class="visual-label">Off White</span>
-              </div>
-              <div class="showcase-card__body"><span>Drum / Cilíndrica · Ref. 05</span><strong>43 × 43 × 27</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            <a class="showcase-card showcase-card--wide" href="modelos.html?ref=22" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/piramidal-retangular-tricoline-branco.webp" alt="Cúpula piramidal retangular branca vista em perspectiva" width="1254" height="1254" loading="lazy">
-                <span class="visual-label">Branco</span>
-              </div>
-              <div class="showcase-card__body"><span>Piramidal retangular · Ref. 22</span><strong>22 × 55 × 36</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            <a class="showcase-card" href="modelos.html?ref=06" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/bell-tricoline-gelo.webp" alt="Cúpula Bell estilo sino em tricoline gelo vista em perspectiva" width="1122" height="1402" loading="lazy">
-                <span class="visual-label">Gelo</span>
-              </div>
-              <div class="showcase-card__body"><span>Bell / Sino · Ref. 06</span><strong>18 × 45 × 31</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            <a class="showcase-card showcase-card--wide" href="modelos.html?ref=09" data-reveal="up">
-              <div class="shade-stage shade-stage--image">
-                <img src="assets/catalogo/variants/box-reto-tricoline-preto.webp" alt="Cúpula box reta quadrada preta vista em perspectiva" width="1254" height="1254" loading="lazy">
-                <span class="visual-label visual-label--light">Preto</span>
-              </div>
-              <div class="showcase-card__body"><span>Box reto / Quadrada · Ref. 09</span><strong>26 × 26 × 17</strong><small>Configurar modelo <span aria-hidden="true">↗</span></small></div>
-            </a>
-            </div>
-          </div>
-          <div class="carousel-footer">
-            <p>Arraste para explorar</p>
-            <div class="carousel-actions">
-              <button class="icon-button" type="button" data-carousel-prev aria-label="Modelos anteriores">←</button>
-              <button class="icon-button" type="button" data-carousel-next aria-label="Próximos modelos">→</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="center-action" data-reveal="up">
-          <a class="button button--dark button--arrow" href="modelos.html">Ver todos os modelos <span aria-hidden="true">↗</span></a>
-        </div>
-      </div>
-    </section>
-
-        <section class="category-entry section" id="tipos" aria-labelledby="category-entry-title">
-      <div class="container">
-        <div class="category-entry__heading">
-          <div><p class="eyebrow">Explore por formato</p><h2 id="category-entry-title">Escolha a linha que combina com sua luminária.</h2></div>
-          <p>Veja as diferenças entre os modelos, conheça acabamentos e comece uma configuração com o formato pré-selecionado.</p>
-        </div>
-        <div class="category-entry__grid"><a class="category-entry__tile" href="cupulas-conicas.html">
-  <span class="category-entry__image"><img src="assets/catalogo/variants/conica-tricoline-bege.webp" alt="Referência visual de cúpula cônica bege" width="1254" height="1254" loading="lazy" decoding="async"></span>
-  <span class="category-entry__tile-copy"><strong>Cúpulas cônicas</strong><span>Proporção clássica para abajures e luminárias.</span><em aria-hidden="true">↗</em></span>
-</a>
-<a class="category-entry__tile" href="cupulas-cilindricas.html">
-  <span class="category-entry__image"><img src="assets/catalogo/variants/drum-tricoline-offwhite.webp" alt="Referência visual de cúpula cilíndrica off-white" width="1254" height="1254" loading="lazy" decoding="async"></span>
-  <span class="category-entry__tile-copy"><strong>Cúpulas cilíndricas</strong><span>Modelo Drum de linhas retas e visual equilibrado.</span><em aria-hidden="true">↗</em></span>
-</a>
-<a class="category-entry__tile" href="cupulas-quadradas.html">
-  <span class="category-entry__image"><img src="assets/catalogo/variants/piramidal-quadrada-juta-natural.webp" alt="Referência visual de cúpula quadrada piramidal em juta" width="1254" height="1254" loading="lazy" decoding="async"></span>
-  <span class="category-entry__tile-copy"><strong>Cúpulas quadradas</strong><span>Perfis retos e piramidais para diferentes projetos.</span><em aria-hidden="true">↗</em></span>
-</a>
-<a class="category-entry__tile" href="cupulas-retangulares.html">
-  <span class="category-entry__image"><img src="assets/catalogo/variants/piramidal-retangular-tricoline-branco.webp" alt="Cúpula piramidal retangular branca" width="1254" height="1254" loading="lazy" decoding="async"></span>
-  <span class="category-entry__tile-copy"><strong>Cúpulas retangulares</strong><span>Modelos para abajures e luminárias sob medida.</span><em aria-hidden="true">↗</em></span>
-</a></div>
-        <p class="category-entry__wholesale">Encomendas em quantidade? <a href="cupulas-atacado.html">Conheça nossa fabricação para lojistas e projetos ↗</a></p>
-      </div>
-    </section>
-    <section class="section section--dark" id="capacidade">
-      <div class="container capability-layout">
-        <div class="capability-copy" data-reveal="left">
-          <p class="eyebrow eyebrow--light">Fabricação sob encomenda</p>
-          <h2>Precisão para transformar especificações em produto</h2>
-          <p>A Center Cúpulas atende desde peças avulsas e reformas até projetos personalizados e pedidos em quantidade, com desenvolvimento ou repetição de modelos.</p>
-          <ul class="feature-list">
-            <li><span>01</span><div><b>Projeto configurável</b><p>Escolha entre diversos formatos ou apresente uma geometria personalizada.</p></div></li>
-            <li><span>02</span><div><b>Materiais e cores</b><p>Juta natural ou tricoline em cores variadas, conforme a necessidade do projeto.</p></div></li>
-            <li><span>03</span><div><b>Avaliação da fábrica</b><p>Formatos e medidas passam por análise de viabilidade antes da confirmação.</p></div></li>
-          </ul>
-        </div>
-        <figure class="spec-visual spec-visual--ambient media-reveal" data-reveal="scale">
-          <img src="assets/hero-workshop.jpg" alt="Ambiente residencial elegante com peça de iluminação em destaque" width="1060" height="805" loading="lazy">
-          <figcaption><span>Universo da iluminação</span><b>Forma em contexto</b></figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="section section--process" id="processo">
-      <div class="container">
-        <div class="section-heading section-heading--center" data-reveal="up">
-          <div><p class="eyebrow">Do catálogo ao pedido</p><h2>Um começo simples para um projeto sob encomenda</h2></div>
-        </div>
-        <ol class="process-grid" data-stagger>
-          <li data-reveal="up"><span>01</span><h3>Parta de uma referência</h3><p>Use uma medida sugerida ou informe as dimensões do seu projeto.</p></li>
-          <li data-reveal="up"><span>02</span><h3>Personalize a cúpula</h3><p>Defina formato, material e cor; depois inclua observações relevantes.</p></li>
-          <li data-reveal="up"><span>03</span><h3>Confira preço e frete</h3><p>No carrinho, consulte as opções de entrega e siga ao pagamento seguro quando houver cotação automática. Projetos especiais continuam com atendimento.</p></li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="section section--soft" id="empresa">
-      <div class="container about-layout">
-        <div class="about-production-media" data-reveal="scale">
-          <img src="assets/institucional/fabricacao-oficina-processo.webp" alt="Ilustração visual de uma etapa de fabricação de cúpulas" width="1536" height="248" loading="lazy" decoding="async">
-        </div>
-        <div data-reveal="right">
-          <p class="eyebrow">Center Cúpulas</p>
-          <h2>Conhecimento de fabricação com visão de parceria</h2>
-          <p>Combinamos cuidado técnico, leitura de proporção e atenção ao acabamento para apoiar lojas, revendedores, montadoras e marcas de iluminação.</p>
-          <div class="value-row"><span>Consistência</span><span>Flexibilidade</span><span>Cuidado técnico</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="contact-cta" id="contato">
-      <div class="container contact-cta__grid">
-        <div data-reveal="up">
-          <p class="eyebrow">Vamos configurar seu modelo?</p>
-          <h2>Monte seu pedido online ou fale diretamente com a Center</h2>
-        </div>
-        <div class="contact-cta__actions" data-reveal="up">
-          <a class="button button--dark" href="modelos.html#monte">Montar pedido online</a>
-          <a class="button button--dark" href="reformas.html">Reforma de cúpulas</a>
-          <a class="button button--whatsapp" href="https://wa.me/5512983216069?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Center%20C%C3%BApulas%20e%20gostaria%20de%20iniciar%20um%20or%C3%A7amento." target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <div class="home2-endcap__actions">
+          <a class="button home2-button home2-button--solid" href="loja.html">Escolher minha cúpula <span aria-hidden="true">→</span></a>
+          <a href="https://wa.me/5512983216069" target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>
         </div>
       </div>
     </section>
   </main>
-
   <footer class="footer">
     <div class="container footer__grid">
       <div class="footer__brand">

@@ -66,10 +66,10 @@ test('critical infrastructure remains protected and checkout is not activated by
 test('homepage prioritizes the self-service catalogue without removing assisted quotations',()=>{
   const home=readFileSync('index.html','utf8');
   const catalog=readFileSync('modelos.html','utf8');
-  assert.ok(home.includes('href="loja.html">Comprar pelo site</a>'),'direct shop in home navigation');
-  assert.ok(home.includes('href="loja.html">Ver modelos com preço'),'shop in hero');
-  assert.match(home,/<h3>Confira preço e frete<\/h3>/);
-  assert.match(home,/>WhatsApp<\/a>/);
+  assert.ok(home.includes('href="loja.html">Ver produtos'),'direct shop in hero');
+  assert.ok(home.includes('href="loja.html">Escolher minha cúpula'),'shop CTA preserved');
+  assert.ok(home.includes('data-store-products data-limit="4"'),'products on homepage');
+  assert.ok(home.includes('Falar pelo WhatsApp'),'assisted support preserved');
   assert.match(catalog,/id="monte"/);
   assert.match(catalog,/adicione ao pedido/);
 });
@@ -144,4 +144,18 @@ test('ready-product store uses server quotes and the existing cart',()=>{
   assert.ok(store.includes("window.location.assign('carrinho.html')"));
   assert.equal((store.match(/ref:'[0-9][0-9]'/g)||[]).length,8);
   assert.ok(!store.includes('historical_price'));
+});
+
+test('simplified storefront homepage prioritizes products, categories and customization',()=>{
+ const html=readFileSync('index.html','utf8');
+ const css=readFileSync('homepage-shop.css','utf8');
+ assert.ok(!html.includes('data-hero-carousel'),'hero carousel removed');
+ assert.ok(html.includes('Cúpulas para abajur,'),'short product-first headline');
+ assert.ok(html.includes('data-store-products data-limit="4"'),'live-priced four-product feature');
+ assert.ok(html.includes('href="loja.html">Ver produtos'),'direct retail path');
+ assert.ok(html.includes('href="modelos.html#monte">Personalizar minha cúpula'),'customization path');
+ assert.ok(html.includes('id="tipos"'),'format discovery maintained');
+ assert.ok(html.includes('id="contato"'),'contact anchor preserved');
+ assert.ok(html.includes('src="loja.js"'),'server-quoted storefront');
+ assert.ok(css.includes('@media (max-width:680px)'),'mobile responsive design');
 });
