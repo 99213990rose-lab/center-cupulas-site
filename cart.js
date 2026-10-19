@@ -77,7 +77,11 @@
       el.hidden = total === 0;
     });
     document.querySelectorAll('[data-cart-label]').forEach((el) => {
-      el.textContent = total ? 'Pedido (' + total + ')' : 'Pedido';
+      el.textContent = total ? 'Pedido (' + total + ')' : (el.dataset.cartEmptyLabel || 'Pedido');
+    });
+    // On the catalogue, an empty cart should invite configuration, not send shoppers to an empty page.
+    document.querySelectorAll('a[data-cart-target-when-empty]').forEach((link) => {
+      link.setAttribute('href', total ? (link.dataset.cartTargetWithItems || 'carrinho.html') : link.dataset.cartTargetWhenEmpty);
     });
   };
 
