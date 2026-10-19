@@ -6,7 +6,7 @@ const pages=[
   'index.html','modelos.html','reformas.html','como-comprar.html',
   'entregas-e-trocas.html','privacidade.html','guia-de-medidas.html',
   'cupulas-conicas.html','cupulas-cilindricas.html','cupulas-quadradas.html',
-  'cupulas-atacado.html','tecidos-e-acabamentos.html'
+  'cupulas-atacado.html','cupulas-retangulares.html','tecidos-e-acabamentos.html'
 ];
 
 function resource(file,url) {
@@ -90,4 +90,23 @@ test('catalogue immediately leads new shoppers to a usable configurator', () => 
   assert.match(html, /id="monte"/);
   // Payment settings and carrier rules are outside the scope of this change.
   assert.match(readFileSync('api/mercadopago/status.js', 'utf8'), /CENTER_CHECKOUT_ENABLED/);
+});
+
+test('retangular SEO page is discoverable and shape purchase CTAs avoid empty carts', () => {
+  const landing = readFileSync('cupulas-retangulares.html', 'utf8');
+  assert.ok(landing.includes('Cúpulas Retangulares para Abajur Sob Medida'), 'specific SEO title');
+  assert.ok(landing.includes('rel="canonical" href="https://www.centercupulas.com.br/cupulas-retangulares.html"'), 'canonical');
+  assert.ok(landing.includes('href="modelos.html?formato=piramidal-retangular#monte"'), 'preselected configurator');
+  assert.ok(readFileSync('catalogo.js','utf8').includes("'piramidal-retangular'"), 'existing configurator supports format');
+  assert.ok(readFileSync('sitemap.xml','utf8').includes('cupulas-retangulares.html'), 'indexed in sitemap');
+  for (const name of ['index.html','modelos.html']) {
+    const html = readFileSync(name, 'utf8');
+    assert.ok(html.includes('class="category-entry__tile" href="cupulas-retangulares.html"'), name+' link');
+    assert.ok(html.includes('href="cupulas-atacado.html"'), name+' B2B link preserved');
+  }
+  for(const [name,format] of [['cupulas-conicas.html','conica'],['cupulas-cilindricas.html','drum'],['cupulas-quadradas.html','piramidal-quadrada']]) {
+    const html = readFileSync(name,'utf8');
+    assert.ok(html.includes('href="modelos.html?formato='+format+'#monte"'), name+' direct purchase');
+    assert.ok(!html.includes('Frete confirmado separadamente'), name+' old freight copy removed');
+  }
 });
