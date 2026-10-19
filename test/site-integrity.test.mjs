@@ -85,7 +85,7 @@ test('catalogue immediately leads new shoppers to a usable configurator', () => 
   assert.match(html, /data-cart-target-with-items="carrinho\.html"/);
   assert.match(html, /data-cart-empty-label="Montar cúpula"/);
   assert.match(cart, /data-cart-target-when-empty/);
-  assert.match(cart, /data-cart-target-with-items/);
+  assert.match(cart, /cartTargetWithItems/);
   assert.match(css, /\.catalog-hero__actions/);
   assert.match(html, /id="monte"/);
   // Payment settings and carrier rules are outside the scope of this change.
