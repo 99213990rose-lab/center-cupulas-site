@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 
 const pages=[
-  'index.html','modelos.html','reformas.html','como-comprar.html',
+  'index.html','modelos.html','loja.html','reformas.html','como-comprar.html',
   'entregas-e-trocas.html','privacidade.html','guia-de-medidas.html',
   'cupulas-conicas.html','cupulas-cilindricas.html','cupulas-quadradas.html',
   'cupulas-atacado.html','cupulas-retangulares.html','tecidos-e-acabamentos.html'
@@ -66,8 +66,8 @@ test('critical infrastructure remains protected and checkout is not activated by
 test('homepage prioritizes the self-service catalogue without removing assisted quotations',()=>{
   const home=readFileSync('index.html','utf8');
   const catalog=readFileSync('modelos.html','utf8');
-  assert.match(home,/<a class="button button--sm button--gold header__cta" href="modelos\.html#monte">Comprar pelo site<\/a>/);
-  assert.match(home,/<a class="button hero-slide__button" href="modelos\.html#monte">Configurar e comprar/);
+  assert.ok(home.includes('href="loja.html">Comprar pelo site</a>'),'direct shop in home navigation');
+  assert.ok(home.includes('href="loja.html">Ver modelos com preço'),'shop in hero');
   assert.match(home,/<h3>Confira preço e frete<\/h3>/);
   assert.match(home,/>WhatsApp<\/a>/);
   assert.match(catalog,/id="monte"/);
@@ -128,4 +128,20 @@ test('cart shows selected fabric/shape reference without accepting arbitrary ext
   for(const link of ['como-comprar.html','entregas-e-trocas.html','privacidade.html']) assert.ok(page.includes('href="'+link+'"'));
   assert.ok(css.includes('.cart-item__visual img'));
   assert.ok(wizard.includes("heading?.scrollIntoView({ block: 'start', behavior: 'auto' })"));
+});
+
+test('ready-product store uses server quotes and the existing cart',()=>{
+  const home=readFileSync('index.html','utf8');
+  const page=readFileSync('loja.html','utf8');
+  const store=readFileSync('loja.js','utf8');
+  assert.ok(home.includes('data-store-products data-limit="4"'));
+  assert.ok(page.includes('data-store-products'));
+  assert.ok(page.includes('modelos.html#monte'),'custom route preserved');
+  assert.ok(store.includes('public-pricing-quote'),'no invented catalog price');
+  assert.ok(store.includes("q?.confidence!=='high'"));
+  assert.ok(store.includes('q?.exact_reference!==true'));
+  assert.ok(store.includes('window.CenterCupulasCart'),'shared cart');
+  assert.ok(store.includes("window.location.assign('carrinho.html')"));
+  assert.equal((store.match(/ref:'[0-9][0-9]'/g)||[]).length,8);
+  assert.ok(!store.includes('historical_price'));
 });
