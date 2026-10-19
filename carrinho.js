@@ -102,7 +102,7 @@
       // Pictures are only visual references; quote/payment data remains server-calculated.
       const safeImage = /^assets\/catalogo\/variants\/[a-z0-9-]+\.webp$/.test(String(item.preview_image || ''))
         ? item.preview_image : '';
-      return '<article class="cart-item"' data-cart-id="' + escapeHtml(item.id) + '">' +
+      return '<article class="cart-item" data-cart-id="' + escapeHtml(item.id) + '">' +
         '<div class="cart-item__main">' +
           (safeImage ? '<div class="cart-item__visual"><img src="' + escapeHtml(safeImage) + '" width="112" height="112" loading="lazy" decoding="async" alt="Referência visual da configuração escolhida"><small>Referência visual</small></div>' : '') +
           '<div class="cart-item__details">' +
