@@ -216,6 +216,9 @@
     shippingOptionsHost.querySelectorAll('input[name="shipping-service"]').forEach((input) => {
       input.addEventListener('change', () => {
         selectedShipping = freightOptions.find((option) => String(option.code) === String(input.value)) || null;
+        if (selectedShipping) window.CenterCupulas?.sendWebEvent?.('shipping_option_selected', {
+          placement: 'cart_shipping', ctaText: 'option_selected'
+        });
         updateGrandTotal();
         updateCheckoutAvailability();
       });
@@ -481,6 +484,9 @@
     if (isSubmitting || !items.length) return;
     if (!checkoutForm.reportValidity()) return;
     isSubmitting = true;
+    window.CenterCupulas?.sendWebEvent?.('checkout_attempt', {
+      placement: 'cart_checkout', ctaText: checkoutProEnabled ? 'mercado_pago' : 'manual_quote'
+    });
 
     const formData = new FormData(checkoutForm);
     const customer = {
@@ -569,6 +575,10 @@
       );
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
+      // Never send addresses, contact fields or raw error strings to analytics.
+      window.CenterCupulas?.sendWebEvent?.('checkout_error', {
+        placement: 'cart_checkout', ctaText: 'checkout_failed'
+      });
       const message = error?.message === 'payment_account_authentication_failed'
         ? 'O pagamento está temporariamente indisponível. Nossa equipe está ajustando a conexão com o Mercado Pago.'
         : error?.message === 'payment_account_verification_required'
@@ -690,5 +700,8 @@
       '<p>Seu carrinho foi mantido. Confira a situação no Mercado Pago antes de tentar novamente.</p>');
   }
   renderItems();
+  if (cart.read().length) window.CenterCupulas?.sendWebEvent?.('cart_view', {
+    placement: 'cart', ctaText: 'cart_has_items'
+  });
   refreshPreview();
 })();
