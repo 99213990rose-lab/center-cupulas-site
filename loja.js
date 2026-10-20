@@ -13,6 +13,7 @@
   {id:'conica-27-35-26',ref:'33',name:'Cúpula cônica branca',format:'conica',label:'Cônica / Empire',top:27,bottom:35,height:26,material:'Tricoline',color:'Branco',image:'conica-tricoline-branco.webp'},
   {id:'bell-18-45-31',ref:'06',name:'Cúpula estilo sino gelo',format:'bell',label:'Bell / Sino',top:18,bottom:45,height:31,material:'Tricoline',color:'Gelo',image:'bell-tricoline-gelo.webp'}
  ];
+ const detailUrls={"conica-20-35-25":"cupula-conica-bege-20x35x25.html","drum-25-25-15":"cupula-cilindrica-off-white-25x25x15.html","piramidal-15-30-20":"cupula-piramidal-quadrada-branca-15x30x20.html","drum-40-40-25":"cupula-cilindrica-bege-40x40x25.html","conica-10-35-23":"cupula-conica-off-white-10x35x23.html","drum-45-45-30":"cupula-cilindrica-preta-45x45x30.html","conica-27-35-26":"cupula-conica-branca-27x35x26.html","bell-18-45-31":"cupula-sino-gelo-18x45x31.html"};
  const cash=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const custom=p=>'modelos.html?formato='+encodeURIComponent(p.format)+'#monte';
@@ -21,10 +22,10 @@
   el.className='store-card'; el.id=p.id;
   const size=p.top+' × '+p.bottom+' × '+p.height+' cm';
   el.innerHTML=
-   '<a class="store-card__image" href="'+custom(p)+'" aria-label="Personalizar '+escape(p.name)+'">'+
+   '<a class="store-card__image" href="'+detailUrls[p.id]+'" aria-label="Ver detalhes de '+escape(p.name)+'">'+
      '<img src="assets/catalogo/variants/'+p.image+'" width="600" height="600" loading="lazy" decoding="async" alt="Referência visual de '+escape(p.name)+'"><span>Referência visual</span></a>'+
    '<div class="store-card__body"><p class="store-card__type">'+escape(p.label)+' · REF. '+p.ref+'</p>'+
-     '<h3>'+escape(p.name)+'</h3><p class="store-card__size">'+size+'</p>'+
+     '<h3><a href="'+detailUrls[p.id]+'">'+escape(p.name)+'</a></h3><p class="store-card__size">'+size+'</p>'+
      '<p class="store-card__fabric">'+escape(p.material+' · '+p.color)+'</p>'+
      '<p class="store-card__price" data-price role="status" aria-live="polite">Consultando preço…</p>'+
      '<p class="store-card__explain">Valor para 1 unidade · Frete no carrinho</p>'+

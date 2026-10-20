@@ -1,0 +1,29 @@
+.product-detail-page{background:#fcfaf7;color:#302218}.product-detail-page .site-header{background:rgba(255,253,249,.96);border-bottom:1px solid #e8dccc}
+.product-detail-page .nav a{font-size:.82rem}.product-detail-page .header__cta [data-cart-count]:not([hidden]){display:inline-grid;place-items:center;background:#fff;color:#54321f;border-radius:50%;padding:1px 5px;font-size:.7rem}
+.pdp{padding-top:20px;padding-bottom:58px}.pdp-breadcrumb{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:.78rem;color:#76685b;margin:0 0 28px}.pdp-breadcrumb a{color:#5a3b26;text-decoration:underline;text-underline-offset:3px}
+.pdp-layout{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(340px,.94fr);align-items:start;gap:clamp(24px,5vw,74px)}
+.pdp-photo{position:relative;background:#eee7de;border:1px solid #ebe4db;border-radius:12px;overflow:hidden;aspect-ratio:1}.pdp-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.pdp-photo__flag{position:absolute;bottom:15px;left:15px;background:rgba(33,21,14,.76);color:white;font-size:.65rem;padding:7px 12px;border-radius:5px}
+.pdp-overline{font-size:.71rem;letter-spacing:.12em;text-transform:uppercase;font-weight:760;color:#815b39;margin:2px 0 12px}
+.pdp-content h1{font:500 clamp(2.15rem,3.7vw,3.8rem)/1.1 var(--serif);letter-spacing:-.04em;color:#2a1d16;margin:0 0 8px}
+.pdp-subheading{font-size:.9rem;color:#766452;margin:0 0 27px}
+.pdp-measures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid #e4dbd0;gap:8px;padding:17px 0}
+.pdp-measures>div{display:flex;gap:7px;flex-direction:column}.pdp-measures span{font-size:.7rem;color:#736558}.pdp-measures strong{font-size:1.06rem;color:#39271c}
+.pdp-payment{padding:26px 0}.pdp-payment__label{font-size:.77rem;color:#725943;font-weight:700}
+.pdp-payment__amount{font-size:clamp(1.8rem,2.9vw,2.6rem);line-height:1.15;font-weight:820;color:#302014;margin:8px 0 4px;min-height:40px}
+.pdp-payment__status{font-size:.78rem;line-height:1.5;min-height:18px;color:#746356;margin:0 0 21px}
+.pdp-qty{display:flex;flex-direction:column;gap:8px;font-size:.79rem;color:#4d3b2f;font-weight:750;margin-bottom:16px}
+.pdp-qty input{width:115px;height:44px;border:1px solid #cabbac;border-radius:7px;background:white;padding:9px 13px;font:inherit;font-size:1rem}
+.pdp-buy{width:100%;max-width:425px;border-radius:7px;min-height:53px;font-size:.92rem;display:block}.pdp-buy:disabled{opacity:.55;cursor:not-allowed}
+.pdp-secondary{display:inline-block;color:#62412b;font-size:.81rem;margin-top:15px;text-decoration:underline;text-underline-offset:4px;font-weight:725}
+.pdp-facts{border-top:1px solid #e4dbd0;padding-top:16px;color:#76685d;font-size:.78rem;line-height:1.6}.pdp-facts p{margin:0 0 9px}.pdp-facts strong{color:#453429}.pdp-facts a{text-decoration:underline;text-underline-offset:3px}
+.pdp-more{margin-top:65px;border-top:1px solid #e4dbd0;padding-top:29px}
+.pdp-more__heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:19px}
+.pdp-more h2{font:500 clamp(1.8rem,3vw,2.65rem)/1.2 var(--serif);letter-spacing:-.025em;margin:0;color:#302116}
+.pdp-more__heading a{font-size:.78rem;font-weight:740;color:#68452d;text-decoration:underline;text-underline-offset:3px}
+.pdp-related{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.pdp-related__item{background:white;border:1px solid #e7dfd5;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;padding-bottom:14px;gap:5px}
+.pdp-related__item img{width:100%;height:auto;aspect-ratio:1.3;object-fit:cover;margin-bottom:8px}
+.pdp-related__item strong{font-size:.88rem;color:#37261b;padding-inline:13px}.pdp-related__item span{font-size:.74rem;color:#756457;padding-inline:13px}
+@media(max-width:840px){.pdp-layout{grid-template-columns:minmax(0,1fr) minmax(310px,1fr);gap:25px}.pdp-content h1{font-size:2.5rem}.product-detail-page .nav a{font-size:.78rem}}
+@media(max-width:680px){.pdp{padding-top:13px;padding-bottom:36px}.pdp-breadcrumb{margin-bottom:16px}.pdp-layout{grid-template-columns:1fr;gap:22px}.pdp-photo{max-width:630px}.pdp-content h1{font-size:clamp(2.1rem,9vw,3.2rem)}.pdp-subheading{margin-bottom:17px}.pdp-payment{padding:21px 0}.pdp-buy{max-width:none}.pdp-more{margin-top:32px}.pdp-related{gap:8px}.pdp-related__item strong{font-size:.74rem;padding-inline:8px}.pdp-related__item span{font-size:.66rem;padding-inline:8px}.pdp-related__item img{margin-bottom:4px}.pdp-more__heading{align-items:start}}
