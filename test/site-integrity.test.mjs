@@ -168,7 +168,7 @@ test('eight individually indexed product pages connect to server quote and cart'
  const xml=readFileSync('sitemap.xml','utf8');
  for(const p of pages) {
   const html=readFileSync(p.slug,'utf8');
-  assert.equal((html.match(/<h1\\b/g)||[]).length,1,p.slug+': one H1');
+  assert.equal((html.match(/<h1\b/g)||[]).length,1,p.slug+': one H1');
   assert.ok(html.includes('<h1>'+p.name+'</h1>'),p.slug+': correct title');
   assert.ok(html.includes('"id":"'+p.id+'"'),p.slug+': embedded product');
   assert.ok(html.includes('src="produto.js"'),p.slug+': script');
