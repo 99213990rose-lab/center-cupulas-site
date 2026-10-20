@@ -4,16 +4,16 @@
  // Nenhum preço é hard-coded: a API comercial calcula o preço em tempo real.
  const API='https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-pricing-quote';
  const products=[
-  {id:'conica-20-35-25',ref:'12',name:'Cúpula cônica bege',format:'conica',label:'Cônica / Empire',top:20,bottom:35,height:25,material:'Tricoline',color:'Bege',image:'conica-tricoline-bege.webp'},
-  {id:'drum-25-25-15',ref:'36',name:'Cúpula cilíndrica off-white',format:'drum',label:'Drum / Cilíndrica',top:25,bottom:25,height:15,material:'Tricoline',color:'Off White',image:'drum-tricoline-offwhite.webp'},
-  {id:'piramidal-15-30-20',ref:'28',name:'Cúpula piramidal quadrada branca',format:'piramidal-quadrada',label:'Piramidal quadrada',top:15,bottom:30,height:20,material:'Tricoline',color:'Branco',image:'piramidal-quadrada-tricoline-branco.webp'},
-  {id:'drum-40-40-25',ref:'38',name:'Cúpula cilíndrica bege',format:'drum',label:'Drum / Cilíndrica',top:40,bottom:40,height:25,material:'Tricoline',color:'Bege',image:'drum-tricoline-bege.webp'},
-  {id:'conica-10-35-23',ref:'14',name:'Cúpula cônica off-white',format:'conica',label:'Cônica / Empire',top:10,bottom:35,height:23,material:'Tricoline',color:'Off White',image:'conica-tricoline-offwhite.webp'},
-  {id:'drum-45-45-30',ref:'39',name:'Cúpula cilíndrica preta',format:'drum',label:'Drum / Cilíndrica',top:45,bottom:45,height:30,material:'Tricoline',color:'Preto',image:'drum-tricoline-preto.webp'},
-  {id:'conica-27-35-26',ref:'33',name:'Cúpula cônica branca',format:'conica',label:'Cônica / Empire',top:27,bottom:35,height:26,material:'Tricoline',color:'Branco',image:'conica-tricoline-branco.webp'},
-  {id:'bell-18-45-31',ref:'06',name:'Cúpula estilo sino gelo',format:'bell',label:'Bell / Sino',top:18,bottom:45,height:31,material:'Tricoline',color:'Gelo',image:'bell-tricoline-gelo.webp'}
+  {id:'conica-20-35-25',ref:'12',name:'Cúpula cônica bege',format:'conica',label:'Cônica / Empire',top:20,bottom:35,height:25,material:'Algodão',color:'Bege',image:'conica-tricoline-bege.webp'},
+  {id:'drum-25-25-15',ref:'36',name:'Cúpula cilíndrica off-white',format:'drum',label:'Drum / Cilíndrica',top:25,bottom:25,height:15,material:'Algodão',color:'Off White',image:'drum-tricoline-offwhite.webp'},
+  {id:'piramidal-15-30-20',ref:'28',name:'Cúpula piramidal quadrada branca',format:'piramidal-quadrada',label:'Piramidal quadrada',top:15,bottom:30,height:20,material:'Algodão',color:'Branco',image:'piramidal-quadrada-tricoline-branco.webp'},
+  {id:'drum-40-40-25',ref:'38',name:'Cúpula cilíndrica bege',format:'drum',label:'Drum / Cilíndrica',top:40,bottom:40,height:25,material:'Algodão',color:'Bege',image:'drum-tricoline-bege.webp'},
+  {id:'conica-10-35-23',ref:'14',name:'Cúpula cônica off-white',format:'conica',label:'Cônica / Empire',top:10,bottom:35,height:23,material:'Algodão',color:'Off White',image:'conica-tricoline-offwhite.webp'},
+  {id:'drum-45-45-30',ref:'39',name:'Cúpula cilíndrica preta',format:'drum',label:'Drum / Cilíndrica',top:45,bottom:45,height:30,material:'Algodão',color:'Preto',image:'drum-tricoline-preto.webp'},
+  {id:'conica-27-35-26',ref:'33',name:'Cúpula cônica branca',format:'conica',label:'Cônica / Empire',top:27,bottom:35,height:26,material:'Algodão',color:'Branco',image:'conica-tricoline-branco.webp'},
+  {id:'bell-18-45-31',ref:'06',name:'Cúpula estilo sino off-white',format:'bell',label:'Bell / Sino',top:18,bottom:45,height:31,material:'Algodão',color:'Off White',image:'bell-tricoline-offwhite.webp'}
  ];
- const detailUrls={"conica-20-35-25":"cupula-conica-bege-20x35x25.html","drum-25-25-15":"cupula-cilindrica-off-white-25x25x15.html","piramidal-15-30-20":"cupula-piramidal-quadrada-branca-15x30x20.html","drum-40-40-25":"cupula-cilindrica-bege-40x40x25.html","conica-10-35-23":"cupula-conica-off-white-10x35x23.html","drum-45-45-30":"cupula-cilindrica-preta-45x45x30.html","conica-27-35-26":"cupula-conica-branca-27x35x26.html","bell-18-45-31":"cupula-sino-gelo-18x45x31.html"};
+ const detailUrls={"conica-20-35-25":"cupula-conica-bege-20x35x25.html","drum-25-25-15":"cupula-cilindrica-off-white-25x25x15.html","piramidal-15-30-20":"cupula-piramidal-quadrada-branca-15x30x20.html","drum-40-40-25":"cupula-cilindrica-bege-40x40x25.html","conica-10-35-23":"cupula-conica-off-white-10x35x23.html","drum-45-45-30":"cupula-cilindrica-preta-45x45x30.html","conica-27-35-26":"cupula-conica-branca-27x35x26.html","bell-18-45-31":"cupula-sino-off-white-18x45x31.html"};
  const cash=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const custom=p=>'modelos.html?formato='+encodeURIComponent(p.format)+'#monte';

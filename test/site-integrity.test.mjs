@@ -7,7 +7,7 @@ const pages=[
   'entregas-e-trocas.html','privacidade.html','guia-de-medidas.html',
   'cupulas-conicas.html','cupulas-cilindricas.html','cupulas-quadradas.html',
   'cupulas-atacado.html','cupulas-retangulares.html','tecidos-e-acabamentos.html',
-  'cupula-conica-bege-20x35x25.html','cupula-cilindrica-off-white-25x25x15.html','cupula-piramidal-quadrada-branca-15x30x20.html','cupula-cilindrica-bege-40x40x25.html','cupula-conica-off-white-10x35x23.html','cupula-cilindrica-preta-45x45x30.html','cupula-conica-branca-27x35x26.html','cupula-sino-gelo-18x45x31.html'
+  'cupula-conica-bege-20x35x25.html','cupula-cilindrica-off-white-25x25x15.html','cupula-piramidal-quadrada-branca-15x30x20.html','cupula-cilindrica-bege-40x40x25.html','cupula-conica-off-white-10x35x23.html','cupula-cilindrica-preta-45x45x30.html','cupula-conica-branca-27x35x26.html','cupula-sino-off-white-18x45x31.html'
 ];
 
 function resource(file,url) {
@@ -195,4 +195,13 @@ test('customer can only select genuine material colors',()=>{
  assert.ok(!s.includes('value="Colorido"'));
  assert.ok(!s.includes('Linho recebe o acabamento premium e pode ser combinado com as cores disponíveis.'));
  assert.doesNotThrow(()=>new Function(s));
+});
+test('shop offers cotton colors only, older ice shade routes to off-white',()=>{
+ const store=readFileSync('loja.js','utf8');
+ assert.ok(store.includes("material:'Algodão'"));
+ assert.ok(!store.includes("color:'Gelo'"));
+ assert.ok(store.includes('cupula-sino-off-white-18x45x31.html'));
+ assert.ok(readFileSync('tecidos-e-acabamentos.html','utf8').includes('Somente essas cinco cores'));
+ assert.ok(readFileSync('vercel.json','utf8').includes('cupula-sino-gelo-18x45x31.html'));
+ assert.doesNotThrow(()=>new Function(store));
 });
