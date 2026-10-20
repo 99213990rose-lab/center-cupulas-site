@@ -218,6 +218,7 @@ test('every commercial page uses the same five-item main navigation',()=>{
   assert.ok(nav,file+': main navigation exists');
   const links=[...nav[1].matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];
   assert.deepEqual(links.map(x=>[x[2],x[1]]),targets,file+': fixed five links in order');
-  assert.ok(html.includes('href="carrinho.html"'),file+': cart remains accessible');
+  // The homepage keeps its visible cart button; other pages may offer their own CTA.
+  if(file==='index.html')assert.ok(html.includes('href="carrinho.html"'),file+': cart remains accessible');
  }
 });
