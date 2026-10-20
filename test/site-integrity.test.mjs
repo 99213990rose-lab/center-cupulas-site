@@ -185,3 +185,14 @@ test('eight individually indexed product pages connect to server quote and cart'
  assert.doesNotThrow(()=>new Function(runtime));
  assert.doesNotThrow(()=>new Function(products));
 });
+
+test('customer can only select genuine material colors',()=>{
+ const s=readFileSync('catalogo.js','utf8');
+ assert.ok(s.includes("const colors = ['Bege', 'Marrom', 'Branco', 'Preto', 'Off White']"));
+ for(const c of ["Juta:'Juta natural'","Linho:'Linho claro'","Cru:'Cru natural'","Voal:'Cor única — confirmar tonalidade'"])assert.ok(s.includes(c));
+ assert.ok(s.includes('input.disabled = !isCotton'));
+ assert.ok(s.includes("configuration.material === 'Voal'"));
+ assert.ok(!s.includes('value="Colorido"'));
+ assert.ok(!s.includes('Linho recebe o acabamento premium e pode ser combinado com as cores disponíveis.'));
+ assert.doesNotThrow(()=>new Function(s));
+});
