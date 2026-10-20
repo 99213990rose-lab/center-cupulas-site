@@ -173,9 +173,17 @@
     { key: 'personalizado', label: 'Projeto personalizado', alt: 'Conceito de cúpula personalizada com geometria futurista' }
   ];
 
-  const colors = ['Preto', 'Branco', 'Bege', 'Off White', 'Gelo', 'Cinza', 'Colorido'];
+  // Opções reais da fábrica: só algodão tem variações.
+  const colors = ['Bege', 'Marrom', 'Branco', 'Preto', 'Off White'];
+  const fixedColor = Object.freeze({Juta:'Juta natural',Linho:'Linho claro',Cru:'Cru natural',Voal:'Cor única — confirmar tonalidade'});
+  const materialNames = new Set(['Algodão',...Object.keys(fixedColor)]);
   const colorValues = {
     Preto: '#292827',
+    Marrom: '#67422e',
+    'Juta natural': '#b9925e',
+    'Linho claro': '#eae5db',
+    'Cru natural': '#e8dcc9',
+    'Cor única — confirmar tonalidade': '#e8e4db',
     Branco: '#f8f6f0',
     Bege: '#cbb797',
     'Off White': '#ece6d8',
@@ -196,7 +204,9 @@
   const getFormat = (key) => formats.find((format) => format.key === key) || formats[0];
   const getCatalogVisual = (format, material = 'Tricoline', color = '') => {
     const imageSet = catalogImages[format.key] || catalogImages.conica;
-    const variantKey = normalize(material) + '__' + normalize(color);
+    const imageMaterial = ['Algodão','Cru'].includes(material) ? 'Tricoline' : material;
+    const imageColor = material === 'Cru' ? 'Off White' : color;
+    const variantKey = normalize(imageMaterial) + '__' + normalize(imageColor);
     const filename = imageSet.variants[variantKey] || imageSet.fallback;
     return {
       image: CATALOG_IMAGE_ROOT + filename,
@@ -313,7 +323,7 @@
     const colorMarkup = colors.map((color, index) => [
       '<label class="color-choice">',
         '<input type="radio" name="' + prefix + '-color" value="' + color + '" data-field="color"' + (index === 0 ? ' checked' : '') + '>',
-        '<span><i class="color-swatch ' + swatchClass(color) + '"></i><b>' + color + '</b></span>',
+        '<span><i class="color-swatch ' + swatchClass(color) + '" style="background-color:' + colorValues[color] + '"></i><b>' + color + '</b></span>',
       '</label>'
     ].join('')).join('');
 
@@ -342,13 +352,15 @@
             '<fieldset aria-describedby="' + prefix + '-error-1">',
               '<legend tabindex="-1" data-step-title><span>Etapa 2</span> Escolha o material e a cor</legend>',
               '<div class="material-options">',
-                '<label><input type="radio" name="' + prefix + '-material" value="Juta" data-field="material" checked><span><b>Juta</b><small>Acabamento natural</small></span></label>',
+                '<label><input type="radio" name="' + prefix + '-material" value="Juta" data-field="material"><span><b>Juta</b><small>Acabamento natural</small></span></label>',
                 '<label><input type="radio" name="' + prefix + '-material" value="Linho" data-field="material"><span><b>Linho</b><small>Textura premium</small></span></label>',
-                '<label><input type="radio" name="' + prefix + '-material" value="Tricoline" data-field="material"><span><b>Tricoline</b><small>Disponível em várias cores</small></span></label>',
+                '<label><input type="radio" name="' + prefix + '-material" value="Algodão" data-field="material" checked><span><b>Algodão</b><small>5 cores disponíveis</small></span></label>',
+                 '<label><input type="radio" name="' + prefix + '-material" value="Cru" data-field="material"><span><b>Algodão cru</b><small>Natural, cor única</small></span></label>',
+                 '<label><input type="radio" name="' + prefix + '-material" value="Voal" data-field="material"><span><b>Voal</b><small>Cor única, a confirmar</small></span></label>',
               '</div>',
-              '<p class="material-note" data-material-note>Juta é oferecida somente na cor natural.</p>',
-              '<div class="juta-color" data-juta-color><span class="color-swatch swatch--natural-juta"></span><b>Juta natural</b></div>',
-              '<div class="color-options" data-tricoline-colors hidden>' + colorMarkup + '</div>',
+              '<p class="material-note" data-material-note>Algodão disponível em cinco cores.</p>',
+              '<div class="juta-color" data-juta-color hidden><span class="color-swatch swatch--natural-juta"></span><b>Juta natural</b></div>',
+              '<div class="color-options" data-tricoline-colors>' + colorMarkup + '</div>',
               '<label class="form-field custom-color-field" hidden><span>Cor desejada</span><input type="text" maxlength="60" data-field="custom-color" placeholder="Ex.: azul petróleo"></label>',
             '</fieldset>',
             '<p class="config-error" id="' + prefix + '-error-1" data-step-error role="alert" hidden></p>',
@@ -490,13 +502,11 @@
     const getConfiguration = () => {
       const formatKey = checkedValue(fields.format) || 'conica';
       const selectedFormat = getFormat(formatKey);
-      const material = checkedValue(fields.material) || 'Juta';
-      const selectedColor = checkedValue(fields.color) || 'Preto';
-      const color = material === 'Juta'
-        ? 'Juta natural'
-        : selectedColor === 'Colorido'
-          ? (fields.customColor.value.trim() || 'Colorido — cor a informar')
-          : selectedColor;
+      const material = checkedValue(fields.material) || 'Algodão';
+      const selectedColor = checkedValue(fields.color) || colors[0];
+      const color = material === 'Algodão'
+        ? (colors.includes(selectedColor) ? selectedColor : colors[0])
+        : fixedColor[material] || 'Cor a confirmar';
       const measureMode = checkedValue(fields.measureMode) || 'suggested';
       const reference = getReference(fields.reference.value);
       const dimensions = measureMode === 'suggested'
@@ -518,7 +528,7 @@
         formatData: selectedFormat,
         material,
         color,
-        visualColor: material === 'Juta' ? 'Juta natural' : selectedColor,
+        visualColor: color,
         measureMode,
         reference,
         upper: dimensions[0] || 'A informar',
@@ -540,15 +550,13 @@
       format.textContent = configuration.format;
       material.textContent = configuration.material + ' · ' + configuration.color;
       preview.dataset.material = configuration.material.toLowerCase();
-      preview.style.setProperty('--selected-color', colorValues[configuration.color] || colorValues.Colorido);
+      preview.style.setProperty('--selected-color', colorValues[configuration.color] || '#dfd3c5');
     };
 
     const update = () => {
-      const material = checkedValue(fields.material) || 'Juta';
-      const selectedColor = checkedValue(fields.color) || 'Preto';
+      const material = checkedValue(fields.material) || 'Algodão';
       const formatKey = checkedValue(fields.format) || 'conica';
-      const isJuta = material === 'Juta';
-      const isColorful = !isJuta && selectedColor === 'Colorido';
+      const isCotton = material === 'Algodão';
       const customFormat = formatKey === 'personalizado';
       const customMeasure = checkedValue(fields.measureMode) === 'custom';
       const customQuantity = checkedValue(fields.quantity) === 'other';
@@ -558,16 +566,19 @@
       fields.customFormat.required = customFormat;
       fields.headingEyebrow.textContent = customFormat ? 'Projeto personalizado' : defaultEyebrow;
       fields.headingTitle.textContent = customFormat ? 'Defina seu projeto' : defaultTitle;
-      fields.jutaColor.hidden = !isJuta;
-      fields.tricolineColors.hidden = isJuta;
-      fields.color.forEach((input) => { input.disabled = isJuta; });
-      fields.customColorField.hidden = !isColorful;
-      fields.customColor.required = isColorful;
-      fields.materialNote.textContent = isJuta
-        ? 'Juta é oferecida somente na cor natural.'
-        : material === 'Linho'
-          ? 'Linho recebe o acabamento premium e pode ser combinado com as cores disponíveis.'
-          : 'Tricoline permite escolher entre as cores disponíveis ou informar outra cor.';
+      fields.jutaColor.hidden = isCotton;
+      fields.tricolineColors.hidden = !isCotton;
+      fields.color.forEach((input) => { input.disabled = !isCotton; });
+      fields.customColorField.hidden = true;
+      fields.customColor.required = false;
+      if (!isCotton) {
+        fields.jutaColor.querySelector('b').textContent = fixedColor[material] || 'Cor a confirmar';
+        fields.jutaColor.querySelector('.color-swatch').style.backgroundColor = colorValues[fixedColor[material]] || '#e9e1d8';
+      }
+      fields.materialNote.textContent = isCotton
+        ? 'Algodão disponível em: bege, marrom, branco, preto e off-white.'
+        : material === 'Voal' ? 'Voal: cor única. Confirme a tonalidade com a fábrica.'
+        : material + ': somente ' + fixedColor[material].toLowerCase() + '.';
       fields.suggestedMeasureField.hidden = customMeasure;
       fields.reference.disabled = customMeasure;
       fields.customMeasures.hidden = !customMeasure;
@@ -654,6 +665,13 @@
       const lower = Number(configuration.lower);
       const height = Number(configuration.height);
       const quantity = Number(configuration.quantity || 1);
+
+      if (configuration.material === 'Voal') {
+        renderPriceEstimate({ status: 'consult' });
+        fields.priceBody.innerHTML = '<strong>Voal sob consulta</strong><p>Cor única: confirme a tonalidade disponível com a fábrica.</p>';
+        submitButton.disabled = false;
+        return;
+      }
 
       if (![upper, lower, height].every(Number.isFinite)) {
         renderPriceEstimate({ status: 'consult' });
@@ -854,7 +872,7 @@
         return;
       }
 
-      if (lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' && window.CenterCupulasCart) {
+      if (configuration.material !== 'Voal' && lastPriceQuote?.status === 'estimate' && lastPriceQuote.confidence !== 'low' && window.CenterCupulasCart) {
         window.CenterCupulasCart.add({
           format: configuration.formatData.key,
           format_label: configuration.format,
@@ -912,8 +930,10 @@
       const formatKey = getFormat(configuration.format).key;
       fields.reference.value = reference.reference;
       fields.format.forEach((input) => { input.checked = input.value === formatKey; });
-      fields.material.forEach((input) => { input.checked = input.value === (configuration.material || 'Juta'); });
-      fields.color.forEach((input) => { input.checked = input.value === (configuration.color || 'Preto'); });
+      const requestedMaterial = configuration.material === 'Tricoline' ? 'Algodão' : (configuration.material || 'Algodão');
+      fields.material.forEach((input) => { input.checked = input.value === (materialNames.has(requestedMaterial) ? requestedMaterial : 'Algodão'); });
+      const requestedColor = colors.includes(configuration.color) ? configuration.color : colors[0];
+      fields.color.forEach((input) => { input.checked = input.value === requestedColor; });
       fields.measureMode.forEach((input) => { input.checked = input.value === (configuration.measureMode || 'suggested'); });
       fields.customFormat.value = configuration.customFormat || '';
       fields.customColor.value = configuration.customColor || '';
@@ -930,8 +950,8 @@
     setConfiguration({
       reference: '01',
       format: 'conica',
-      material: 'Juta',
-      color: 'Preto',
+      material: 'Algodão',
+      color: 'Bege',
       measureMode: mode === 'custom' ? 'custom' : 'suggested'
     });
     return { form, setConfiguration, update };
@@ -947,8 +967,8 @@
     dialogConfigurator.setConfiguration({
       reference: reference.reference,
       format: settings.format || reference.formatKey || 'conica',
-      material: settings.material || 'Juta',
-      color: settings.color || 'Preto'
+      material: settings.material || 'Algodão',
+      color: settings.color || 'Bege'
     });
     document.body.classList.add('dialog-open');
     window.CenterCupulas?.sendWebEvent?.('configurator_started', {
@@ -999,8 +1019,8 @@
     pageConfigurator?.setConfiguration({
       format: requestedFormat,
       measureMode: 'custom',
-      material: 'Juta',
-      color: 'Preto'
+      material: 'Algodão',
+      color: 'Bege'
     });
   }
 

@@ -2,6 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/cupula-sino-gelo-18x45x31.html",
+      "destination": "/cupula-sino-off-white-18x45x31.html",
+      "permanent": true
+    },
+    {
       "source": "/",
       "has": [
         {

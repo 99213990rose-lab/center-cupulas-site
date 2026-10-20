@@ -7,7 +7,7 @@ const pages=[
   'entregas-e-trocas.html','privacidade.html','guia-de-medidas.html',
   'cupulas-conicas.html','cupulas-cilindricas.html','cupulas-quadradas.html',
   'cupulas-atacado.html','cupulas-retangulares.html','tecidos-e-acabamentos.html',
-  'cupula-conica-bege-20x35x25.html','cupula-cilindrica-off-white-25x25x15.html','cupula-piramidal-quadrada-branca-15x30x20.html','cupula-cilindrica-bege-40x40x25.html','cupula-conica-off-white-10x35x23.html','cupula-cilindrica-preta-45x45x30.html','cupula-conica-branca-27x35x26.html','cupula-sino-gelo-18x45x31.html'
+  'cupula-conica-bege-20x35x25.html','cupula-cilindrica-off-white-25x25x15.html','cupula-piramidal-quadrada-branca-15x30x20.html','cupula-cilindrica-bege-40x40x25.html','cupula-conica-off-white-10x35x23.html','cupula-cilindrica-preta-45x45x30.html','cupula-conica-branca-27x35x26.html','cupula-sino-off-white-18x45x31.html'
 ];
 
 function resource(file,url) {
@@ -162,7 +162,7 @@ test('simplified storefront homepage prioritizes products, categories and custom
 });
 
 test('eight individually indexed product pages connect to server quote and cart',()=>{
- const pages=[{"slug":"cupula-conica-bege-20x35x25.html","id":"conica-20-35-25","name":"Cúpula cônica bege"},{"slug":"cupula-cilindrica-off-white-25x25x15.html","id":"drum-25-25-15","name":"Cúpula cilíndrica off-white"},{"slug":"cupula-piramidal-quadrada-branca-15x30x20.html","id":"piramidal-15-30-20","name":"Cúpula piramidal quadrada branca"},{"slug":"cupula-cilindrica-bege-40x40x25.html","id":"drum-40-40-25","name":"Cúpula cilíndrica bege"},{"slug":"cupula-conica-off-white-10x35x23.html","id":"conica-10-35-23","name":"Cúpula cônica off-white"},{"slug":"cupula-cilindrica-preta-45x45x30.html","id":"drum-45-45-30","name":"Cúpula cilíndrica preta"},{"slug":"cupula-conica-branca-27x35x26.html","id":"conica-27-35-26","name":"Cúpula cônica branca"},{"slug":"cupula-sino-gelo-18x45x31.html","id":"bell-18-45-31","name":"Cúpula estilo sino gelo"}];
+ const pages=[{"slug":"cupula-conica-bege-20x35x25.html","id":"conica-20-35-25","name":"Cúpula cônica bege"},{"slug":"cupula-cilindrica-off-white-25x25x15.html","id":"drum-25-25-15","name":"Cúpula cilíndrica off-white"},{"slug":"cupula-piramidal-quadrada-branca-15x30x20.html","id":"piramidal-15-30-20","name":"Cúpula piramidal quadrada branca"},{"slug":"cupula-cilindrica-bege-40x40x25.html","id":"drum-40-40-25","name":"Cúpula cilíndrica bege"},{"slug":"cupula-conica-off-white-10x35x23.html","id":"conica-10-35-23","name":"Cúpula cônica off-white"},{"slug":"cupula-cilindrica-preta-45x45x30.html","id":"drum-45-45-30","name":"Cúpula cilíndrica preta"},{"slug":"cupula-conica-branca-27x35x26.html","id":"conica-27-35-26","name":"Cúpula cônica branca"},{"slug":"cupula-sino-off-white-18x45x31.html","id":"bell-18-45-31","name":"Cúpula estilo sino off-white"}];
  const products=readFileSync('loja.js','utf8');
  const runtime=readFileSync('produto.js','utf8');
  const xml=readFileSync('sitemap.xml','utf8');
@@ -184,4 +184,24 @@ test('eight individually indexed product pages connect to server quote and cart'
  assert.ok(runtime.includes('window.CenterCupulasCart'));
  assert.doesNotThrow(()=>new Function(runtime));
  assert.doesNotThrow(()=>new Function(products));
+});
+
+test('customer can only select genuine material colors',()=>{
+ const s=readFileSync('catalogo.js','utf8');
+ assert.ok(s.includes("const colors = ['Bege', 'Marrom', 'Branco', 'Preto', 'Off White']"));
+ for(const c of ["Juta:'Juta natural'","Linho:'Linho claro'","Cru:'Cru natural'","Voal:'Cor única — confirmar tonalidade'"])assert.ok(s.includes(c));
+ assert.ok(s.includes('input.disabled = !isCotton'));
+ assert.ok(s.includes("configuration.material === 'Voal'"));
+ assert.ok(!s.includes('value="Colorido"'));
+ assert.ok(!s.includes('Linho recebe o acabamento premium e pode ser combinado com as cores disponíveis.'));
+ assert.doesNotThrow(()=>new Function(s));
+});
+test('shop offers cotton colors only, older ice shade routes to off-white',()=>{
+ const store=readFileSync('loja.js','utf8');
+ assert.ok(store.includes("material:'Algodão'"));
+ assert.ok(!store.includes("color:'Gelo'"));
+ assert.ok(store.includes('cupula-sino-off-white-18x45x31.html'));
+ assert.ok(readFileSync('tecidos-e-acabamentos.html','utf8').includes('Somente essas cinco cores'));
+ assert.ok(readFileSync('vercel.json','utf8').includes('cupula-sino-off-white-18x45x31.html'));
+ assert.doesNotThrow(()=>new Function(store));
 });
