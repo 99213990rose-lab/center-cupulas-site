@@ -205,3 +205,19 @@ test('shop offers cotton colors only, older ice shade routes to off-white',()=>{
  assert.ok(readFileSync('vercel.json','utf8').includes('cupula-sino-off-white-18x45x31.html'));
  assert.doesNotThrow(()=>new Function(store));
 });
+
+test('every commercial page uses the same five-item main navigation',()=>{
+ const targets=[
+  ['Início','index.html'],['Loja','loja.html'],
+  ['Sob Medida','modelos.html#monte'],['Reforma','reformas.html'],
+  ['Atacado','cupulas-atacado.html']
+ ];
+ for(const file of [...pages,'carrinho.html']) {
+  const html=readFileSync(file,'utf8');
+  const nav=html.match(/<nav class="nav" id="site-nav"[^>]*>([\s\S]*?)<\/nav>/);
+  assert.ok(nav,file+': main navigation exists');
+  const links=[...nav[1].matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];
+  assert.deepEqual(links.map(x=>[x[2],x[1]]),targets,file+': fixed five links in order');
+  assert.ok(html.includes('href="carrinho.html"'),file+': cart remains accessible');
+ }
+});
