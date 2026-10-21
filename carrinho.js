@@ -21,6 +21,8 @@
   const checkoutForm = document.querySelector('[data-checkout-form]');
   const checkoutButton = document.querySelector('[data-checkout-submit]');
   const statusBox = document.querySelector('[data-checkout-status]');
+  // A confirmation is more important than the checkout form: show it before the fields.
+  if (statusBox && checkoutForm) checkoutForm.closest('.checkout-card')?.before(statusBox);
   const flowNote = document.querySelector('[data-checkout-flow-note]');
   const freightNote = document.querySelector('[data-cart-freight-note]');
   const grandTotalLabel = document.querySelector('[data-cart-grand-label]');
@@ -533,6 +535,27 @@
     const items = apiItems();
     if (isSubmitting || !items.length) return;
     if (!checkoutForm.reportValidity()) return;
+    if (checkoutProEnabled && !selectedShipping) {
+      setStatus('warning', '<strong>Escolha uma opção de entrega ou retirada.</strong>');
+      return;
+    }
+    // Open the provider in a separate tab during the buyer's click. Browsers can
+    // block windows opened only AFTER the asynchronous checkout request.
+    // This keeps the original Center tab available to monitor the Pix confirmation.
+    let paymentTab = null;
+    if (checkoutProEnabled) {
+      try {
+        paymentTab = window.open('', '_blank');
+        if (paymentTab) {
+          paymentTab.opener = null;
+          paymentTab.document.title = 'Preparando pagamento | Center Cúpulas';
+          paymentTab.document.body.innerHTML =
+            '<main style="max-width:36rem;margin:12vh auto;padding:2rem;font:16px/1.6 system-ui,sans-serif;color:#302018">' +
+            '<h1>Preparando o pagamento seguro…</h1>' +
+            '<p>Aguarde enquanto conectamos você ao Mercado Pago. Volte à aba da Center Cúpulas para acompanhar a confirmação.</p></main>';
+        }
+      } catch { paymentTab = null; }
+    }
     isSubmitting = true;
     window.CenterCupulas?.sendWebEvent?.('checkout_attempt', {
       placement: 'cart_checkout', ctaText: checkoutProEnabled ? 'mercado_pago' : 'manual_quote'
@@ -574,17 +597,40 @@
         if (url.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.br)?$/.test(url.hostname)) {
           throw new Error('invalid_payment_url');
         }
-        // Save only the signed receipt reference in this browser tab, never personal data.
-        // The payment redirect is not proof of an approved transaction.
-        try {
-          if(data.status_reference && data.status_proof){
-            sessionStorage.setItem('center-cupulas-payment-receipt',JSON.stringify({
-              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,fulfillment:pickupSelected ? "pickup" : "delivery",at:Date.now()
-            }));
-          }
-        } catch { /* Private browsing may disable session storage. Payment still works. */ }
+        // The browser-held signed proof is NOT payment approval; it only lets
+        // these tabs check the true server-confirmed order status.
+        const activeReceipt = data.status_reference && data.status_proof ? {
+          reference: data.status_reference, proof: data.status_proof,
+          code: data.quote_code, fulfillment: pickupSelected ? 'pickup' : 'delivery',
+          at: Date.now()
+        } : null;
+        if (!activeReceipt) throw new Error('receipt_unavailable');
+        receipt = activeReceipt;
+        paymentCheckoutUrl = url.href;
+        try { sessionStorage.setItem(receiptKey, JSON.stringify(activeReceipt)); } catch {}
+        // If Mercado Pago returns inside the provider tab, it must be able
+        // to see its OWN receipt proof, independent of the original Center tab.
+        if (paymentTab) {
+          try { paymentTab.sessionStorage.setItem(receiptKey, JSON.stringify(activeReceipt)); } catch {}
+        }
         window.CenterCupulas?.sendWebEvent?.('cart_checkout_started', { placement: 'cart_checkout', ctaText: data.quote_code });
-        window.location.assign(url.href);
+        let providerOpened = false;
+        if (paymentTab && !paymentTab.closed) {
+          try {
+            paymentTab.location.replace(url.href);
+            providerOpened = true;
+          } catch { /* Browser blocked the new tab; show a direct, safe link instead. */ }
+        }
+        checkoutButton.textContent = 'Aguardando confirmação…';
+        setStatus('info', '<strong>Pagamento preparado.</strong><p>Seu pedido ' +
+          escapeHtml(data.quote_code) +
+          ' está aguardando pagamento. O Mercado Pago ' +
+          (providerOpened ? 'foi aberto em outra aba.' : 'pode ser aberto pelo botão abaixo.') +
+          ' Após pagar com Pix, volte a esta aba para ver a confirmação automática. <b>Não pague duas vezes.</b></p>' +
+          paymentLinkHtml() +
+          '<button type="button" class="button" data-check-payment-status>Consultar pagamento</button>');
+        statusBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        void checkPaymentStatus();
         return;
       }
       const response = await fetch(ENDPOINT, {
@@ -625,6 +671,8 @@
       );
       window.CenterCupulas?.sendWebEvent?.('cart_checkout_submitted', { placement: 'cart_checkout', ctaText: data.quote_code });
     } catch (error) {
+      // A checkout preparation failed; close its temporary window if still open.
+      if (paymentTab) { try { paymentTab.close(); } catch {} }
       // Never send addresses, contact fields or raw error strings to analytics.
       window.CenterCupulas?.sendWebEvent?.('checkout_error', {
         placement: 'cart_checkout', ctaText: 'checkout_failed'
@@ -637,6 +685,8 @@
         ? 'O Mercado Pago não conseguiu iniciar o pagamento. Tente novamente em alguns instantes.'
         : error?.message === 'quote_unavailable'
         ? 'Não foi possível concluir a preparação do pedido. Tente novamente.'
+        : error?.message === 'receipt_unavailable'
+        ? 'O pedido não pôde ser acompanhado com segurança. Nenhuma nova cobrança deve ser tentada antes de confirmar o status do pedido.'
         : error?.message === 'price_changed' ? 'O valor foi atualizado. Confira novamente o frete e o total antes de pagar.'
         : error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
         : error?.message === 'Escolha uma opção de frete antes de continuar.'
@@ -681,14 +731,20 @@
   const paymentReturn = new URLSearchParams(window.location.search).get('payment');
   const receiptKey = 'center-cupulas-payment-receipt';
   let receipt = null;
-  if(['return','pending','failed'].includes(paymentReturn)){
-    try {
-      const stored=JSON.parse(sessionStorage.getItem(receiptKey)||'null');
-      if(stored && typeof stored.reference==='string' && typeof stored.proof==='string' &&
-         Number.isFinite(stored.at) && Date.now()-stored.at<24*60*60*1000) receipt=stored;
-    } catch { /* no stored receipt */ }
-  }
+  let paymentCheckoutUrl = null;
+  try {
+    const stored=JSON.parse(sessionStorage.getItem(receiptKey)||'null');
+    if(stored && typeof stored.reference==='string' && typeof stored.proof==='string' &&
+       Number.isFinite(stored.at) && Date.now()-stored.at<24*60*60*1000) receipt=stored;
+  } catch { /* Session storage can be unavailable in private browsers. */ }
+  // A return from Mercado Pago can occur in a different tab. Always restore
+  // outstanding status from this tab, not only on ?payment=return.
+  if (receipt) isSubmitting = true;
 
+  const paymentLinkHtml = () => paymentCheckoutUrl
+    ? '<p><a class="button button--dark" href="' + escapeHtml(paymentCheckoutUrl) +
+      '" target="_blank" rel="noopener noreferrer">Abrir ou voltar ao Mercado Pago ↗</a></p>'
+    : '';
   let statusAttempts=0;
   let statusTimer=null;
   let checkingStatus=false;
@@ -708,6 +764,8 @@
         const receiptFulfillment = receipt?.fulfillment;
         try{sessionStorage.removeItem(receiptKey)}catch{}
         receipt=null;
+        paymentCheckoutUrl=null;
+        document.querySelector('[data-checkout-layout]')?.classList.add('is-complete');
         // Only a verified paid order registered in the production queue clears the cart.
         cart.clear();
         renderItems();
@@ -721,19 +779,23 @@
       }
       if(response.ok && result.state==='processing'){
         setStatus('info','<strong>Pagamento identificado.</strong><p>Estamos finalizando o registro do pedido na produção. '+
-          'Você não precisa pagar novamente.</p><button type="button" class="button" data-check-payment-status>Consultar situação</button>');
+          'Você não precisa pagar novamente.</p>' + paymentLinkHtml() +
+          '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
       } else if(response.ok && result.state==='pending'){
         setStatus('info','<strong>Aguardando confirmação do Mercado Pago.</strong><p>Se você pagou, '+
-          'a atualização pode levar alguns instantes. Não realize outro pagamento enquanto aguarda.</p>'+
+          'a atualização pode levar alguns instantes. Não realize outro pagamento enquanto aguarda.</p>' +
+          paymentLinkHtml() +
           '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
       } else {
         setStatus('info','<strong>Não foi possível consultar o pedido agora.</strong><p>Seu pagamento '+
-          'não será presumido como aprovado. Tente consultar novamente.</p>'+
+          'não será presumido como aprovado. Tente consultar novamente.</p>' +
+          paymentLinkHtml() +
           '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
       }
     }catch {
       setStatus('info','<strong>Consulta temporariamente indisponível.</strong>'+
-        '<p>Se você pagou, aguarde a confirmação. Não pague novamente enquanto verifica.</p>'+
+        '<p>Se você pagou, aguarde a confirmação. Não pague novamente enquanto verifica.</p>' +
+        paymentLinkHtml() +
         '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
     }finally{
       checkingStatus=false;
@@ -750,12 +812,26 @@
     }
   });
 
-  if(paymentReturn==='return'||paymentReturn==='pending'){
-    setStatus('info','<strong>Consultando a confirmação do pedido…</strong>'+
-      '<p>O Mercado Pago confirma a compra antes da entrada em produção.</p>');
-    if(receipt)void checkPaymentStatus();
-    else setStatus('info','<strong>Você voltou do Mercado Pago.</strong><p>A confirmação '+
-      'depende da aprovação do pagamento. Se pagou, guarde o comprovante.</p>');
+  // Recheck whenever the shopper comes back from the Mercado Pago tab.
+  const resumePaymentCheck = () => {
+    if(!receipt || document.visibilityState==='hidden') return;
+    if(statusTimer) window.clearTimeout(statusTimer);
+    statusAttempts=0;
+    void checkPaymentStatus();
+  };
+  document.addEventListener('visibilitychange', resumePaymentCheck);
+  window.addEventListener('focus', resumePaymentCheck);
+
+  if(receipt){
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = 'Aguardando confirmação…';
+    setStatus('info','<strong>Consultando pagamento do pedido ' +
+      escapeHtml(receipt.code || '') + '…</strong>' +
+      '<p>Você pode permanecer aqui enquanto aguarda o Mercado Pago. Se o Pix já foi pago, não pague novamente.</p>');
+    void checkPaymentStatus();
+  }else if(paymentReturn==='return'||paymentReturn==='pending'){
+    setStatus('info','<strong>Você voltou do Mercado Pago.</strong><p>Confira o aplicativo do seu banco e guarde o comprovante. ' +
+      'Se já pagou, não pague novamente; entre em contato com a loja para consultar o pedido.</p>');
   }else if(paymentReturn==='failed'){
     setStatus('warning','<strong>Pagamento não concluído.</strong>'+
       '<p>Seu carrinho foi mantido. Confira a situação no Mercado Pago antes de tentar novamente.</p>');
