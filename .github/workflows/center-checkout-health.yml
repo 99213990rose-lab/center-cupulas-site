@@ -1,0 +1,68 @@
+name: Center Cupulas - Checkout Health
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'cart.js'
+      - 'carrinho.js'
+      - 'carrinho.html'
+      - 'test/**'
+      - '.github/workflows/center-checkout-health.yml'
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'cart.js'
+      - 'carrinho.js'
+      - 'carrinho.html'
+      - 'test/**'
+      - '.github/workflows/center-checkout-health.yml'
+  schedule:
+    # 09:15 in Brasilia (UTC-3). Read-only; no checkout/payment is created.
+    - cron: '15 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checkout-regressions:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate the checkout and site without real charges
+        run: node --test test/checkout.test.mjs test/site-integrity.test.mjs
+
+  production-readiness:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check live payment readiness (read-only)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const endpoint = 'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=connection';
+          const res = await fetch(endpoint, {
+            headers: { accept: 'application/json' },
+            signal: AbortSignal.timeout(20000)
+          });
+          if (!res.ok) throw new Error('Checkout status endpoint unavailable: HTTP ' + res.status);
+          const status = await res.json();
+          const enabled = status.checkout_enabled === true;
+          const authorized = status.provider_connection === 'authorized';
+          console.log('Checkout enabled:', enabled);
+          console.log('Mercado Pago connection:', authorized ? 'authorized' : (status.provider_connection || 'unknown'));
+          if (!enabled || !authorized) {
+            throw new Error('Online checkout needs attention; no charge or order was created.');
+          }
+          NODE
