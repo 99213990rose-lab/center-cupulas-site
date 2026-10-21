@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '24'
       - name: Validate the checkout and site without real charges
-        run: node --test test/checkout.test.mjs test/site-integrity.test.mjs
+        run: node --test test/checkout.test.mjs test/site-integrity.test.mjs test/customer-account.test.mjs
 
   production-readiness:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
