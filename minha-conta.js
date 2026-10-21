@@ -10,6 +10,13 @@
   const orderHost=document.querySelector('[data-orders-list]');
   const emailLabel=document.querySelector('[data-account-email]');
   const submit=document.querySelector('[data-auth-submit]');
+  const emailField=document.querySelector('[data-auth-email-field]');
+  const codeField=document.querySelector('[data-auth-code-field]');
+  const passwordField=document.querySelector('[data-auth-password-field]');
+  const resend=document.querySelector('[data-auth-resend]');
+  const changeEmail=document.querySelector('[data-auth-change-email]');
+  const passwordSwitch=document.querySelector('[data-auth-password]');
+  const recover=document.querySelector('[data-auth-recover]');
   if(!form||!window.supabase?.createClient){
     if(authFeedback)authFeedback.textContent='Não foi possível carregar o acesso agora. Atualize a página e tente novamente.';
     return;
@@ -24,7 +31,10 @@
   const brl=x=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(x)||0);
   const date=x=>{const d=new Date(x);return Number.isNaN(d.getTime())?'':d.toLocaleDateString('pt-BR');};
   const say=(box,message,kind='info')=>{if(box){box.textContent=message;box.dataset.kind=kind;}};
-  let mode='login';
+  let stage='email';
+  let currentEmail='';
+  let nextCodeAt=0;
+  let sendingCode=false;
   let lastOrdersRequest=0;
   const terms={queued:'Aguardando produção',in_production:'Em produção',processing:'Em produção',
     finished:'Produção concluída',ready:'Pronto para retirada ou envio',
@@ -33,19 +43,67 @@
   const showAccount=email=>{
     authPanel.hidden=true;ordersPanel.hidden=false;emailLabel.textContent=email||'';
   };
-  const setMode=next=>{
-    mode=next;
-    form.querySelector('[name=password]').autocomplete=next==='signup'||next==='recovery'?'new-password':'current-password';
-    form.elements.email.closest('label').hidden=next==='recovery';
-    form.elements.email.required=next!=='recovery';
-    document.querySelectorAll('[data-auth-mode]').forEach(btn=>{
-      btn.setAttribute('aria-pressed',String(btn.dataset.authMode===next));
-    });
-    submit.textContent=next==='signup'?'Criar conta':next==='recovery'?'Atualizar senha':'Entrar na minha conta';
-    say(authFeedback,'');
+  const setStage=(next)=>{
+    stage=next;
+    const codeStage=next==='code';
+    const pwdStage=next==='password'||next==='recovery';
+    if(emailField)emailField.hidden=codeStage||next==='recovery';
+    if(codeField)codeField.hidden=!codeStage;
+    if(passwordField)passwordField.hidden=!pwdStage;
+    form.elements.email.required=next==='email'||next==='password';
+    form.elements.code.required=codeStage;
+    form.elements.password.required=pwdStage;
+    form.elements.password.autocomplete=next==='recovery'?'new-password':'current-password';
+    if(resend)resend.hidden=!codeStage;
+    if(changeEmail)changeEmail.hidden=!codeStage&&next!=='password';
+    if(passwordSwitch)passwordSwitch.hidden=codeStage||pwdStage;
+    if(recover)recover.hidden=next!=='password';
+    submit.textContent=codeStage?'Confirmar código':
+      next==='recovery'?'Atualizar senha':
+      next==='password'?'Entrar com senha':'Enviar código por e-mail';
+    if(codeStage)form.elements.code.focus();
+    if(next==='email')form.elements.email.focus();
   };
-  document.querySelectorAll('[data-auth-mode]').forEach(btn=>{
-    btn.addEventListener('click',()=>setMode(btn.dataset.authMode));
+  // Email OTP creates a customer account on first use and authenticates returning
+  // customers. Resend is rate limited client-side in addition to Supabase limits.
+  const sendCode=async(isResend=false)=>{
+    const email=(isResend?currentEmail:form.elements.email.value).trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      say(authFeedback,'Digite um e-mail válido.','error');return;
+    }
+    if(sendingCode)return;
+    const wait=Math.ceil((nextCodeAt-Date.now())/1000);
+    if(wait>0){say(authFeedback,'Aguarde '+wait+' segundos antes de reenviar o código.');return;}
+    sendingCode=true;
+    submit.disabled=true;
+    if(resend)resend.disabled=true;
+    say(authFeedback,'Enviando instruções para '+email+'...');
+    try{
+      const {error}=await sb.auth.signInWithOtp({
+        email,options:{shouldCreateUser:true,
+          emailRedirectTo:'https://www.centercupulas.com.br/meus-pedidos.html'}
+      });
+      if(error)throw error;
+      currentEmail=email;
+      nextCodeAt=Date.now()+60000;
+      setStage('code');
+      form.elements.code.value='';
+      say(authFeedback,'Confira seu e-mail '+email+'. Digite o código de 6 dígitos recebido. Se o provedor enviar um link, ele também pode confirmar o acesso.','success');
+    }catch(err){
+      const rate=/rate limit|too many|429|over_email_send_rate_limit/i.test(String(err?.message||''));
+      say(authFeedback,rate?'Muitas solicitações. Aguarde alguns minutos antes de tentar novamente.':
+        'Não foi possível enviar o acesso agora. Confira o e-mail e tente novamente.','error');
+      if(rate)nextCodeAt=Date.now()+60000;
+    }finally{sendingCode=false;submit.disabled=false;if(resend)resend.disabled=false;}
+  };
+  resend?.addEventListener('click',()=>void sendCode(true));
+  changeEmail?.addEventListener('click',()=>{
+    currentEmail='';nextCodeAt=0;
+    form.elements.code.value='';
+    setStage('email');say(authFeedback,'');
+  });
+  passwordSwitch?.addEventListener('click',()=>{
+    setStage('password');say(authFeedback,'Se sua conta já tinha senha, você ainda pode entrar com ela.');
   });
   const formatAddress=address=>address?
     [address.street,address.number,address.neighborhood,
@@ -117,30 +175,34 @@
     await loadOrders();
   };
   form.addEventListener('submit',async event=>{
-    event.preventDefault();if(!form.reportValidity())return;
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    if(stage==='email'){await sendCode();return;}
+    if(stage==='code'){
+      const code=form.elements.code.value.trim();
+      if(!/^[0-9]{6}$/.test(code)){say(authFeedback,'Digite os 6 números do e-mail.','error');return;}
+      submit.disabled=true;say(authFeedback,'Verificando código...');
+      try {
+        const {error}=await sb.auth.verifyOtp({email:currentEmail,token:code,type:'email'});
+        if(error)throw error;
+        form.elements.code.value='';
+        await refreshAccount();
+      }catch{
+        say(authFeedback,'Código inválido ou expirado. Confira o e-mail ou solicite um novo código.','error');
+      }finally{submit.disabled=false;}
+      return;
+    }
     const email=form.elements.email.value.trim().toLowerCase();
     const password=form.elements.password.value;
     submit.disabled=true;say(authFeedback,'Aguarde...');
-    try{
-      if(mode==='recovery'){
+    try {
+      if(stage==='recovery'){
         const {error}=await sb.auth.updateUser({password});
         if(error)throw error;
         form.elements.password.value='';
         await sb.auth.signOut();
-        showAuth();setMode('login');
+        showAuth();setStage('password');
         say(authFeedback,'Senha atualizada. Entre com a nova senha.','success');
-        return;
-      }
-      if(mode==='signup'){
-        const {data,error}=await sb.auth.signUp({
-          email,password,options:{emailRedirectTo:'https://www.centercupulas.com.br/meus-pedidos.html'}
-        });
-        if(error)throw error;
-        form.elements.password.value='';
-        if(!data.session){
-          say(authFeedback,'Verifique seu e-mail e confirme seu cadastro para entrar.','success');return;
-        }
-        await refreshAccount();
       }else{
         const {error}=await sb.auth.signInWithPassword({email,password});
         if(error)throw error;
@@ -148,15 +210,20 @@
         await refreshAccount();
       }
     }catch(e){
-      const generic='Não foi possível acessar. Confira e-mail e senha ou tente novamente.';
-      say(authFeedback,e?.message?.includes('Email not confirmed')?'Confirme o e-mail antes de entrar.':generic,'error');
+      say(authFeedback,e?.message?.includes('Email not confirmed')?
+        'Seu e-mail ainda não foi confirmado. Use o acesso por código.':
+        'Não foi possível acessar. Confira e-mail e senha ou use o código de e-mail.','error');
     }finally{submit.disabled=false;}
   });
-  document.querySelector('[data-auth-recover]')?.addEventListener('click',async()=>{
-    const email=form.elements.email.value.trim();
+  recover?.addEventListener('click',async()=>{
+    const email=form.elements.email.value.trim().toLowerCase();
     if(!email){say(authFeedback,'Digite seu e-mail para recuperar a senha.');return;}
-    try{await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://www.centercupulas.com.br/meus-pedidos.html'});
-      say(authFeedback,'Se houver uma conta cadastrada, enviaremos instruções de recuperação por e-mail.','success');
+    try{
+      const {error}=await sb.auth.resetPasswordForEmail(email,{
+        redirectTo:'https://www.centercupulas.com.br/meus-pedidos.html'
+      });
+      if(error)throw error;
+      say(authFeedback,'Se houver uma conta cadastrada, enviaremos instruções de recuperação.','success');
     }catch{say(authFeedback,'Não foi possível iniciar a recuperação agora.','error');}
   });
   document.querySelector('[data-account-signout]')?.addEventListener('click',async()=>{
@@ -166,9 +233,10 @@
   sb.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT'){++lastOrdersRequest;orderHost.replaceChildren();showAuth();}
     if(event==='PASSWORD_RECOVERY')setTimeout(()=>{
-      showAuth();setMode('recovery');
+      showAuth();setStage('recovery');
       say(authFeedback,'Digite uma nova senha com pelo menos 8 caracteres.','info');
     },0);
   });
+  setStage('email');
   void refreshAccount();
 })();
