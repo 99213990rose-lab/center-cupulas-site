@@ -390,7 +390,7 @@ Deno.serve(async(req:Request)=>{
     const insertedQuote=await sb.from("quotes").insert({
       organization_id:ORG_ID,lead_id:leadId,code,status:"draft",line_items:lineItems,
       subtotal:productTotal,freight:freightValue,total:finalTotal,currency:"BRL",
-      customer_name:name,customer_phone:phone,shipping:{...shipping,box_purchase_budget:{...boxBudget,included_in_products:true}},
+      customer_name:name,customer_phone:phone,shipping:{...shipping,customer_email:email||null,box_purchase_budget:{...boxBudget,included_in_products:true}},
       notes:[
         "Checkout do site — preços calculados pelo motor comercial.",
         pickup?"Retirada na Rua Cachoeira Buriti, 44, Itaquera, São Paulo/SP. Frete R$ 0,00. Agendar após confirmação do pagamento.":
