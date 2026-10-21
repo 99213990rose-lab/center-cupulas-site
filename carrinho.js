@@ -774,7 +774,8 @@
           ' registrado e encaminhado à fila de produção.</p>'+
           (receiptFulfillment === 'pickup'
             ? '<p><strong>Retirada:</strong> Rua Cachoeira Buriti, 44 — Itaquera, São Paulo/SP. Combine o dia e horário antes de comparecer.</p>'
-            : '<p>Obrigado por comprar na Center Cúpulas.</p>'));
+            : '<p>Obrigado por comprar na Center Cúpulas.</p>')+
+          '<p><a href="meus-pedidos.html">Acompanhar em Meus Pedidos</a></p>');
         return;
       }
       if(response.ok && result.state==='processing'){
