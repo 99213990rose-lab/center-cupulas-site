@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body style="margin:0;padding:36px 16px;background:#faf8f4;font-family:Arial,sans-serif;color:#302018">
+    <main style="max-width:540px;margin:auto;padding:32px;background:white;border:1px solid #e8daca;border-radius:18px">
+      <p style="margin:0 0 12px;color:#9e7446;letter-spacing:2px;font-size:12px;font-weight:bold">CENTER CÚPULAS</p>
+      <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-weight:normal;font-size:29px">Seu código de acesso</h1>
+      <p style="line-height:1.65">Digite este código na área <strong>Meus Pedidos</strong> para entrar ou criar sua conta:</p>
+      <p style="padding:22px 12px;background:#f5efe7;border-radius:12px;text-align:center;font-size:36px;letter-spacing:9px;font-weight:bold;color:#302018">{{ .Token }}</p>
+      <p style="line-height:1.65">O código é temporário e deve ser usado uma única vez. Não compartilhe com ninguém.</p>
+      <p style="line-height:1.65;color:#6c6259">Se preferir, <a href="{{ .ConfirmationURL }}" style="color:#785534">entre clicando neste link seguro</a>.</p>
+      <p style="margin-top:28px;font-size:12px;color:#75675c;line-height:1.7">Se você não solicitou acesso, ignore esta mensagem. Nenhum pagamento será criado.</p>
+    </main>
+  </body>
+</html>
