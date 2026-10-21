@@ -222,3 +222,13 @@ test('every commercial page uses the same five-item main navigation',()=>{
   if(file==='index.html')assert.ok(html.includes('href="carrinho.html"'),file+': cart remains accessible');
  }
 });
+
+
+test('privacy consent never interrupts a first-time visitor', () => {
+  const script=readFileSync('privacy-consent.js','utf8');
+  assert.ok(script.includes("const KEY = 'centerPrivacyPreferencesV1'"));
+  assert.ok(script.includes("return preferences?.[kind] === true"), 'analytics and marketing must stay opt-in');
+  assert.ok(!script.includes('if (!preferences) open();'), 'privacy dialog must not appear automatically');
+  assert.ok(script.includes("'[data-open-privacy-settings]'"), 'preferences must remain accessible from footer');
+  assert.ok(script.includes("panel.hidden = true"), 'dialog must start hidden');
+});
