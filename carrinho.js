@@ -579,7 +579,7 @@
         try {
           if(data.status_reference && data.status_proof){
             sessionStorage.setItem('center-cupulas-payment-receipt',JSON.stringify({
-              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,at:Date.now()
+              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,fulfillment:pickupSelected ? "pickup" : "delivery",at:Date.now()
             }));
           }
         } catch { /* Private browsing may disable session storage. Payment still works. */ }
@@ -669,7 +669,7 @@
         ? 'Pagamento seguro pelo Mercado Pago. O frete e os valores serão validados antes de cobrar. O pedido só é confirmado após a aprovação.'
         : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
       if (heroDescription) heroDescription.textContent = checkoutProEnabled
-        ? 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.'
+        ? (pickupEnabled ? 'Escolha entrega ou retirada, confira os valores e pague com segurança pelo Mercado Pago.' : 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.')
         : 'Ajuste quantidades e confira os dados. O preço é calculado automaticamente e a entrega é confirmada antes da produção.';
       if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
         ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
@@ -705,6 +705,7 @@
       const result=await response.json();
       if(response.ok && result.state==='confirmed'){
         if(statusTimer)window.clearTimeout(statusTimer);
+        const receiptFulfillment = receipt?.fulfillment;
         try{sessionStorage.removeItem(receiptKey)}catch{}
         receipt=null;
         // Only a verified paid order registered in the production queue clears the cart.
@@ -712,7 +713,10 @@
         renderItems();
         setStatus('success','<strong>Pagamento confirmado!</strong><p>Pedido '+
           escapeHtml(result.order_code||result.reference_code||'')+
-          ' registrado e encaminhado à fila de produção. Obrigado por comprar na Center Cúpulas.</p>');
+          ' registrado e encaminhado à fila de produção.</p>'+
+          (receiptFulfillment === 'pickup'
+            ? '<p><strong>Retirada:</strong> Rua Cachoeira Buriti, 44 — Itaquera, São Paulo/SP. Combine o dia e horário antes de comparecer.</p>'
+            : '<p>Obrigado por comprar na Center Cúpulas.</p>'));
         return;
       }
       if(response.ok && result.state==='processing'){
