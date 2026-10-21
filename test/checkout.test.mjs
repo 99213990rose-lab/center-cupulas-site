@@ -386,7 +386,7 @@ test('checkout receipt proof is generated only after a successful provider prefe
 });
 test('paid return UX checks secure status, never treats query parameters as payment confirmation',()=>{
  const html=readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
- assert.ok(html.includes("sessionStorage.setItem('center-cupulas-payment-receipt'"));
+ assert.ok(html.includes('sessionStorage.setItem(receiptKey, JSON.stringify(activeReceipt))'));
  assert.ok(html.includes("fetch('/api/mercadopago/order-status'"));
  assert.ok(html.includes("result.state==='confirmed'"));
  assert.ok(html.includes("cart.clear();"));
