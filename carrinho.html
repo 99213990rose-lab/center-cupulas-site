@@ -87,6 +87,15 @@
               <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
               <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
               <label><span>E-mail</span><input name="email" type="email" autocomplete="email" maxlength="180"></label>
+              <div class="shipping-quote-box" data-fulfillment-picker hidden>
+                <div class="shipping-quote-box__head"><span>Como deseja receber?</span><small>escolha uma opção</small></div>
+                <div class="shipping-options">
+                  <label class="shipping-option"><input type="radio" name="fulfillment" value="delivery" checked><span class="shipping-option__main"><b>Entrega no endereço</b><small>Frete calculado para seu CEP</small></span></label>
+                  <label class="shipping-option"><input type="radio" name="fulfillment" value="pickup"><span class="shipping-option__main"><b>Retirar no local</b><small>Rua Cachoeira Buriti, 44 — Itaquera, São Paulo/SP. Após a compra, combine o dia e horário da retirada.</small></span><strong>R$ 0,00</strong></label>
+                </div>
+                <p class="shipping-calibration-note">Retirada na Rua Cachoeira Buriti, 44, Itaquera, São Paulo/SP, com agendamento após a compra. Não é uma transportadora.</p>
+              </div>
+              <div data-delivery-address>
               <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status aria-live="polite"></small></label>
               <label><span>Rua / Avenida *</span><input name="street" autocomplete="address-line1" maxlength="160" required></label>
               <div class="checkout-form__row checkout-form__row--address">
@@ -97,6 +106,7 @@
               <div class="checkout-form__row">
                 <label><span>Cidade *</span><input name="city" autocomplete="address-level2" maxlength="100" required></label>
                 <label><span>UF *</span><input name="state" autocomplete="address-level1" maxlength="2" placeholder="SP" required></label>
+              </div>
               </div>
               <div class="shipping-quote-box" data-shipping-box hidden>
                 <div class="shipping-quote-box__head"><span>Opções de frete</span><small data-shipping-provider>cotação automática</small></div>

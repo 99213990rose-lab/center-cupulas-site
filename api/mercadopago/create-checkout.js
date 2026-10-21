@@ -11,9 +11,12 @@ const json = (res, status, body) => res.status(status).setHeader('Cache-Control'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
+  // The pickup option is strictly seller-enabled; never trust a zero freight value from the browser.
+  const pickup = req.body?.shippingSelection?.code === 'STORE_PICKUP';
+  if (pickup && process.env.CENTER_PICKUP_ENABLED !== 'true') return json(res, 503, { error: 'pickup_not_enabled' });
   // No origin CEP/token or verified packaging: do not create a payable order.
-  if (process.env.CENTER_USE_LIVE_FRENET_RATES !== 'true') return json(res, 503, { error: 'carrier_rates_not_enabled' });
-  if (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, ''))) {
+  if (!pickup && process.env.CENTER_USE_LIVE_FRENET_RATES !== 'true') return json(res, 503, { error: 'carrier_rates_not_enabled' });
+  if (!pickup && (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '')))) {
     return json(res, 503, { error: 'shipping_not_configured' });
   }
   const token = cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN);
@@ -26,7 +29,8 @@ export default async function handler(req, res) {
     const { items, customer, shippingSelection } = req.body || {};
     if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code ||
         typeof shippingSelection?.price !== 'number' || !Number.isFinite(shippingSelection.price) || shippingSelection.price < 0 ||
-        typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0) {
+        typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0 ||
+        (pickup && shippingSelection.price !== 0)) {
       return json(res, 400, { error: 'complete_order_and_shipping_required' });
     }
     // Current Center backend recalculates each item and verifies selected freight on submission.
@@ -37,7 +41,8 @@ export default async function handler(req, res) {
     });
     const quote = await quoteResponse.json();
     if (!quoteResponse.ok || !quote.submitted) return json(res, 422, { error: 'quote_unavailable' });
-    if (quote.shipping?.status !== 'quoted' || quote.packaging?.status !== 'estimated' ||
+    if ((pickup ? quote.shipping?.status !== 'pickup' || Number(quote.shipping?.freight) !== 0
+        : quote.shipping?.status !== 'quoted') || quote.packaging?.status !== 'estimated' ||
         !Number.isFinite(Number(quote.total)) || Number(quote.total) <= 0 || !quote.quote_id) {
       return json(res, 422, { error: 'shipping_or_packaging_needs_review', quote_code: quote.quote_code });
     }

@@ -36,6 +36,8 @@
   const shippingBox = checkoutForm?.querySelector('[data-shipping-box]');
   const shippingOptionsHost = checkoutForm?.querySelector('[data-shipping-options]');
   const shippingProvider = checkoutForm?.querySelector('[data-shipping-provider]');
+  const fulfillmentPicker = checkoutForm?.querySelector('[data-fulfillment-picker]');
+  const deliveryAddress = checkoutForm?.querySelector('[data-delivery-address]');
   let preview = null;
   let timer = 0;
   let requestSeq = 0;
@@ -44,6 +46,8 @@
   let selectedShipping = null;
   let freightProviderConfigured = false;
   let checkoutProEnabled = false;
+  let pickupEnabled = false;
+  let pickupSelected = false;
   let previewLoading = false;
   let isSubmitting = false;
   let cepLookupSeq = 0;
@@ -135,12 +139,13 @@
     const hasFreight = selectedShipping && Number.isFinite(Number(selectedShipping.price));
     const productTotal = Number(preview?.product_total);
     const freight = hasFreight ? Number(selectedShipping.price) : 0;
-    if (freightEl) freightEl.textContent = hasFreight ? money(freight) : 'A confirmar';
-    if (grandTotalLabel) grandTotalLabel.textContent = hasFreight ? 'Total com frete' : 'Total (frete a confirmar)';
+    if (freightEl) freightEl.textContent = pickupSelected ? 'Retirada grátis' : hasFreight ? money(freight) : 'A confirmar';
+    if (grandTotalLabel) grandTotalLabel.textContent = pickupSelected ? 'Total para retirada' : hasFreight ? 'Total com frete' : 'Total (frete a confirmar)';
     if (grandTotalEl) grandTotalEl.textContent = !Number.isFinite(productTotal)
       ? 'Calculando…' : hasFreight ? money(productTotal + freight) : money(productTotal) + ' + frete';
-    if (freightNote) freightNote.textContent = hasFreight
-      ? 'Frete da transportadora selecionada, incluído no total do pedido.'
+    if (freightNote) freightNote.textContent = pickupSelected
+      ? 'Sem cobrança de frete. Retirada no local e horário informados pela fábrica.'
+      : hasFreight ? 'Frete da transportadora selecionada, incluído no total do pedido.'
       : 'O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.';
   };
 
@@ -156,7 +161,7 @@
   };
 
   const renderFreightState = (data) => {
-    if (!shippingBox || !shippingOptionsHost) return;
+    if (pickupSelected || !shippingBox || !shippingOptionsHost) return;
     shippingBox.hidden = false;
     freightOptions = Array.isArray(data?.options) ? data.options : [];
     freightProviderConfigured = data?.status === 'ok' || data?.status === 'no_options';
@@ -238,6 +243,7 @@
 
   const refreshFreight = async () => {
     const seq = ++freightRequestSeq;
+    if (pickupSelected) return;
     const cep = onlyDigits(cepInput?.value);
     if (!preview?.packaging?.packages?.length || cep.length !== 8) {
       selectedShipping = null;
@@ -285,6 +291,40 @@
     }
   };
 
+  const choosePickup = () => {
+    ++freightRequestSeq;
+    selectedShipping = { code: 'STORE_PICKUP', price: 0, carrier: 'Retirada no local', service: 'Retirada no local' };
+    freightOptions = [];
+    freightProviderConfigured = false;
+    if (shippingBox) shippingBox.hidden = true;
+    updateGrandTotal();
+    updateCheckoutAvailability();
+  };
+
+  const updateFulfillmentMode = () => {
+    pickupSelected = pickupEnabled &&
+      checkoutForm?.querySelector('input[name="fulfillment"]:checked')?.value === 'pickup';
+    if (deliveryAddress) {
+      deliveryAddress.hidden = pickupSelected;
+      deliveryAddress.querySelectorAll('input').forEach((field) => {
+        if (field.name !== 'complement') field.required = !pickupSelected;
+      });
+    }
+    if (pickupSelected) choosePickup();
+    else {
+      selectedShipping = null;
+      if (preview && onlyDigits(cepInput?.value).length === 8) void refreshFreight();
+      else {
+        if (shippingBox) shippingBox.hidden = true;
+        updateGrandTotal();
+        updateCheckoutAvailability();
+      }
+    }
+  };
+  checkoutForm?.querySelectorAll('input[name="fulfillment"]').forEach((radio) => {
+    radio.addEventListener('change', updateFulfillmentMode);
+  });
+
   const renderPreview = (data) => {
     previewLoading = false;
     preview = data;
@@ -322,7 +362,8 @@
       packagingBody.innerHTML = '<p><strong>Embalagem já incluída no preço das cúpulas.</strong> O número de volumes e os detalhes do envio serão definidos pela equipe antes do despacho.</p>';
     }
     updateCheckoutAvailability();
-    if (onlyDigits(cepInput?.value).length === 8) refreshFreight();
+    if (pickupSelected) choosePickup();
+    else if (onlyDigits(cepInput?.value).length === 8) refreshFreight();
   };
 
   const refreshPreview = async () => {
@@ -462,6 +503,7 @@
   };
 
   cepInput?.addEventListener('input', () => {
+    if (pickupSelected) return;
     const cep = onlyDigits(cepInput.value);
     cepInput.value = formatCep(cep);
     ++cepLookupSeq;
@@ -501,13 +543,13 @@
       name: formData.get('name'),
       phone: formData.get('phone'),
       email: formData.get('email'),
-      cep: formData.get('cep'),
-      street: formData.get('street'),
-      number: formData.get('number'),
-      complement: formData.get('complement'),
-      neighborhood: formData.get('neighborhood'),
-      city: formData.get('city'),
-      state: formData.get('state'),
+      cep: pickupSelected ? '' : formData.get('cep'),
+      street: pickupSelected ? '' : formData.get('street'),
+      number: pickupSelected ? '' : formData.get('number'),
+      complement: pickupSelected ? '' : formData.get('complement'),
+      neighborhood: pickupSelected ? '' : formData.get('neighborhood'),
+      city: pickupSelected ? '' : formData.get('city'),
+      state: pickupSelected ? '' : formData.get('state'),
       notes: formData.get('notes')
     };
 
@@ -537,7 +579,7 @@
         try {
           if(data.status_reference && data.status_proof){
             sessionStorage.setItem('center-cupulas-payment-receipt',JSON.stringify({
-              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,at:Date.now()
+              reference:data.status_reference,proof:data.status_proof,code:data.quote_code,fulfillment:pickupSelected ? "pickup" : "delivery",at:Date.now()
             }));
           }
         } catch { /* Private browsing may disable session storage. Payment still works. */ }
@@ -616,11 +658,18 @@
       if (!response.ok) return;
       const data = await response.json();
       checkoutProEnabled = data.checkout_enabled === true;
+      pickupEnabled = checkoutProEnabled && data.pickup_enabled === true;
+      if (fulfillmentPicker) fulfillmentPicker.hidden = !pickupEnabled;
+      if (!pickupEnabled) {
+        const deliveryRadio = checkoutForm?.querySelector('input[name="fulfillment"][value="delivery"]');
+        if (deliveryRadio) deliveryRadio.checked = true;
+      }
+      updateFulfillmentMode();
       if (flowNote) flowNote.textContent = checkoutProEnabled
         ? 'Pagamento seguro pelo Mercado Pago. O frete e os valores serão validados antes de cobrar. O pedido só é confirmado após a aprovação.'
         : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
       if (heroDescription) heroDescription.textContent = checkoutProEnabled
-        ? 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.'
+        ? (pickupEnabled ? 'Escolha entrega ou retirada, confira os valores e pague com segurança pelo Mercado Pago.' : 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.')
         : 'Ajuste quantidades e confira os dados. O preço é calculado automaticamente e a entrega é confirmada antes da produção.';
       if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
         ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
@@ -656,6 +705,7 @@
       const result=await response.json();
       if(response.ok && result.state==='confirmed'){
         if(statusTimer)window.clearTimeout(statusTimer);
+        const receiptFulfillment = receipt?.fulfillment;
         try{sessionStorage.removeItem(receiptKey)}catch{}
         receipt=null;
         // Only a verified paid order registered in the production queue clears the cart.
@@ -663,7 +713,10 @@
         renderItems();
         setStatus('success','<strong>Pagamento confirmado!</strong><p>Pedido '+
           escapeHtml(result.order_code||result.reference_code||'')+
-          ' registrado e encaminhado à fila de produção. Obrigado por comprar na Center Cúpulas.</p>');
+          ' registrado e encaminhado à fila de produção.</p>'+
+          (receiptFulfillment === 'pickup'
+            ? '<p><strong>Retirada:</strong> Rua Cachoeira Buriti, 44 — Itaquera, São Paulo/SP. Combine o dia e horário antes de comparecer.</p>'
+            : '<p>Obrigado por comprar na Center Cúpulas.</p>'));
         return;
       }
       if(response.ok && result.state==='processing'){
