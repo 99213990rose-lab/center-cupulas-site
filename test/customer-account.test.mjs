@@ -93,3 +93,28 @@ test('customer interface stays simple, with no administrative controls',()=>{
  assert.ok(backend.includes("user.email_confirmed_at"));
  assert.ok(!backend.includes('req.query.email'));
 });
+
+test('passwordless login sends a real Supabase OTP and verifies six digits before orders',()=>{
+ const page=readFileSync(new URL('../meus-pedidos.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('../minha-conta.js',import.meta.url),'utf8');
+ const template=readFileSync(new URL('../supabase/templates/customer-email-otp.html',import.meta.url),'utf8');
+ assert.ok(page.includes('data-auth-code-field hidden'));
+ assert.ok(page.includes('autocomplete="one-time-code"'));
+ assert.ok(page.includes('pattern="[0-9]{6}"'));
+ assert.ok(page.includes('data-auth-resend hidden'));
+ assert.ok(page.includes('data-auth-change-email hidden'));
+ assert.ok(page.includes('data-auth-password'));
+ assert.ok(page.includes('data-auth-password-field hidden'));
+ assert.ok(!page.includes('data-auth-mode="signup"'),'new accounts must not need password signup');
+ assert.ok(js.includes('sb.auth.signInWithOtp({'));
+ assert.ok(js.includes('shouldCreateUser:true'));
+ assert.ok(js.includes("sb.auth.verifyOtp({email:currentEmail,token:code,type:'email'})"));
+ assert.ok(js.includes('nextCodeAt=Date.now()+60000'));
+ assert.ok(js.includes("if(stage==='email'){await sendCode();return;}"));
+ assert.ok(js.includes("if(stage==='code')"));
+ assert.ok(js.includes('sb.auth.signInWithPassword({email,password})'),'existing password logins remain available');
+ assert.ok(template.includes('{{ .Token }}'),'email sender must include a six-digit token');
+ assert.ok(template.includes('{{ .ConfirmationURL }}'),'existing email link works as a fallback');
+ assert.ok(js.includes('await refreshAccount()'),'order access after OTP confirmation');
+ assert.ok(!js.includes('sb.auth.signUp({'),'password creation must not be required');
+});
