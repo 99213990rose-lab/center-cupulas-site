@@ -125,7 +125,8 @@
       const button = event.target.closest?.('[data-open-privacy-settings]');
       if (button) { event.preventDefault(); open(); }
     });
-    if (!preferences) open();
+    // First-time visitors can browse immediately. Optional trackers stay disabled
+    // unless the visitor explicitly opens preferences and opts in.
   }
 
   window.CenterPrivacyConsent = { enabled, open, save, read: () => preferences };
