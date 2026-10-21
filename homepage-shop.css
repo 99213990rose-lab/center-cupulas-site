@@ -156,3 +156,63 @@
 @media(prefers-reduced-motion:reduce) {
  .home2-types .category-entry__tile,.home2-types .category-entry__tile img{transition:none;}
 }
+/* Simplicidade: busca na entrada, respiro, produtos e formatos. */
+.home2-page{background:#fff;color:#302c28}
+.home2-page .site-header{background:rgba(255,255,255,.98);box-shadow:none;border-bottom:1px solid #efedea}
+.home2-page .header__inner{min-height:70px}
+.home2-page .nav a{color:#4d4843;font-weight:600}
+.home2-hero,.home2-hero__layout{min-height:465px;background:#fff}
+.home2-hero::before{display:none}
+.home2-hero__layout{padding:79px 16px 55px;align-items:center;justify-content:center;text-align:center}
+.home2-hero__copy{max-width:800px;width:100%}
+.home2-hero h1{font:500 clamp(2.7rem,5vw,4.7rem)/1.12 var(--serif);max-width:800px;margin:0 auto 16px;letter-spacing:-.055em}
+.home2-hero h1 span{display:inline}
+.home2-hero__lead{margin:0 auto;color:#766d66;max-width:550px}
+.home2-hero__actions{justify-content:center;margin-top:19px;gap:11px}
+.home2-hero__actions .home2-button{border-radius:999px;min-height:46px;padding:11px 22px;background:#f5f3f1;color:#3e342e;border:1px solid #eeeae5}
+.home2-hero__actions .home2-button--solid{background:#3b3029;border-color:#3b3029;color:#fff}
+.home2-hero__actions .home2-button--solid:hover{background:#544135}
+.minimal-search{margin:27px auto 0;display:flex;align-items:center;width:min(690px,100%);min-height:60px;border:1px solid #dad7d3;border-radius:999px;background:#fff;box-shadow:0 2px 13px rgba(31,26,22,.055)}
+.minimal-search:focus-within{border-color:#98775f;box-shadow:0 2px 19px rgba(31,26,22,.1)}
+.minimal-search svg{flex:none;width:21px;height:21px;margin-left:20px;color:#827971}
+.minimal-search input{flex:1;min-width:0;padding:14px 12px;background:transparent;border:none;outline:none;font:400 .96rem var(--sans,Arial,sans-serif);color:#302c28}
+.minimal-search input::placeholder{color:#938c85}
+.minimal-search button{border:0;background:#3b3029;color:#fff;border-radius:999px;min-height:44px;margin-right:7px;padding:0 23px;font-size:.82rem;font-weight:700;cursor:pointer}
+.minimal-search button:hover{background:#584335}
+.minimal-trust{font-size:.76rem;color:#92877e;margin:20px 0 0}
+.home2-section{background:#fff;padding:55px 0}
+.home2-featured{background:#fff;padding-bottom:52px}
+.home2-types{background:#fff;padding-top:50px;border-top:1px solid #f0ece7}
+.home2-section__heading{margin-bottom:23px}
+.home2-section__heading h2{font:500 clamp(2rem,3vw,2.8rem)/1.15 var(--serif);margin:0;letter-spacing:-.035em}
+.home2-section__heading p:not(.home2-eyebrow){display:none}
+.home2-types__grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}
+.home2-types .category-entry__tile{background:#faf9f7;border:1px solid #ebe8e4;border-radius:14px;box-shadow:none}
+.home2-types .category-entry__tile strong{font-size:.86rem}
+.home2-featured .store-card{border:1px solid #ebe7e1;box-shadow:none;border-radius:13px}
+.home2-featured .store-card__buy{border-radius:999px;background:#3b3029}
+.home2-featured__note{font-size:.7rem}
+.home2-endcap{background:#faf8f5;padding:43px 0}
+.home2-endcap .home2-button{border-radius:999px}
+.home2-page .footer{background:#fff;padding-top:39px}
+.home2-page .footer__grid{grid-template-columns:1.4fr repeat(3,minmax(0,1fr))}
+.home2-page .footer__grid>div:not(.footer__brand) a{font-size:.78rem}
+@media(max-width:900px){.home2-page .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home2-page .footer__brand{grid-column:span 2}}
+@media (max-width:680px){
+ .home2-page .header__inner{min-height:63px}
+ .home2-hero,.home2-hero__layout{min-height:405px}
+ .home2-hero__layout{padding:55px 16px 45px}
+ .home2-hero h1{font-size:clamp(2.65rem,10vw,3.8rem)}
+ .home2-hero__lead{font-size:.9rem}
+ .minimal-search{min-height:55px;margin-top:24px}
+ .minimal-search svg{width:18px;height:18px;margin-left:15px}
+ .minimal-search input{font-size:.84rem;padding:12px 8px}
+ .minimal-search button{font-size:.75rem;min-height:40px;padding:0 14px}
+ .minimal-trust{font-size:.66rem}
+ .home2-section{padding:39px 0}
+ .home2-types__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ .home2-section__heading{flex-direction:row;align-items:center}
+ .home2-section__heading h2{font-size:1.95rem}
+ .home2-page .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:350px){.minimal-search button{padding:0 10px}.home2-hero h1{font-size:2.4rem}}

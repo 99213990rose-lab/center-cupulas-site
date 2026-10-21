@@ -15,6 +15,17 @@
  ];
  const detailUrls={"conica-20-35-25":"cupula-conica-bege-20x35x25.html","drum-25-25-15":"cupula-cilindrica-off-white-25x25x15.html","piramidal-15-30-20":"cupula-piramidal-quadrada-branca-15x30x20.html","drum-40-40-25":"cupula-cilindrica-bege-40x40x25.html","conica-10-35-23":"cupula-conica-off-white-10x35x23.html","drum-45-45-30":"cupula-cilindrica-preta-45x45x30.html","conica-27-35-26":"cupula-conica-branca-27x35x26.html","bell-18-45-31":"cupula-sino-off-white-18x45x31.html"};
  const cash=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+ const searchQuery=(new URLSearchParams(window.location.search).get('q')||'').trim().slice(0,90);
+ const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/×/g,'x').replace(/[^a-z0-9]+/g,' ').trim();
+ const terms=normalize(searchQuery).split(/\s+/).filter(Boolean);
+ const searchMatches=p=>{
+   if(!terms.length)return true;
+   const info=normalize([p.name,p.label,p.format,p.color,p.material,p.ref,
+     p.top+'x'+p.bottom+'x'+p.height,p.top+' '+p.bottom+' '+p.height,'cupula abajur luminaria'].join(' '));
+   return terms.every(term=>info.includes(term));
+ };
+ const shopInput=document.querySelector('[data-shop-search]');
+ if(shopInput)shopInput.value=searchQuery;
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const custom=p=>'modelos.html?formato='+encodeURIComponent(p.format)+'#monte';
  function createCard(p) {
@@ -28,9 +39,9 @@
      '<h3><a href="'+detailUrls[p.id]+'">'+escape(p.name)+'</a></h3><p class="store-card__size">'+size+'</p>'+
      '<p class="store-card__fabric">'+escape(p.material+' · '+p.color)+'</p>'+
      '<p class="store-card__price" data-price role="status" aria-live="polite">Consultando preço…</p>'+
-     '<p class="store-card__explain">Valor para 1 unidade · Frete no carrinho</p>'+
+     '<p class="store-card__explain">Frete no carrinho</p>'+
      '<button class="button button--dark store-card__buy" type="button" disabled data-buy>Verificando preço…</button>'+
-     '<a class="store-card__custom" href="'+custom(p)+'">Personalizar medidas ou tecido ↗</a></div>';
+     '<a class="store-card__custom" href="'+custom(p)+'">Personalizar ↗</a></div>';
   return el;
  }
  async function quoteOne(p,el) {
@@ -47,7 +58,7 @@
        Number(q.quantity)!==1||!Number.isFinite(Number(q.total))||Number(q.total)<=0||
        !Number.isFinite(Number(q.unit_price))||Number(q.unit_price)<=0)throw Error('consult');
     price.textContent=cash.format(Number(q.total));
-    button.disabled=false;button.textContent='Adicionar ao carrinho →';
+    button.disabled=false;button.textContent='Adicionar →';
     button.addEventListener('click',()=>{
       const cart=window.CenterCupulasCart;
       if(!cart){price.textContent='Atualize a página para comprar';button.disabled=true;return;}
@@ -67,7 +78,15 @@
  }
  for(const host of document.querySelectorAll('[data-store-products]')){
   const limit=Math.min(products.length,Math.max(1,Number(host.dataset.limit)||products.length));
-  const selected=products.slice(0,limit);
+  const selected=host.dataset.limit?products.slice(0,limit):products.filter(searchMatches);
+  const resultText=document.querySelector('[data-store-results]');
+  if(resultText&&searchQuery)resultText.textContent=selected.length+
+    (selected.length===1?' resultado':' resultados')+' para “'+searchQuery+'”.';
+  if(!selected.length){
+    host.innerHTML='<div class="store-empty"><p>Nenhum produto encontrado.</p>'+
+      '<a href="modelos.html#monte">Fazer sob medida</a> · <a href="loja.html">Limpar busca</a></div>';
+    continue;
+  }
   const cards=selected.map(createCard);
   host.replaceChildren(...cards);
   (async()=>{for(let i=0;i<cards.length;i+=3)

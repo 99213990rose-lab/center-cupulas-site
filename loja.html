@@ -13,11 +13,12 @@
 <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96x96.png">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="minimal-ui.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":"https://www.centercupulas.com.br/"},{"@type":"ListItem","position":2,"name":"Loja de cúpulas","item":"https://www.centercupulas.com.br/loja.html"}]}</script>
 <script defer src="privacy-consent.js"></script><script defer src="script.js"></script><script defer src="cart.js"></script><script defer src="loja.js"></script>
 </head><body class="store-page">
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<div class="topbar"><div class="container topbar__inner"><span>Fabricação sob encomenda</span><span>Compra online</span><span>Preço calculado pelo site</span></div></div>
+
 <header class="site-header" data-header><div class="container header__inner">
 <a class="brand" href="index.html" aria-label="Center Cúpulas, início"><svg class="brand__mark" viewBox="0 0 120 54" aria-hidden="true"><path d="M10 44h100M18 42c4-24 20-35 42-35s38 11 42 35M38 42C41 21 48 9 60 7M82 42C79 21 72 9 60 7M60 7v35"/></svg><span><strong>CENTER</strong><small>CÚPULAS</small></span></a>
 <button class="nav-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
@@ -31,20 +32,24 @@
 <a class="account-header-link" href="meus-pedidos.html">Minha conta</a><a class="button button--sm button--gold header__cta" href="carrinho.html">Meu pedido</a></div></header>
 <main id="conteudo">
 <section class="store-hero"><div class="container">
-<nav class="breadcrumb" aria-label="Navegação estrutural"><a href="index.html">Início</a><span aria-hidden="true">›</span><span aria-current="page">Loja</span></nav>
-<p class="eyebrow eyebrow--light">Escolha uma medida pronta para encomendar</p>
-<h1>Escolha sua cúpula e compre pelo site.</h1>
-<p>Veja modelos com medidas e acabamentos definidos, confira o valor atualizado para uma unidade e escolha seu frete antes de pagar.</p>
-<div class="store-hero__actions"><a class="button button--gold" href="#produtos">Ver produtos e preços ↘</a><a href="modelos.html#monte">Quero medidas personalizadas ↗</a></div>
-<p class="store-hero__note">Produção sob encomenda. Esses modelos não representam estoque para pronta entrega.</p>
-</div></section>
+ <p class="eyebrow">Loja</p><h1>Encontre sua cúpula.</h1>
+ <p>Preço no produto. Frete no carrinho.</p>
+ <form class="minimal-search" action="loja.html" method="get" role="search">
+  <label class="sr-only" for="shop-search">Buscar cúpula, cor ou medida</label>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+  <input id="shop-search" data-shop-search name="q" type="search" maxlength="90" autocomplete="off" placeholder="Modelo, cor ou medida">
+  <button type="submit">Buscar</button>
+ </form>
+ <p><a class="minimal-inline" href="modelos.html#monte">Precisa de outro tamanho? Sob medida →</a></p>
+ </div></section>
 <section class="store-listing section" id="produtos" aria-labelledby="produtos-titulo"><div class="container">
-<div class="store-section-heading"><div><p class="eyebrow">Seleção inicial</p><h2 id="produtos-titulo">Modelos para encomendar diretamente</h2></div><p>Os preços são calculados pela tabela vigente para uma unidade. O carrinho recalcula os produtos e o frete para seu CEP antes do pagamento.</p></div>
+<div class="store-section-heading"><h2 id="produtos-titulo">Produtos</h2><p>Feitos sob encomenda.</p></div>
+<p class="shop-search-status" data-store-results role="status" aria-live="polite"></p>
 <div class="store-grid" data-store-products><p role="status">Carregando modelos…</p></div>
 <noscript><p>Ative o JavaScript para consultar os valores dos produtos. Você pode utilizar o <a href="modelos.html">catálogo de cúpulas</a>.</p></noscript>
 </div></section>
-<section class="store-custom"><div class="container store-custom__inner"><div><p class="eyebrow eyebrow--light">Sob medida</p><h2>Precisa de outro formato ou tamanho?</h2><p>Use o configurador para escolher tecido, cor, medidas e quantidade. Ele aceita diferentes formatos e informa quando for necessária avaliação da fábrica.</p></div><a class="button button--gold" href="modelos.html#monte">Montar minha cúpula →</a></div></section>
-<section class="store-information section"><div class="container"><h2>Compra transparente</h2><p>Imagens de referência, sem promessa de estoque imediato. Verifique medidas e encaixe no <a href="guia-de-medidas.html">guia de medidas</a>. Consulte também <a href="como-comprar.html">como comprar</a> e <a href="entregas-e-trocas.html">entregas e trocas</a>.</p></div></section>
+<section class="store-custom"><div class="container store-custom__inner"><div><h2>Outro tamanho?</h2><p>Personalize medidas, tecido e cor.</p></div><a class="button button--gold" href="modelos.html#monte">Fazer sob medida →</a></div></section>
+
 </main>
 <footer class="footer"><div class="container footer__grid">
 <div class="footer__brand"><a class="brand brand--footer" href="index.html"><span><strong>CENTER</strong><small>CÚPULAS</small></span></a><p>Fabricação sob encomenda para abajures e luminárias.</p></div>
