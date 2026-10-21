@@ -35,11 +35,13 @@
   };
   const setMode=next=>{
     mode=next;
-    form.querySelector('[name=password]').autocomplete=next==='signup'?'new-password':'current-password';
+    form.querySelector('[name=password]').autocomplete=next==='signup'||next==='recovery'?'new-password':'current-password';
+    form.elements.email.closest('label').hidden=next==='recovery';
+    form.elements.email.required=next!=='recovery';
     document.querySelectorAll('[data-auth-mode]').forEach(btn=>{
       btn.setAttribute('aria-pressed',String(btn.dataset.authMode===next));
     });
-    submit.textContent=next==='signup'?'Criar conta':'Entrar na minha conta';
+    submit.textContent=next==='signup'?'Criar conta':next==='recovery'?'Atualizar senha':'Entrar na minha conta';
     say(authFeedback,'');
   };
   document.querySelectorAll('[data-auth-mode]').forEach(btn=>{
@@ -120,6 +122,15 @@
     const password=form.elements.password.value;
     submit.disabled=true;say(authFeedback,'Aguarde...');
     try{
+      if(mode==='recovery'){
+        const {error}=await sb.auth.updateUser({password});
+        if(error)throw error;
+        form.elements.password.value='';
+        await sb.auth.signOut();
+        showAuth();setMode('login');
+        say(authFeedback,'Senha atualizada. Entre com a nova senha.','success');
+        return;
+      }
       if(mode==='signup'){
         const {data,error}=await sb.auth.signUp({
           email,password,options:{emailRedirectTo:'https://www.centercupulas.com.br/meus-pedidos.html'}
@@ -154,7 +165,10 @@
   document.querySelector('[data-orders-refresh]')?.addEventListener('click',()=>void loadOrders());
   sb.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT'){++lastOrdersRequest;orderHost.replaceChildren();showAuth();}
-    if(event==='PASSWORD_RECOVERY')setTimeout(()=>say(authFeedback,'Use o link de recuperação para atualizar a senha.','info'),0);
+    if(event==='PASSWORD_RECOVERY')setTimeout(()=>{
+      showAuth();setMode('recovery');
+      say(authFeedback,'Digite uma nova senha com pelo menos 8 caracteres.','info');
+    },0);
   });
   void refreshAccount();
 })();
