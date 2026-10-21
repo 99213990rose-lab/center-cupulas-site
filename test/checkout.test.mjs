@@ -459,3 +459,29 @@ test('cart pickup switch is gated and shipping address is optional only for pick
   assert.ok(edge.includes('const shippingAddress=pickup?null:'));
   assert.ok(edge.includes('status:pickup?"pickup"'));
 });
+
+test('Pix payment opens in a separate tab without losing the Center order tracker', () => {
+  const cart = readFileSync(new URL('../carrinho.js', import.meta.url), 'utf8');
+  const checkoutStart = cart.indexOf("checkoutForm?.addEventListener('submit'");
+  const newTab = cart.indexOf("window.open('', '_blank')");
+  const providerRequest = cart.indexOf("fetch('/api/mercadopago/create-checkout'");
+  assert.ok(checkoutStart >= 0 && newTab > checkoutStart && newTab < providerRequest,
+    'open a provider tab during the buyer gesture before the asynchronous checkout');
+  assert.ok(cart.includes('paymentTab.opener = null'), 'a payment tab must not control the store tab');
+  assert.ok(cart.includes('paymentTab.location.replace(url.href)'));
+  assert.ok(!cart.includes('window.location.assign(url.href)'),
+    'the store itself must remain open to display payment confirmation');
+  assert.ok(cart.includes('receipt = activeReceipt'));
+  assert.ok(cart.includes('paymentTab.sessionStorage.setItem(receiptKey'),
+    'the return tab must have its own signed receipt');
+  assert.ok(cart.includes("sessionStorage.setItem(receiptKey"), 'the original tab must retain the signed receipt');
+  assert.ok(cart.includes('paymentLinkHtml()'),
+    'buyers whose browser blocks new tabs must have a safe manual link');
+  assert.ok(cart.includes("window.addEventListener('focus', resumePaymentCheck)"),
+    'returning to the store must recheck payment state');
+  assert.ok(cart.includes('if(receipt){') && cart.includes('isSubmitting = true'),
+    'a pending payment must block accidental duplicate checkout attempts');
+  assert.ok(cart.includes("if(response.ok && result.state==='confirmed')"));
+  assert.ok(cart.includes('cart.clear();'),
+    'only a confirmed paid order can clear the cart');
+});
