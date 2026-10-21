@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96x96.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="minha-conta.css">
+  <link rel="stylesheet" href="minimal-ui.css">
 </head>
 <body class="account-page">
   <a class="skip-link" href="#conta">Ir para minha conta</a>
@@ -35,11 +36,11 @@
     <section class="account-hero"><div class="container">
       <p class="eyebrow">Área do cliente</p>
       <h1>Meus pedidos</h1>
-      <p>Consulte suas compras e acompanhe a produção. A conta é opcional.</p>
+      <p>Acompanhe suas compras.</p>
     </div></section>
     <section class="account-main"><div class="container account-layout">
       <div class="account-panel" data-account-auth>
-        <div class="account-panel__head"><h2>Acesse seus pedidos</h2><p>Digite seu e-mail. Vamos enviar um código de 6 dígitos para entrar ou criar sua conta, sem senha.</p></div>
+        <div class="account-panel__head"><h2>Acesse seus pedidos</h2><p>Receba um código no e-mail. Sem senha.</p></div>
         <form id="account-form" class="account-form" autocomplete="on">
           <label data-auth-email-field>E-mail <input name="email" type="email" autocomplete="email" maxlength="180" required placeholder="voce@exemplo.com"></label>
           <label data-auth-code-field hidden>Código de verificação
@@ -72,7 +73,7 @@
       </section>
       <aside class="account-aside">
         <h2>Comprar sem cadastro</h2>
-        <p>Prefere não criar conta? Você pode continuar comprando normalmente.</p>
+        <p>Cadastro não é obrigatório.</p>
         <a class="button button--gold" href="loja.html">Ir para a loja</a>
         <p class="account-aside__note">Para acompanhar compras futuras nesta área, informe no checkout o mesmo e-mail da sua conta.</p>
       </aside>
