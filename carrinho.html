@@ -18,8 +18,8 @@
   <div class="topbar" aria-label="Informações comerciais">
     <div class="container topbar__inner">
       <span>Revise seu pedido</span>
-      <span>Preço recalculado no servidor</span>
-      <span>Frete calculado na finalização</span>
+      <span>Fabricação sob encomenda</span>
+      <span>Entrega ou retirada</span>
     </div>
   </div>
   <header class="site-header" data-header>
@@ -36,6 +36,7 @@
         <a href="reformas.html">Reforma</a>
         <a href="cupulas-atacado.html">Atacado</a>
       </nav>
+      <a class="account-header-link" href="meus-pedidos.html">Meus pedidos</a>
       <a class="button button--sm button--gold header__cta cart-header-link" href="carrinho.html">Pedido <span class="cart-count" data-cart-count hidden>0</span></a>
     </div>
   </header>
@@ -74,7 +75,7 @@
               <div class="cart-totals__total"><dt data-cart-grand-label>Total (frete a confirmar)</dt><dd data-cart-grand-total>Calculando…</dd></div>
             </dl>
             <p class="cart-progress" data-cart-progress></p>
-            <div class="packaging-preview" data-packaging-summary hidden><div class="packaging-preview__head"><span>Prévia de embalagem</span><small>estimativa logística</small></div><div data-packaging-body></div></div><p class="cart-freight-note" data-cart-freight-note>O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.</p>
+            <div class="packaging-preview" data-packaging-summary hidden><div data-packaging-body></div></div><p class="cart-freight-note" data-cart-freight-note>O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.</p>
           </section>
 
           <div class="checkout-assurance" data-cart-assurance aria-label="Informações de compra" hidden>
@@ -86,7 +87,7 @@
             <form class="checkout-form" data-checkout-form>
               <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
               <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
-              <label><span>E-mail</span><input name="email" type="email" autocomplete="email" maxlength="180"></label>
+              <label><span>E-mail (opcional)</span><input name="email" type="email" autocomplete="email" maxlength="180"><small>Com este e-mail você poderá acompanhar a compra em <a href="meus-pedidos.html">Meus pedidos</a>. Criar conta não é obrigatório.</small></label>
               <div class="shipping-quote-box" data-fulfillment-picker hidden>
                 <div class="shipping-quote-box__head"><span>Como deseja receber?</span><small>escolha uma opção</small></div>
                 <div class="shipping-options">
