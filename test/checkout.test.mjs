@@ -10,7 +10,7 @@ import mpTransport from '../api/mercadopago/transport.cjs';
 
 const keys = [
   'CENTER_CHECKOUT_ENABLED','MERCADO_PAGO_ACCESS_TOKEN','MERCADO_PAGO_WEBHOOK_SECRET',
-  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_USE_LIVE_FRENET_RATES'
+  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_USE_LIVE_FRENET_RATES','CENTER_PICKUP_ENABLED'
 ];
 const baseline = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 const originalFetch = globalThis.fetch;
@@ -392,4 +392,70 @@ test('paid return UX checks secure status, never treats query parameters as paym
  assert.ok(html.includes("cart.clear();"));
  assert.ok(html.includes('Aguardando confirmação do Mercado Pago.'));
  assert.ok(!html.includes("paymentReturn === 'return') {\n    cart.clear"));
+});
+
+
+test('store pickup stays hidden and blocked until the seller opts in', async (t) => {
+  t.after(reset); configure();
+  let state = response();
+  await status({method:'GET'}, state);
+  assert.equal(state.body.checkout_enabled, true);
+  assert.equal(state.body.pickup_enabled, false);
+
+  let gateway = response();
+  await createCheckout({method:'POST', headers:{origin:'https://www.centercupulas.com.br'},
+    body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+      customer:{name:'Cliente'},shippingSelection:{code:'STORE_PICKUP',price:0,productTotal:90}}
+  },gateway);
+  assert.equal(gateway.statusCode,503);
+  assert.equal(gateway.body.error,'pickup_not_enabled');
+
+  process.env.CENTER_PICKUP_ENABLED='true';
+  state=response();
+  await status({method:'GET'},state);
+  assert.equal(state.body.pickup_enabled,true);
+});
+
+test('store pickup uses the server total and does not add freight', async (t) => {
+  t.after(reset); configure();
+  process.env.CENTER_PICKUP_ENABLED='true';
+  const calls=[];
+  globalThis.fetch=async (url, options={}) => {
+    calls.push({url,options});
+    if (calls.length===1) return Response.json({
+      status:'ok',submitted:true,quote_id:'11111111-1111-4111-8111-111111111111',
+      quote_code:'WEB-PICKUP',total:90,shipping:{status:'pickup',freight:0},
+      packaging:{status:'estimated'}
+    });
+    return Response.json({init_point:'https://www.mercadopago.com.br/checkout/mock'});
+  };
+  const req={method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
+    body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+      customer:{name:'Cliente',phone:'11999999999'},
+      shippingSelection:{code:'STORE_PICKUP',price:0,productTotal:90}}};
+  const res=response();
+  await createCheckout(req,res);
+  assert.equal(res.statusCode,200);
+  assert.equal(calls.length,2);
+  assert.equal(JSON.parse(calls[0].options.body).shippingSelection.code,'STORE_PICKUP');
+  assert.equal(JSON.parse(calls[1].options.body).items[0].unit_price,90);
+  assert.equal(res.body.quote_code,'WEB-PICKUP');
+
+  const malicious=response();
+  await createCheckout({...req,body:{...req.body,shippingSelection:{code:'STORE_PICKUP',price:5,productTotal:90}}},malicious);
+  assert.equal(malicious.statusCode,400);
+  assert.equal(calls.length,2,'do not create any quote for a forged pickup rate');
+});
+
+test('cart pickup switch is gated and shipping address is optional only for pickup', () => {
+  const cart = readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
+  const page = readFileSync(new URL('../carrinho.html',import.meta.url),'utf8');
+  const edge = readFileSync(new URL('../supabase/functions/public-cart-checkout/index.ts',import.meta.url),'utf8');
+  assert.ok(page.includes('data-fulfillment-picker hidden'));
+  assert.ok(page.includes('data-delivery-address'));
+  assert.ok(cart.includes('pickupEnabled = checkoutProEnabled && data.pickup_enabled === true'));
+  assert.ok(cart.includes("code: 'STORE_PICKUP', price: 0"));
+  assert.ok(edge.includes('const pickup=body.shippingSelection?.code==="STORE_PICKUP"'));
+  assert.ok(edge.includes('const shippingAddress=pickup?null:'));
+  assert.ok(edge.includes('status:pickup?"pickup"'));
 });
