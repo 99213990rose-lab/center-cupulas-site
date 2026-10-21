@@ -16,6 +16,7 @@ export default async function handler(req, res) {
     Boolean(process.env.FRENET_TOKEN) &&
     process.env.CENTER_USE_LIVE_FRENET_RATES === 'true' &&
     /^\d{8}$/.test(originCep);
+  const pickupEnabled = enabled && process.env.CENTER_PICKUP_ENABLED === 'true';
   if (req.query?.diagnose === 'connection' || req.query?.diagnose === 'native') {
     // Read-only credential probe; never return token, account data or method details.
     if (!cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)) {
@@ -60,5 +61,5 @@ export default async function handler(req, res) {
         provider_connection: 'unavailable', connection_issue });
     }
   }
-  return res.status(200).json({ checkout_enabled: enabled, flow: enabled ? 'mercadopago' : 'manual' });
+  return res.status(200).json({ checkout_enabled: enabled, pickup_enabled: pickupEnabled, flow: enabled ? 'mercadopago' : 'manual' });
 }
