@@ -270,15 +270,22 @@ Deno.serve(async(req:Request)=>{
     const notes=sanitizeText(customer.notes,600);
 
     if(name.length<2||phone.length<10)return json({error:"customer_required"},400,origin);
-    if(!/^\d{8}$/.test(cep)||!street||!number||!neighborhood||!city||state.length!==2){
+    // No address is needed when the customer collects the order at the factory.
+    const pickup=body.shippingSelection?.code==="STORE_PICKUP";
+    if(!pickup && (!/^\d{8}$/.test(cep)||!street||!number||!neighborhood||!city||state.length!==2)){
       return json({error:"shipping_address_required"},400,origin);
     }
 
-    const shippingAddress={cep,street,number,complement:complement||null,neighborhood,city,state,country:"BR"};
+    const shippingAddress=pickup?null:{cep,street,number,complement:complement||null,neighborhood,city,state,country:"BR"};
 
     const requestedShipping=body.shippingSelection||null;
     let verifiedFreight:any=null;
     let freightProviderStatus="pending_quote";
+    if(pickup){
+      // A collection order never calls Frenet and never adds shipment charges.
+      verifiedFreight={code:"STORE_PICKUP",price:0,carrier:"Retirada no local",carrier_code:null,service:"Retirada no local",delivery_days:null};
+      freightProviderStatus="pickup";
+    }else{
     try{
       const freightResponse=await fetch("https://www.centercupulas.com.br/api/frete",{
         method:"POST",
@@ -322,10 +329,11 @@ Deno.serve(async(req:Request)=>{
     }catch{
       freightProviderStatus="provider_unavailable";
     }
+    }
 
     // A paid checkout must never create a payable quote without validated freight and packaging.
     // Keep the original manual quote workflow unchanged for action="submit".
-    if(action==="payment" && (packaging.status!=="estimated" || !verifiedFreight || freightProviderStatus!=="quoted" || !Number.isFinite(n(verifiedFreight.price)) || n(verifiedFreight.price)<0)){
+    if(action==="payment" && (packaging.status!=="estimated" || !verifiedFreight || (!pickup && freightProviderStatus!=="quoted") || !Number.isFinite(n(verifiedFreight.price)) || n(verifiedFreight.price)<0)){
       return json({error:"payment_shipping_unavailable",requires_review:true},422,origin);
     }
     const freightValue=verifiedFreight?round2(n(verifiedFreight.price)):0;
@@ -361,18 +369,19 @@ Deno.serve(async(req:Request)=>{
       confidence:x.confidence,exact_reference:x.exact_reference,observations:x.observations
     }));
     const shipping={
-      status:verifiedFreight?"quoted":"pending_quote",
-      provider:verifiedFreight?"Frenet":null,
+      status:pickup?"pickup":verifiedFreight?"quoted":"pending_quote",
+      fulfillment:pickup?"pickup":"delivery",
+      provider:pickup?"Retirada no local":verifiedFreight?"Frenet":null,
       provider_status:freightProviderStatus,
       address:shippingAddress,
       packaging,
       freight:verifiedFreight?freightValue:null,
-      carrier:verifiedFreight?verifiedFreight.carrier:null,
-      carrier_code:verifiedFreight?verifiedFreight.carrier_code:null,
-      service:verifiedFreight?verifiedFreight.service:null,
+      carrier:pickup?null:verifiedFreight?verifiedFreight.carrier:null,
+      carrier_code:pickup?null:verifiedFreight?verifiedFreight.carrier_code:null,
+      service:pickup?"Retirada no local":verifiedFreight?verifiedFreight.service:null,
       service_code:verifiedFreight?verifiedFreight.code:null,
-      delivery_days:verifiedFreight?verifiedFreight.delivery_days:null,
-      weight_basis:verifiedFreight?"peso_volumetrico_conservador":null
+      delivery_days:pickup?null:verifiedFreight?verifiedFreight.delivery_days:null,
+      weight_basis:pickup?null:verifiedFreight?"peso_volumetrico_conservador":null
     };
     // Procurement costs are internal: they are NOT added to the client's total
     // and NEVER substituted for a carrier's freight tariff.
@@ -382,7 +391,8 @@ Deno.serve(async(req:Request)=>{
       customer_name:name,customer_phone:phone,shipping:{...shipping,box_purchase_budget:{...boxBudget,included_in_products:true}},
       notes:[
         "Checkout do site — preços calculados pelo motor comercial.",
-        verifiedFreight?("Frete: "+verifiedFreight.carrier+" / "+verifiedFreight.service+" — R$ "+freightValue.toFixed(2)):"Frete ainda não calculado.",
+        pickup?"Retirada no local, sem cobrança de frete. Agendar após confirmação do pagamento.":
+          verifiedFreight?("Frete: "+verifiedFreight.carrier+" / "+verifiedFreight.service+" — R$ "+freightValue.toFixed(2)):"Frete ainda não calculado.",
         "Prévia de embalagem: "+packaging.package_count+" volume(s).",
         "Custo previsto das caixas já embutido nos preços das cúpulas; não acrescentar novamente.",
         boxBudget.status==="estimate"
