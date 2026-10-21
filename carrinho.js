@@ -359,10 +359,9 @@
     }
     if (totalEl) totalEl.textContent = money(data.product_total);
     updateGrandTotal();
-    if (packagingSummary && packagingBody) {
-      packagingSummary.hidden = false;
-      packagingBody.innerHTML = '<p><strong>Embalagem já incluída no preço das cúpulas.</strong> O número de volumes e os detalhes do envio serão definidos pela equipe antes do despacho.</p>';
-    }
+    // Logistics/packaging estimation remains server-side. Keep operational
+    // previews out of the storefront; they are irrelevant to the buyer.
+    if (packagingSummary) packagingSummary.hidden = true;
     updateCheckoutAvailability();
     if (pickupSelected) choosePickup();
     else if (onlyDigits(cepInput?.value).length === 8) refreshFreight();
