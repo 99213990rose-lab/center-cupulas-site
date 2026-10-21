@@ -82,7 +82,7 @@ test('customer interface stays simple, with no administrative controls',()=>{
  const cart=readFileSync(new URL('../carrinho.html',import.meta.url),'utf8');
  const backend=readFileSync(new URL('../api/account/orders.js',import.meta.url),'utf8');
  const edge=readFileSync(new URL('../supabase/functions/public-cart-checkout/index.ts',import.meta.url),'utf8');
- assert.ok(page.includes('Minha conta') && page.includes('data-account-orders'));
+ assert.ok(page.includes('Meus pedidos') && page.includes('data-account-orders'));
  assert.ok(page.includes('Criar conta'));
  assert.ok(page.includes('Ir para a loja'));
  for(const word of ['SalesOps','SUPABASE_SERVICE_ROLE_KEY','Configuração Mercado Pago','Frenet Token'])assert.ok(!page.includes(word),word);
