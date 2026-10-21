@@ -277,6 +277,7 @@ Deno.serve(async(req:Request)=>{
     }
 
     const shippingAddress=pickup?null:{cep,street,number,complement:complement||null,neighborhood,city,state,country:"BR"};
+    const pickupLocation=pickup?{street:"Rua Cachoeira Buriti",number:"44",neighborhood:"Itaquera",city:"São Paulo",state:"SP",country:"BR",scheduling:"after_purchase"}:null;
 
     const requestedShipping=body.shippingSelection||null;
     let verifiedFreight:any=null;
@@ -374,6 +375,7 @@ Deno.serve(async(req:Request)=>{
       provider:pickup?"Retirada no local":verifiedFreight?"Frenet":null,
       provider_status:freightProviderStatus,
       address:shippingAddress,
+      pickup_location:pickupLocation,
       packaging,
       freight:verifiedFreight?freightValue:null,
       carrier:pickup?null:verifiedFreight?verifiedFreight.carrier:null,
@@ -391,7 +393,7 @@ Deno.serve(async(req:Request)=>{
       customer_name:name,customer_phone:phone,shipping:{...shipping,box_purchase_budget:{...boxBudget,included_in_products:true}},
       notes:[
         "Checkout do site — preços calculados pelo motor comercial.",
-        pickup?"Retirada no local, sem cobrança de frete. Agendar após confirmação do pagamento.":
+        pickup?"Retirada na Rua Cachoeira Buriti, 44, Itaquera, São Paulo/SP. Frete R$ 0,00. Agendar após confirmação do pagamento.":
           verifiedFreight?("Frete: "+verifiedFreight.carrier+" / "+verifiedFreight.service+" — R$ "+freightValue.toFixed(2)):"Frete ainda não calculado.",
         "Prévia de embalagem: "+packaging.package_count+" volume(s).",
         "Custo previsto das caixas já embutido nos preços das cúpulas; não acrescentar novamente.",
