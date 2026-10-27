@@ -59,8 +59,9 @@ test('paid receipt is sent once and saved as sent in the outbox',async t=>{
     SUPABASE_SERVICE_ROLE_KEY:'sb_secret_testing',
     RESEND_API_KEY:'re_testing',
     CENTER_ORDER_EMAIL_FROM:'Center Cúpulas <pedidos@centercupulas.com.br>'});
-  const state={status:'pending',attempts:0,requests:0};
+  const state={status:'pending',attempts:0,requests:0,queries:[]};
   globalThis.fetch=async(url,opts={})=>{
+    state.queries.push(String(url));
     const path=new URL(String(url));
     if(path.hostname==='api.resend.com'){
       state.requests++;
