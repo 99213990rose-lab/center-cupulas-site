@@ -92,7 +92,7 @@ test('paid receipt is sent once and saved as sent in the outbox',async t=>{
     throw Error('unexpected query '+url);
   };
   const first=await processOrderConfirmationEmails({quoteId,limit:1});
-  assert.equal(first.sent,1);
+  assert.equal(first.sent,1,JSON.stringify({first,state}));
   assert.equal(state.status,'sent');
   const second=await processOrderConfirmationEmails({quoteId,limit:1});
   assert.equal(second.processed,0);
