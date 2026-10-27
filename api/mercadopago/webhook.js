@@ -1,4 +1,5 @@
 import mpTransport from './transport.cjs';
+import {processOrderConfirmationEmails} from '../../lib/order-confirmation-email.mjs';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
   .replace(/^Bearer\s+/i, '')
@@ -103,6 +104,12 @@ export default async function handler(req, res) {
     const result = await saved.json();
     if (result?.status === 'duplicate_charge') {
       console.error('CENTER PAYMENT REQUIRES REVIEW: duplicate approved charge', id);
+    }
+    // Payment settlement is authoritative. An email outage must never revoke a paid order.
+    // The database trigger creates an outbox entry; Cron retries any failed delivery.
+    if (result?.status !== 'duplicate_charge') {
+      try { await processOrderConfirmationEmails({quoteId, limit:1}); }
+      catch { console.error('center-order-email deferred for retry'); }
     }
     return respond(res, 200, {
       received: true,

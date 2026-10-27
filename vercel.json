@@ -48,7 +48,14 @@
         }
       ],
       "destination": "https://www.centercupulas.com.br/:path*",
-      "permanent": true
+      "permanent": true,
+      "missing": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "vercel-cron/1.0"
+        }
+      ]
     },
     {
       "source": "/:path*",
@@ -59,7 +66,14 @@
         }
       ],
       "destination": "https://www.centercupulas.com.br/:path*",
-      "permanent": true
+      "permanent": true,
+      "missing": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "vercel-cron/1.0"
+        }
+      ]
     },
     {
       "source": "/:path*",
@@ -70,7 +84,14 @@
         }
       ],
       "destination": "https://www.centercupulas.com.br/:path*",
-      "permanent": true
+      "permanent": true,
+      "missing": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "vercel-cron/1.0"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -220,6 +241,12 @@
           "value": "same-origin"
         }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/internal/order-email-cron",
+      "schedule": "15 12 * * *"
     }
   ]
 }
