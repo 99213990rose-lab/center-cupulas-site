@@ -1,3 +1,4 @@
+import { notifyCenterPaidSale, saleAlertIsConfigured } from './sale-alert.js';
 import mpTransport from './transport.cjs';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
@@ -103,6 +104,16 @@ export default async function handler(req, res) {
     const result = await saved.json();
     if (result?.status === 'duplicate_charge') {
       console.error('CENTER PAYMENT REQUIRES REVIEW: duplicate approved charge', id);
+    }
+    // Alert the owner only after the signed payment was atomically applied.
+    // A WhatsApp outage must never roll back or falsify a confirmed sale.
+    if (result?.status === 'applied' && result?.order_id && saleAlertIsConfigured()) {
+      try {
+        const notice = await notifyCenterPaidSale(result.order_id);
+        if (notice.status !== 'sent') console.warn('center-sale WhatsApp notice', notice.status);
+      } catch (error) {
+        console.error('center-sale WhatsApp alert failed', error?.message || 'alert_failed');
+      }
     }
     return respond(res, 200, {
       received: true,
