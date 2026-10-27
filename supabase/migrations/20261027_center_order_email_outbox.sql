@@ -11,6 +11,7 @@ create table if not exists public.center_order_email_outbox (
 );
 alter table public.center_order_email_outbox enable row level security;
 revoke all on public.center_order_email_outbox from anon, authenticated;
+grant select, insert, update, delete on public.center_order_email_outbox to service_role;
 create index if not exists center_order_email_outbox_queue_idx
   on public.center_order_email_outbox (status, created_at);
 
