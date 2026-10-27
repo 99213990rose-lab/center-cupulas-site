@@ -126,6 +126,8 @@
       '<strong>'+brl(o.total)+'</strong></div><div class="account-order__body">'+
       '<div><span class="account-pill">Pagamento confirmado</span></div>'+
       '<p><strong>Produção:</strong> '+esc(status)+'</p>'+
+      '<p><strong>Prazo:</strong> a fabricação é confirmada pela equipe após conferência técnica.'+
+        (!pickup && Number(ship.delivery_days)>0 ? ' Transporte estimado em '+esc(ship.delivery_days)+' dias após a postagem.' : '')+'</p>'+
       (items?'<div><strong>Produtos:</strong><ul class="account-order__items">'+items+'</ul></div>':'')+
       '<div class="account-order__address"><strong>'+(pickup?'Retirada no local':'Entrega')+':</strong> '+
         (destination||'Endereço conforme o pedido')+'</div>'+
