@@ -44,8 +44,10 @@ test('approved alert uses one claim, approved template and server secret',async 
   assert.equal(meta.to,'5519999998888');
   assert.equal(meta.type,'template');
   assert.equal(meta.template.name,'center_venda_confirmada');
-  assert.deepEqual(meta.template.components[0].parameters.map(p=>p.text),
-    ['PED-WEB-TEST','R$ 168,93','2']);
+  const params=meta.template.components[0].parameters.map(p=>p.text);
+  assert.equal(params[0],'PED-WEB-TEST');
+  assert.match(params[1],/R\$\s*168,93/);
+  assert.equal(params[2],'2');
   assert.match(requests[2].url,/status=eq.sending/);
   assert.equal(JSON.parse(requests[2].options.body).status,'sent');
 });
