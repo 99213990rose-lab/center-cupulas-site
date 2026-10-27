@@ -59,9 +59,8 @@ test('paid receipt is sent once and saved as sent in the outbox',async t=>{
     SUPABASE_SERVICE_ROLE_KEY:'sb_secret_testing',
     RESEND_API_KEY:'re_testing',
     CENTER_ORDER_EMAIL_FROM:'Center Cúpulas <pedidos@centercupulas.com.br>'});
-  const state={status:'pending',attempts:0,requests:0,queries:[]};
+  const state={status:'pending',attempts:0,requests:0};
   globalThis.fetch=async(url,opts={})=>{
-    state.queries.push(String(url));
     const path=new URL(String(url));
     if(path.hostname==='api.resend.com'){
       state.requests++;
@@ -93,7 +92,7 @@ test('paid receipt is sent once and saved as sent in the outbox',async t=>{
     throw Error('unexpected query '+url);
   };
   const first=await processOrderConfirmationEmails({quoteId,limit:1});
-  assert.equal(first.sent,1,JSON.stringify({first,state,quoteId,quoteLength:quoteId.length,uuidValid:/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(quoteId)}));
+  assert.equal(first.sent,1);
   assert.equal(state.status,'sent');
   const second=await processOrderConfirmationEmails({quoteId,limit:1});
   assert.equal(second.processed,0);
