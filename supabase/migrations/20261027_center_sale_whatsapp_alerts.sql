@@ -31,8 +31,12 @@ begin
     values (new.id) on conflict (order_id) do nothing;
   end if;
   return new;
+exception when others then
+  -- A notification failure must never abort an approved payment/order.
+  raise warning 'center_sale_whatsapp_enqueue_failed (SQLSTATE %)', sqlstate;
+  return new;
 end;
-$$;
+$;
 drop trigger if exists center_paid_sale_whatsapp_alert on public.orders;
 create trigger center_paid_sale_whatsapp_alert after insert on public.orders
 for each row execute function public.center_enqueue_sale_whatsapp_alert();
