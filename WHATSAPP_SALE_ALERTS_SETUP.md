@@ -40,3 +40,12 @@ O canal Meta encontrado no banco é "Meta test number", com registro de falha 40
 - Nenhum pagamento ou pedido anterior é reinserido automaticamente na fila (inclusive o teste de R$ 32,46).
 - Sem as configurações completas, o recurso fica desligado e o checkout continua operando.
 - Para desabilitar rapidamente: definir CENTER_SALE_ALERT_ENABLED=false e publicar novamente.
+
+## Verificação técnica em 28/10/2026
+- Meta App da Center está cadastrado e guarda App Secret no Vault.
+- Nenhuma conta autorizada aparece em meta_gateway_accounts para a Center.
+- Nenhum Configuration ID de Embedded Signup está cadastrado; o fluxo de Coexistência ainda não pode iniciar.
+- O código da função meta-oauth-start abre /dialog/oauth genérico (não FB.login Embedded Signup com featureType), portanto não deve ser usado para esse número.
+- Antes de ativar, conferir no Meta Developers o modo Live, App Review/Advanced Access do WhatsApp, a habilitação de Embedded Signup v4 para WhatsApp Business App Coexistence e configurar o Configuration ID.
+- A autorização do número exige ação do administrador na conta da Meta e no aplicativo WhatsApp Business existente. Não é possível aprovar login ou conexão em nome do responsável sem essa ação.
+- A migration só deve ser aplicada perto da ativação para não acumular alertas antigos de novas vendas antes de o canal estar pronto.
