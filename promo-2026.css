@@ -1,0 +1,10 @@
+/* Faixa compacta de campanha, preservando o layout minimalista. */
+[data-promo-cupulas][hidden] { display: none !important; }
+.promo-cupulas { background: #30251e; color: #fffaf1; }
+.promo-cupulas__inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+.promo-cupulas__inner p { margin: 0; font-size: 14px; line-height: 1.45; }
+.promo-cupulas__inner strong { font-weight: 800; }
+.promo-cupulas__inner span { color: #e9daca; }
+.promo-cupulas__inner a { color: #fffaf1; font-size: 13px; font-weight: 700; white-space: nowrap; text-underline-offset: 3px; }
+.promo-cupulas__inner a:hover { color: #f9d8a5; }
+@media (max-width: 600px) { .promo-cupulas__inner { align-items: flex-start; } .promo-cupulas__inner p span { display: block; } }
