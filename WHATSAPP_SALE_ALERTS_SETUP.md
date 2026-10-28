@@ -7,8 +7,8 @@ O webhook assinado do Mercado Pago confirma o pagamento, cria o pedido e registr
 - Destinatário das notificações: WhatsApp pessoal do responsável, +55 11 91954-8038.
 - A Vercel guarda CENTER_SALE_ALERT_RECIPIENT e CENTER_SALE_ALERT_SENDER_CANDIDATE, mas o remetente ainda não foi validado na Meta.
 - O WhatsApp pessoal fica **somente recebendo**, sem migração.
-- Antes de vincular o número comercial, verificar se ele já usa o WhatsApp Business app; quando elegível usar a modalidade **Coexistence** da Meta, sem apagar nem desinstalar o app ou perder o atendimento.
-- A conexão genérica de Meta existente no painel NÃO está comprovada como fluxo de Coexistence: não autorizar migração padrão sem esta confirmação.
+- CONFIRMADO pelo responsável em 28/10/2026: o número comercial +55 12 98321-6069 já usa o **WhatsApp Business app**. A conexão deve ser exclusivamente pelo fluxo **Coexistence / Embedded Signup v4** com Meta Tech Provider/Solution Partner habilitado; não apagar nem desinstalar o aplicativo nem migrar o número pelo fluxo tradicional.
+- INSPECIONADO NO CÓDIGO: o botão genérico do painel SalesOps usa meta-oauth-start com /dialog/oauth padrão e NÃO implementa Embedded Signup v4 com featureType whatsapp_business_app_onboarding. **NÃO clicar em "Conectar / reautorizar Meta + WhatsApp" para ativar coexistência**; precisamos de onboarding pelo provedor homologado com a configuração específica, verificação no aplicativo e template de mensagem aprovado.
 - Depois da verificação, obter Phone Number ID real e token de envio autorizado do número 12; não substituir por ID do número de teste.
 
 ## Situação verificada 27/10/2026
