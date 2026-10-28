@@ -2,6 +2,15 @@
 
 O webhook assinado do Mercado Pago confirma o pagamento, cria o pedido e registra um alerta único no Supabase. A API oficial da Meta envia um template aprovado ao número particular do responsável (não ao comprador). O WhatsApp do celular mostra a notificação conforme as preferências do aparelho.
 
+## Configuração escolhida (28/10/2026)
+- Remetente **previsto**: WhatsApp comercial Center Cúpulas, +55 12 98321-6069.
+- Destinatário das notificações: WhatsApp pessoal do responsável, +55 11 91954-8038.
+- A Vercel guarda CENTER_SALE_ALERT_RECIPIENT e CENTER_SALE_ALERT_SENDER_CANDIDATE, mas o remetente ainda não foi validado na Meta.
+- O WhatsApp pessoal fica **somente recebendo**, sem migração.
+- Antes de vincular o número comercial, verificar se ele já usa o WhatsApp Business app; quando elegível usar a modalidade **Coexistence** da Meta, sem apagar nem desinstalar o app ou perder o atendimento.
+- A conexão genérica de Meta existente no painel NÃO está comprovada como fluxo de Coexistence: não autorizar migração padrão sem esta confirmação.
+- Depois da verificação, obter Phone Number ID real e token de envio autorizado do número 12; não substituir por ID do número de teste.
+
 ## Situação verificada 27/10/2026
 O canal Meta encontrado no banco é "Meta test number", com registro de falha 403 (131005) na tentativa de envio. Isso não é prova de um remetente de produção funcional. As variáveis de envio de WhatsApp ainda não estão configuradas na Vercel do site.
 
