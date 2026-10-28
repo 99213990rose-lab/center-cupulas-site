@@ -345,7 +345,7 @@
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
       if (data.promotion?.applied) {
         progressEl.hidden = false;
-        progressEl.textContent = '10% de desconto na segunda cúpula de algodão aplicado.';
+        progressEl.textContent = 'Desconto de ' + discountLabel + ' na segunda cúpula de algodão aplicado.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else if (discountPercent <= 0) {
         progressEl.textContent = '';
