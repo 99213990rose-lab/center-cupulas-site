@@ -12,7 +12,7 @@
     </filter>
   </defs>
   <g fill="url(#bronze)" filter="url(#relief)">
-    <text x="14" y="43" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="800" letter-spacing="4.1">2 POR</text>
-    <text x="7" y="155" font-family="Georgia, 'Times New Roman', serif" font-size="112" font-weight="700" letter-spacing="-4.3">R$ 99,90</text>
+    <text x="15" y="43" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="800" letter-spacing="3.2">2 POR</text>
+    <text x="15" y="155" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="700" textLength="426" lengthAdjust="spacingAndGlyphs">R$ 99,90</text>
   </g>
 </svg>

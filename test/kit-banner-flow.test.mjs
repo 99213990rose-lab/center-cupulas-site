@@ -39,9 +39,11 @@ test('CTA opens fabric selection, not WhatsApp, and animation respects reduced m
 test('price artwork stays readable, vector and accessible without raster artifacts',()=>{
  const art=readFileSync(new URL('../assets/promo/arte-2-por-9990.svg',import.meta.url),'utf8');
  assert.match(art,/viewBox="0 0 465 178"/);
- assert.match(art,/font-size="29"/);
+ assert.match(art,/font-size="32"/);
  assert.match(art,/>2 POR</);
  assert.match(art,/>R\$ 99,90</);
+ assert.match(art,/textLength="426" lengthAdjust="spacingAndGlyphs"/);
+ assert.ok(15+426 < 465, "price must fit within SVG viewport including right padding");
  assert.match(promo,/aria-label="2 por R\$ 99,90"/);
  assert.match(css,/home-kit-art__price-art/);
 });
