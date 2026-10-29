@@ -8,10 +8,11 @@ const dialog=home.slice(home.indexOf('<dialog class="home-kit-options"'),home.in
 const script=readFileSync(new URL('../promo-kit.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../promo-2026.css',import.meta.url),'utf8');
 
-test('banner shows only 2 for R$99,90 and measurements, without fabric copy or premium price',()=>{
+test('banner shows 2 por R$99,90 without dimensions or fabric copy',()=>{
  assert.match(promo,/>2 POR</);
  assert.match(promo,/>R\$ 99,90</);
- assert.match(promo,/12 × 20 × 20 cm cada/);
+ assert.doesNotMatch(promo,/12 × 20 × 20 cm cada/);
+ assert.match(dialog,/12 × 20 × 20 cm cada/);
  assert.doesNotMatch(promo,/Algodão bege|Linho|Juta|R\$ 120|O PAR POR/);
  assert.match(promo,/Aproveitar agora/);
 });
