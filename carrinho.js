@@ -343,7 +343,11 @@
     if (progressEl) {
       const discountPercent = Math.max(0, Math.min(99, Number(data.discount?.percent || 0)));
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
-      if (data.promotion?.applied) {
+      if (data.promotion?.type === 'kit_2_99_90' && data.promotion.applied) {
+        progressEl.hidden = false;
+        progressEl.textContent = 'Kit de 2 cúpulas cônicas por R$ 99,90 incluído. Frete calculado separadamente.';
+        progressEl.className = 'cart-progress cart-progress--ok';
+      } else if (data.promotion?.applied) {
         progressEl.hidden = false;
         progressEl.textContent = 'Desconto de ' + discountLabel + ' na segunda cúpula de algodão aplicado.';
         progressEl.className = 'cart-progress cart-progress--ok';
