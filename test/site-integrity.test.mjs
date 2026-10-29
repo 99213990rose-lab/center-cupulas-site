@@ -151,7 +151,7 @@ test('simplified storefront homepage prioritizes products, categories and custom
  const html=readFileSync('index.html','utf8');
  const css=readFileSync('homepage-shop.css','utf8');
  assert.ok(!html.includes('data-hero-carousel'),'hero carousel removed');
- assert.ok(html.includes('Cúpulas para abajur,'),'short product-first headline');
+ assert.ok(html.includes('Escolha ou monte a cúpula do seu abajur, do seu jeito.'),'approved product-first headline');
  assert.ok(html.includes('data-store-products data-limit="4"'),'live-priced four-product feature');
  assert.ok(html.includes('href="loja.html">Ver produtos'),'direct retail path');
  assert.ok(html.includes('href="modelos.html#monte">Personalizar minha cúpula'),'customization path');
