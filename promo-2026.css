@@ -8,3 +8,23 @@
 .promo-cupulas__inner a { color: #fffaf1; font-size: 13px; font-weight: 700; white-space: nowrap; text-underline-offset: 3px; }
 .promo-cupulas__inner a:hover { color: #f9d8a5; }
 @media (max-width: 600px) { .promo-cupulas__inner { align-items: flex-start; } .promo-cupulas__inner p span { display: block; } }
+
+
+/* Destaque comercial no início da homepage; independente das regras do carrinho. */
+.home-kit-promo { background: #eadbca; border-bottom: 1px solid rgba(55,34,20,.14); }
+.home-kit-promo__inner { display:grid; grid-template-columns: minmax(0, 1.6fr) minmax(200px, .75fr); gap:clamp(20px,4vw,70px); align-items:center; padding-top:clamp(22px,3vw,38px); padding-bottom:clamp(22px,3vw,38px); }
+.home-kit-promo__copy { min-width:0; }
+.home-kit-promo__eyebrow { margin:0 0 7px; text-transform:uppercase; letter-spacing:.14em; font-size:.7rem; font-weight:800; color:#795034; }
+.home-kit-promo__copy h2 { margin:0; font-family:Georgia,serif; line-height:1.09; font-size:clamp(1.75rem,3.2vw,3.2rem); letter-spacing:-.025em; color:#322118; }
+.home-kit-promo__copy h2 span { color:#9a571e; white-space:nowrap; }
+.home-kit-promo__lead { margin:12px 0 4px; font-size:clamp(.95rem,1.1vw,1.1rem); color:#4d392d; }
+.home-kit-promo__measures { margin:4px 0 15px; font-size:.88rem; line-height:1.5; color:#4d392d; }
+.home-kit-promo__actions { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.home-kit-promo__cta { background:#342118 !important; color:#fff !important; border-color:#342118 !important; padding:12px 19px !important; font-weight:750; font-size:.85rem; }
+.home-kit-promo__cta:hover { background:#563824 !important; }
+.home-kit-promo__note { font-size:.8rem; color:#594233; }
+.home-kit-promo__visual { margin:0; justify-self:end; width:min(100%,255px); position:relative; }
+.home-kit-promo__visual img { width:100%; height:auto; aspect-ratio:1; object-fit:contain; border-radius:18px; }
+.home-kit-promo__visual figcaption { text-align:center; font-size:.66rem; color:#765c4a; margin-top:3px; }
+@media(max-width:650px) { .home-kit-promo__inner { grid-template-columns:minmax(0,1fr) 110px; gap:12px; } .home-kit-promo__copy h2 { font-size:clamp(1.5rem,5.3vw,2.2rem); } .home-kit-promo__copy h2 span { white-space:normal; display:block; } .home-kit-promo__measures { font-size:.78rem; } .home-kit-promo__visual { width:100%; } .home-kit-promo__cta { padding:10px 13px !important; font-size:.78rem; } .home-kit-promo__lead { font-size:.85rem; } }
+@media(max-width:380px) { .home-kit-promo__inner { grid-template-columns:1fr; } .home-kit-promo__visual { display:none; } }
