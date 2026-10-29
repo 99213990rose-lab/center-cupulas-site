@@ -72,8 +72,7 @@
   }[item.format] || item.format);
 
 
-  const isPromoKitInCart = () => Date.now() < Date.parse('2026-11-01T00:00:00-03:00') &&
-    cart.read().some(item => ['conica','conica_redonda'].includes(item.format) &&
+  const isPromoKitInCart = () => cart.read().some(item => ['conica','conica_redonda'].includes(item.format) &&
       String(item.material||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='algodao' &&
       String(item.color||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='bege' &&
       Number(item.top)===12 && Number(item.bottom)===20 && Number(item.height)===20 &&
