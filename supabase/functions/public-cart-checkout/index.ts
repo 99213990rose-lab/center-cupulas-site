@@ -281,6 +281,7 @@ Deno.serve(async(req:Request)=>{
     if(name.length<2||phone.length<10)return json({error:"customer_required"},400,origin);
     // No address is needed when the customer collects the order at the factory.
     const pickup=body.shippingSelection?.code==="STORE_PICKUP";
+    if(pickup)return json({error:"pickup_not_enabled"},400,origin); // Apenas entrega no checkout público.
     if(!pickup && (!/^\d{8}$/.test(cep)||!street||!number||!neighborhood||!city||state.length!==2)){
       return json({error:"shipping_address_required"},400,origin);
     }
