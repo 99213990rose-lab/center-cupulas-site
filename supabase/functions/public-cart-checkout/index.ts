@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.mjs";
 import { addBoxesToPrices } from "./price-with-box.mjs";
-import { applySecondShadePromotion } from "./promo-second-shade.mjs";
+import { applyFixedPriceKit } from "./promo-kit-120.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -220,7 +220,7 @@ Deno.serve(async(req:Request)=>{
     // The manufacturing discount never discounts that embedded cost.
     const lineBoxes=priced.map(x=>estimateBoxCostForItem(x,data.packaging));
     const threshold=n(data.rules.discount_threshold),discountPct=n(data.rules.discount_pct);
-    const pricedQuote=applySecondShadePromotion(addBoxesToPrices(priced,lineBoxes,threshold,discountPct));
+    const pricedQuote=applyFixedPriceKit(addBoxesToPrices(priced,lineBoxes,threshold,discountPct));
     if(pricedQuote.status!=="ok"){
       return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
     }
@@ -249,7 +249,7 @@ Deno.serve(async(req:Request)=>{
       packaging,
       discount:{
         unlocked,
-        percent:promoApplied?10:discountPct,
+        percent:promoApplied?0:discountPct,
         threshold:round2(threshold),
         amount:pricedQuote.discountAmount,
         amount_to_unlock:promoApplied?0:round2(Math.max(0,threshold-manufacturerSubtotal))
@@ -406,7 +406,7 @@ Deno.serve(async(req:Request)=>{
             boxBudget.counts.grande+" grande(s)).")
           :"Custo interno de caixas pendente de avaliação.",
         packaging.status==="review"?"Embalagem requer revisão manual.":null,
-        promoApplied?"Promoção outubro/2026: 10% na segunda cúpula de algodão, sem acúmulo com desconto por volume.":null,
+        promoApplied?"Kit outubro/2026: 2 cúpulas cônicas brancas 27x35x26 em algodão por R$ 120, sem acúmulo com desconto por volume.":null,
         unlocked&&!promoApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
         email?("E-mail: "+email):null,notes?("Cliente: "+notes):null
       ].filter(Boolean).join(" | ")

@@ -40,12 +40,12 @@
      '<p class="store-card__fabric">'+escape(p.material+' · '+p.color)+'</p>'+
      '<p class="store-card__price" data-price role="status" aria-live="polite">Consultando preço…</p>'+
      '<p class="store-card__explain">Frete no carrinho</p>'+
-     '<button class="button button--dark store-card__buy" type="button" disabled data-buy>Verificando preço…</button>'+
+     '<button class="button button--dark store-card__buy" type="button" disabled data-buy>Verificando preço…</button>'+(p.id==='conica-27-35-26'?'<button class="button button--gold store-card__buy" type="button" disabled data-buy-kit>Adicionar kit · 2 por R$ 120</button>':'')+
      '<a class="store-card__custom" href="'+custom(p)+'">Personalizar ↗</a></div>';
   return el;
  }
  async function quoteOne(p,el) {
-  const price=el.querySelector('[data-price]'),button=el.querySelector('[data-buy]');
+  const price=el.querySelector('[data-price]'),button=el.querySelector('[data-buy]'),kitButton=el.querySelector('[data-buy-kit]');
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),8500);
   try{
@@ -59,6 +59,17 @@
        !Number.isFinite(Number(q.unit_price))||Number(q.unit_price)<=0)throw Error('consult');
     price.textContent=cash.format(Number(q.total));
     button.disabled=false;button.textContent='Adicionar →';
+     if(kitButton){
+       kitButton.disabled=false;
+       kitButton.addEventListener('click',()=>{
+         const cart=window.CenterCupulasCart;
+         if(!cart)return;
+         cart.add({format:p.format,format_label:p.label,material:p.material,color:p.color,
+           top:p.top,bottom:p.bottom,height:p.height,quantity:2,reference:p.ref,
+           observations:'',preview_image:'assets/catalogo/variants/'+p.image});
+         window.location.assign('carrinho.html');
+       },{once:true});
+     }
     button.addEventListener('click',()=>{
       const cart=window.CenterCupulasCart;
       if(!cart){price.textContent='Atualize a página para comprar';button.disabled=true;return;}

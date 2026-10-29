@@ -1,0 +1,12 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {applyFixedPriceKit,KIT_BEGIN_MS,KIT_END_MS} from "../supabase/functions/public-cart-checkout/promo-kit-120.mjs";
+const model=(quantity,price=132)=>({id:"promo",format:"conica",top:27,bottom:35,height:26,material:"Algodão",color:"Branco",reference:"33",quantity,line_list_total:price,line_total:price});
+const quote=(lines,discount=0)=>{let sum=lines.reduce((a,l)=>a+l.line_list_total,0);return {status:"ok",items:lines,subtotalBeforeDiscount:sum,productTotal:sum-discount,discountAmount:discount,discountUnlocked:discount>0}};
+const at=Date.parse("2026-10-30T12:00:00-03:00");
+test("2 unidades por R$120",()=>{let r=applyFixedPriceKit(quote([model(2)]),at);assert.equal(r.productTotal,120);assert.equal(r.discountAmount,12)});
+test("4 unidades são 2 kits",()=>{let r=applyFixedPriceKit(quote([model(4,266)]),at);assert.equal(r.productTotal,240);assert.equal(r.promotion.kits,2)});
+test("não aplica com modelo diferente nem a apenas 1",()=>{assert.equal(applyFixedPriceKit(quote([model(1,70)]),at).promotion.applied,false);const l=model(2);l.material="Linho";assert.equal(applyFixedPriceKit(quote([l]),at).promotion.applied,false)});
+test("não cria desconto fictício",()=>assert.equal(applyFixedPriceKit(quote([model(2,110)]),at).promotion.applied,false));
+test("não acumula com volume",()=>assert.equal(applyFixedPriceKit(quote([model(2,132)],20),at).productTotal,112));
+test("encerramento automático",()=>{assert.equal(applyFixedPriceKit(quote([model(2)]),KIT_BEGIN_MS-1).promotion.applied,false);assert.equal(applyFixedPriceKit(quote([model(2)]),KIT_END_MS).promotion.applied,false)});

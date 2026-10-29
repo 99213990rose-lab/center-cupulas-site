@@ -343,9 +343,13 @@
     if (progressEl) {
       const discountPercent = Math.max(0, Math.min(99, Number(data.discount?.percent || 0)));
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
-      if (data.promotion?.applied) {
+      if (data.promotion?.type === 'kit_2_for_120' && data.promotion?.applied) {
         progressEl.hidden = false;
-        progressEl.textContent = 'Desconto de ' + discountLabel + ' na segunda cúpula de algodão aplicado.';
+        progressEl.textContent = 'Kit aplicado: 2 cúpulas cônicas brancas por R$ 120. Frete à parte.';
+        progressEl.className = 'cart-progress cart-progress--ok';
+      } else if (data.promotion?.applied) {
+        progressEl.hidden = false;
+        progressEl.textContent = 'Promoção aplicada.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else if (discountPercent <= 0) {
         progressEl.textContent = '';
