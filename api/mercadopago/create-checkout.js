@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
   // The pickup option is strictly seller-enabled; never trust a zero freight value from the browser.
   const pickup = req.body?.shippingSelection?.code === 'STORE_PICKUP';
-  if (pickup && process.env.CENTER_PICKUP_ENABLED !== 'true') return json(res, 503, { error: 'pickup_not_enabled' });
+  if (pickup) return json(res, 503, { error: 'pickup_not_enabled' }); // Apenas entrega pelo site.
   // No origin CEP/token or verified packaging: do not create a payable order.
   if (!pickup && process.env.CENTER_USE_LIVE_FRENET_RATES !== 'true') return json(res, 503, { error: 'carrier_rates_not_enabled' });
   if (!pickup && (!process.env.FRENET_TOKEN || !/^\d{8}$/.test(String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '')))) {

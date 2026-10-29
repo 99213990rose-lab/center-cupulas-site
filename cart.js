@@ -97,7 +97,11 @@
 
   const clear = () => write([]);
 
-  const count = (items = read()) => items.reduce((sum, item) => sum + Math.max(1, Number(item.quantity || 1)), 0);
+  // Show retail units in the header: one promotional pair is one kit, not two independent products.
+  const count = (items = read()) => items.reduce((sum, item) => {
+    const pieces = Math.max(1, Math.floor(Number(item.quantity || 1)));
+    return sum + (item.kind === 'promo_kit' ? Math.max(1, Math.floor(pieces / 2)) : pieces);
+  }, 0);
 
   const updateBadges = (items = read()) => {
     const total = count(items);
