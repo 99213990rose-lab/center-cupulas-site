@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyKitPrice,KIT_BEGIN_MS,KIT_END_MS,isKitProduct} from '../supabase/functions/public-cart-checkout/kit-promo-9990.mjs';
+import {applyKitPrice,isKitProduct} from '../supabase/functions/public-cart-checkout/kit-promo-9990.mjs';
 const at = Date.parse('2026-10-29T15:00:00-03:00');
 const sample = (quantity=2,price=74.48) => ({
   id:'kit',format:'conica',material:'Algodão',color:'Bege',top:12,bottom:20,height:20,quantity,
@@ -28,8 +28,9 @@ test('itens distintos preservam valores e desconto preexistente de volume',()=>{
   const res=applyKitPrice(input([sample(),other]),at);
   assert.equal(res.productTotal,207.90);assert.equal(res.subtotalBeforeDiscount,219.90);assert.equal(res.discountAmount,12);
 });
-test('campanha expira na hora real sem reset',()=>{
-  assert.equal(applyKitPrice(input([sample()]),KIT_BEGIN_MS-1).promotion.applied,false);
-  assert.equal(applyKitPrice(input([sample()]),KIT_BEGIN_MS).promotion.applied,true);
-  assert.equal(applyKitPrice(input([sample()]),KIT_END_MS).promotion.applied,false);
+test('kit permanece ativo sem data limite',()=>{
+  const q=applyKitPrice(input([sample()]));
+  assert.equal(q.promotion.applied,true);
+  assert.equal(q.promotion.active,true);
+  assert.equal(q.promotion.ends_at,undefined);
 });
