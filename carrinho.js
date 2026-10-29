@@ -72,11 +72,7 @@
   }[item.format] || item.format);
 
 
-  const isPromoKitInCart = () => cart.read().some(item => ['conica','conica_redonda'].includes(item.format) &&
-      String(item.material||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='algodao' &&
-      String(item.color||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='bege' &&
-      Number(item.top)===12 && Number(item.bottom)===20 && Number(item.height)===20 &&
-      Number(item.quantity)>=2 && !String(item.observations||'').trim());
+  const isPromoKitInCart = () => cart.read().some(item => item.kind === 'promo_kit');
 
   const apiItems = () => cart.read().map((item) => ({
     id: item.id,
@@ -88,6 +84,7 @@
     bottom: Number(item.bottom),
     height: Number(item.height),
     quantity: Number(item.quantity || 1),
+    kind: item.kind === 'promo_kit' ? 'promo_kit' : null,
     reference: item.reference || null,
     observations: item.observations || ''
   }));
@@ -111,7 +108,10 @@
 
     itemsHost.innerHTML = items.map((item) => {
       const snapshot = item.quote_snapshot;
-      const rough = snapshot?.unit_price ? money(snapshot.unit_price) + ' / un.' : 'Preço será recalculado';
+      const isKit = item.kind === 'promo_kit';
+      const kitCount = Math.max(1,Math.floor(Number(item.quantity||2)/2));
+      const rough = isKit ? money(99.90*kitCount) : snapshot?.unit_price
+        ? money(snapshot.unit_price) + ' / un.' : 'Preço será recalculado';
       // Pictures are only visual references; quote/payment data remains server-calculated.
       const safeImage = /^assets\/catalogo\/variants\/[a-z0-9-]+\.webp$/.test(String(item.preview_image || ''))
         ? item.preview_image : '';
@@ -119,14 +119,16 @@
         '<div class="cart-item__main">' +
           (safeImage ? '<div class="cart-item__visual"><img src="' + escapeHtml(safeImage) + '" width="112" height="112" loading="lazy" decoding="async" alt="Referência visual da configuração escolhida"><small>Referência visual</small></div>' : '') +
           '<div class="cart-item__details">' +
-            '<span class="cart-item__eyebrow">' + escapeHtml(formatLabel(item)) + '</span>' +
+            '<span class="cart-item__eyebrow">' + (isKit ? 'KIT PROMOCIONAL · 2 CÚPULAS CÔNICAS' : escapeHtml(formatLabel(item))) + '</span>' +
             '<h3>' + escapeHtml(item.top + ' × ' + item.bottom + ' × ' + item.height + ' cm') + '</h3>' +
             '<p>' + escapeHtml(item.material + (item.color ? ' · ' + item.color : '')) + '</p>' +
-            (item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
+            (isKit ? '<small>Cada kit contém 2 cúpulas · R$ 99,90 por kit</small>' : item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
           '</div>' +
         '</div>' +
         '<div class="cart-item__controls">' +
-          '<label>Quantidade<input type="number" min="1" max="500" step="1" value="' + Number(item.quantity || 1) + '" data-cart-qty></label>' +
+          '<label>' + (isKit ? 'Quantidade de kits' : 'Quantidade') +
+          '<input type="number" min="1" max="' + (isKit ? '250' : '500') +
+          '" step="1" value="' + (isKit ? kitCount : Number(item.quantity || 1)) + '" data-cart-qty></label>' +
           '<strong data-cart-line>' + rough + '</strong>' +
           '<button type="button" class="cart-remove" data-cart-remove>Remover</button>' +
         '</div>' +
@@ -354,7 +356,7 @@
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
       if (data.promotion?.type === 'kit_2_99_90' && data.promotion.applied) {
         progressEl.hidden = false;
-        progressEl.textContent = 'Kit de 2 cúpulas cônicas por R$ 99,90 incluído. Frete calculado separadamente.';
+        progressEl.textContent = 'Kit de 2 cúpulas cônicas por R$ 99,90 cada. A quantidade é alterada por kit.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else if (data.promotion?.applied) {
         progressEl.hidden = false;
