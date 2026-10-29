@@ -32,5 +32,5 @@ test('CTA opens fabric selection, not WhatsApp, and animation respects reduced m
  assert.doesNotMatch(script,/wa\.me|whatsapp\.com/);
  assert.match(css,/kit-cta-lightpass/);
  assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(css,/\.home-kit-options \\[hidden\\]/);
+ assert.ok(css.includes('.home-kit-options [hidden]'));
 });
