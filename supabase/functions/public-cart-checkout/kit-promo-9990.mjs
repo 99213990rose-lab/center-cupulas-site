@@ -1,7 +1,5 @@
-// Oferta real com início e fim fixos. Somente o servidor define preço no checkout.
+// Kit anunciado por tempo indeterminado. O preço é sempre calculado pelo servidor.
 import { roundMoney } from './price-with-box.mjs';
-export const KIT_BEGIN_MS = Date.parse('2026-10-29T00:00:00-03:00');
-export const KIT_END_MS = Date.parse('2026-11-01T00:00:00-03:00');
 export const KIT_PAIR_PRICE = 99.90;
 const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 export const isKitProduct = line => line &&
@@ -12,11 +10,9 @@ export const isKitProduct = line => line &&
 // Recebe o retorno do calculador com embalagens, que são precificadas apenas uma vez.
 // Ajusta o preço do kit inclusive quando o valor normal seria menor:
 // não apresenta porcentagem falsa nem inventa 'economia' ao consumidor.
-export function applyKitPrice(quote, at = Date.now()) {
+export function applyKitPrice(quote) {
   if (!quote || quote.status !== 'ok') return quote;
-  const active = Number(at) >= KIT_BEGIN_MS && Number(at) < KIT_END_MS;
-  const promotion = {type:'kit_2_99_90',active,applied:false,pair_price:KIT_PAIR_PRICE,ends_at:'2026-10-31T23:59:59-03:00'};
-  if (!active) return {...quote,promotion};
+  const promotion = {type:'kit_2_99_90',active:true,applied:false,pair_price:KIT_PAIR_PRICE};
   let pairs = 0;
   const items = quote.items.map(line => {
     const quantity = Number(line.quantity);
