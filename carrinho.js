@@ -110,7 +110,8 @@
       const snapshot = item.quote_snapshot;
       const isKit = item.kind === 'promo_kit';
       const kitCount = Math.max(1,Math.floor(Number(item.quantity||2)/2));
-      const rough = isKit ? money(99.90*kitCount) : snapshot?.unit_price
+      const kitPrice = ['linho','juta'].includes(String(item.material||'').toLowerCase()) ? 120 : 99.90;
+      const rough = isKit ? money(kitPrice*kitCount) : snapshot?.unit_price
         ? money(snapshot.unit_price) + ' / un.' : 'Preço será recalculado';
       // Pictures are only visual references; quote/payment data remains server-calculated.
       const safeImage = /^assets\/catalogo\/variants\/[a-z0-9-]+\.webp$/.test(String(item.preview_image || ''))
@@ -122,7 +123,7 @@
             '<span class="cart-item__eyebrow">' + (isKit ? 'KIT PROMOCIONAL · 2 CÚPULAS CÔNICAS' : escapeHtml(formatLabel(item))) + '</span>' +
             '<h3>' + escapeHtml(item.top + ' × ' + item.bottom + ' × ' + item.height + ' cm') + '</h3>' +
             '<p>' + escapeHtml(item.material + (item.color ? ' · ' + item.color : '')) + '</p>' +
-            (isKit ? '<small>Cada kit contém 2 cúpulas · R$ 99,90 por kit</small>' : item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
+            (isKit ? '<small>Cada kit contém 2 cúpulas · ' + money(kitPrice) + ' por kit</small>' : item.reference ? '<small>REF. ' + escapeHtml(item.reference) + '</small>' : '') +
           '</div>' +
         '</div>' +
         '<div class="cart-item__controls">' +
@@ -362,7 +363,7 @@
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
       if (data.promotion?.type === 'kit_2_99_90' && data.promotion.applied) {
         progressEl.hidden = false;
-        progressEl.textContent = 'Kit de 2 cúpulas cônicas por R$ 99,90 cada. A quantidade é alterada por kit.';
+        progressEl.textContent = 'Kit de 2 cúpulas cônicas. Preço conforme o tecido selecionado; quantidade alterada por kit.';
         progressEl.className = 'cart-progress cart-progress--ok';
       } else if (data.promotion?.applied) {
         progressEl.hidden = false;

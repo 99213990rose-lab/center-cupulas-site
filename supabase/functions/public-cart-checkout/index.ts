@@ -378,7 +378,7 @@ Deno.serve(async(req:Request)=>{
       dimensions:{top:x.top,bottom:x.bottom,height:x.height},
       quantity:x.quantity,unit_price:x.unit_price,line_total:x.line_total,
       kind:x.kind||null,kit_quantity:x.kind==="promo_kit"?x.quantity/2:null,
-      kit_price:x.kind==="promo_kit"?99.90:null,
+      kit_price:x.kind==="promo_kit"?x.kit_price:null,
       confidence:x.confidence,exact_reference:x.exact_reference,observations:x.observations
     }));
     const shipping={
@@ -415,7 +415,7 @@ Deno.serve(async(req:Request)=>{
             boxBudget.counts.grande+" grande(s)).")
           :"Custo interno de caixas pendente de avaliação.",
         packaging.status==="review"?"Embalagem requer revisão manual.":null,
-        kitApplied?"Kit promocional: pares de cúpulas cônicas algodão bege 12x20x20 cm por R$ 99,90 cada kit, frete separado.":null,
+        kitApplied?"Kit promocional: 2 cúpulas cônicas 12x20x20 cm por kit. Algodão: R$ 99,90; linho ou juta natural: R$ 120,00 por kit. Frete separado.":null,
         promoApplied?"Promoção outubro/2026: 10% na segunda cúpula de algodão, sem acúmulo com desconto por volume.":null,
         unlocked&&!promoApplied&&!kitApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
         email?("E-mail: "+email):null,notes?("Cliente: "+notes):null
