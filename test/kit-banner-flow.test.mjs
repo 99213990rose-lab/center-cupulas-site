@@ -9,8 +9,8 @@ const script=readFileSync(new URL('../promo-kit.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../promo-2026.css',import.meta.url),'utf8');
 
 test('banner shows 2 por R$99,90 without dimensions or fabric copy',()=>{
- assert.match(promo,/>2 POR</);
- assert.match(promo,/>R\$ 99,90</);
+ assert.match(promo,/alt="2 POR R\$ 99,90"/);
+ assert.match(promo,/assets\/promo\/arte-2-por-9990\.svg/);
  assert.doesNotMatch(promo,/12 × 20 × 20 cm cada/);
  assert.match(dialog,/12 × 20 × 20 cm cada/);
  assert.doesNotMatch(promo,/Algodão bege|Linho|Juta|R\$ 120|O PAR POR/);
@@ -34,4 +34,14 @@ test('CTA opens fabric selection, not WhatsApp, and animation respects reduced m
  assert.match(css,/kit-cta-lightpass/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.ok(css.includes('.home-kit-options [hidden]'));
+});
+
+test('price artwork stays readable, vector and accessible without raster artifacts',()=>{
+ const art=readFileSync(new URL('../assets/promo/arte-2-por-9990.svg',import.meta.url),'utf8');
+ assert.match(art,/viewBox="0 0 465 178"/);
+ assert.match(art,/font-size="29"/);
+ assert.match(art,/>2 POR</);
+ assert.match(art,/>R\$ 99,90</);
+ assert.match(promo,/aria-label="2 por R\$ 99,90"/);
+ assert.match(css,/home-kit-art__price-art/);
 });
