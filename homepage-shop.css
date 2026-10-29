@@ -216,3 +216,81 @@
  .home2-page .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:350px){.minimal-search button{padding:0 10px}.home2-hero h1{font-size:2.4rem}}
+
+
+/* Tradição junto à marca — selo institucional do cabeçalho da home. */
+.home2-page .brand-heritage {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 19px;
+  min-width: 0;
+}
+.home2-page .brand-heritage .brand {
+  min-width: 0;
+  flex: 0 0 auto;
+}
+.home2-page .brand-heritage__seal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding: 7px 11px 6px;
+  border: 1px solid #c58b50;
+  border-radius: 12px;
+  color: #945b2a;
+  background: linear-gradient(140deg, #fffdf8 0%, #fff6e9 100%);
+  box-shadow: 0 1px 3px rgba(84,53,29,.05);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.home2-page .brand-heritage__seal::before {
+  content: "";
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 34px;
+  background: #dac9b7;
+}
+.home2-page .brand-heritage__seal strong {
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+.home2-page .brand-heritage__seal small {
+  font-size: .52rem;
+  font-weight: 650;
+  letter-spacing: .065em;
+}
+@media (max-width: 1120px) {
+  .home2-page .brand-heritage { gap: 14px; }
+  .home2-page .brand-heritage__seal { padding: 6px 8px; }
+  .home2-page .brand-heritage__seal::before { right: calc(100% + 7px); }
+  .home2-page .brand-heritage__seal strong { font-size: .58rem; }
+  .home2-page .brand-heritage__seal small { font-size: .48rem; }
+}
+@media (max-width: 680px) {
+  .home2-page .header__inner { min-height: 77px; }
+  .home2-page .brand-heritage { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .home2-page .brand-heritage__seal {
+    margin-left: 47px;
+    padding: 3px 8px;
+    flex-direction: row;
+    gap: 5px;
+    border-radius: 999px;
+  }
+  .home2-page .brand-heritage__seal::before { display: none; }
+  .home2-page .brand-heritage__seal strong { font-size: .52rem; }
+  .home2-page .brand-heritage__seal small { font-size: .48rem; }
+}
+@media (max-width: 370px) {
+  .home2-page .header__inner { gap: 5px; }
+  .home2-page .brand-heritage__seal { margin-left: 41px; padding: 3px 6px; }
+  .home2-page .brand-heritage__seal strong { font-size: .47rem; }
+  .home2-page .brand-heritage__seal small { font-size: .43rem; }
+}
