@@ -157,21 +157,18 @@
     <div class="home-kit-art__offer">
       <p class="home-kit-art__price-label">O PAR POR</p>
       <strong class="home-kit-art__price">R$ 99,90</strong>
-      <span class="home-kit-art__freight">Frete calculado no carrinho</span>
     </div>
     <div class="home-kit-art__checkout">
-      <button type="button" class="home-kit-art__button" data-kit-buy aria-describedby="home-kit-art-end">
-        Calcular frete e comprar <span aria-hidden="true">→</span>
+      <button type="button" class="home-kit-art__button" data-kit-buy>
+        Aproveitar agora
       </button>
-      <span class="home-kit-art__payment">Pagamento seguro pelo Mercado Pago</span>
     </div>
   </div>
   <div class="home-kit-art__foot">
     <div class="container home-kit-art__foot-inner">
-      <span class="home-kit-art__deadline" id="home-kit-art-end">Termina em 31/10/2026 às 23h59 (Brasília)</span>
-      <span class="home-kit-art__timer-label">Tempo restante:</span>
-      <time class="home-kit-art__timer" data-kit-countdown datetime="2026-10-31T23:59:59-03:00">Calculando…</time>
-      <span class="home-kit-art__assurance">Fabricação sob encomenda <span aria-hidden="true">·</span> Frete à parte</span>
+      <span class="home-kit-art__timer-label" data-kit-timer-label>Tempo desta sessão:</span>
+      <span class="home-kit-art__timer" data-kit-countdown role="timer" aria-live="off">03:00:00</span>
+      <span class="home-kit-art__session-note" data-kit-session-note>A promoção continua disponível após a sessão.</span>
     </div>
   </div>
 </section>
@@ -252,7 +249,7 @@
   <script src="privacy-consent.js" defer></script>
   <script src="script.js" defer></script>
   <script src="cart.js" defer></script>
-  <script src="promo-kit.js" defer></script>
+  <script type="module" src="promo-kit.js"></script>
   <script src="loja.js" defer></script>
 </body>
 </html>
