@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.mjs";
 import { addBoxesToPrices } from "./price-with-box.mjs";
 import { applySecondShadePromotion } from "./promo-second-shade.mjs";
-import { applyKitPrice } from "./kit-promo-9990.mjs";
+import { applyKitPrice, validateKitRequest } from "./kit-promo-9990.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -42,7 +42,7 @@ type PackagingRules = {
 };
 type RefPrice = { code:string; top_cm:number|string; bottom_cm:number|string; height_cm:number|string; historical_price:number|string };
 type Validation = { format:string; top_cm:number|string; bottom_cm:number|string; height_cm:number|string; material:string; quantity:number; actual_factory_price:number|string|null };
-type Item = { id?:string; format:string; format_label?:string; material:string; color?:string; top:number; bottom:number; height:number; quantity:number; reference?:string|null; observations?:string };
+type Item = { id?:string; kind?:string|null; format:string; format_label?:string; material:string; color?:string; top:number; bottom:number; height:number; quantity:number; reference?:string|null; observations?:string };
 
 let cache: { refs: RefPrice[]; rules: Rules; validations: Validation[]; packaging: PackagingRules; expires: number } | null = null;
 const n=(v:unknown)=>Number(v||0);
@@ -132,7 +132,8 @@ function priceItem(item:Item,data:{refs:RefPrice[];rules:Rules;validations:Valid
   const format=mapFormat(item.format),material=mapMaterial(item.material);
   if(!format)throw new Error("unsupported_format");
   if(![top,bottom,height].every(v=>Number.isFinite(v)&&v>=1&&v<=150))throw new Error("invalid_dimensions");
-  if(!Number.isFinite(quantity)||quantity<1||quantity>500)throw new Error("invalid_quantity");
+  if(!Number.isSafeInteger(Number(item.quantity))||quantity<1||quantity>500)throw new Error("invalid_quantity");
+  if(item.kind==="promo_kit" && !validateKitRequest(item))throw new Error("invalid_kit_quantity");
   const base=estimateBase(data.refs,data.validations,data.rules,top,bottom,height);
   if(base.confidence==="low")throw new Error("low_confidence");
   const formatPct=shapeSizePct(data.rules,format,top,bottom,height);
@@ -144,7 +145,8 @@ function priceItem(item:Item,data:{refs:RefPrice[];rules:Rules;validations:Valid
   return {
     id:item.id||crypto.randomUUID(),
     format:item.format,
-    format_label:String(item.format_label||item.format).slice(0,100),
+    kind:item.kind==="promo_kit"?"promo_kit":null,
+    format_label:item.kind==="promo_kit"?"Kit promocional — 2 cúpulas cônicas":String(item.format_label||item.format).slice(0,100),
     material:String(item.material||"").slice(0,60),
     color:String(item.color||"").slice(0,60),
     top,bottom,height,quantity,
@@ -374,6 +376,8 @@ Deno.serve(async(req:Request)=>{
       format:x.format,material:x.material,color:x.color,reference:x.reference,
       dimensions:{top:x.top,bottom:x.bottom,height:x.height},
       quantity:x.quantity,unit_price:x.unit_price,line_total:x.line_total,
+      kind:x.kind||null,kit_quantity:x.kind==="promo_kit"?x.quantity/2:null,
+      kit_price:x.kind==="promo_kit"?99.90:null,
       confidence:x.confidence,exact_reference:x.exact_reference,observations:x.observations
     }));
     const shipping={
@@ -410,9 +414,9 @@ Deno.serve(async(req:Request)=>{
             boxBudget.counts.grande+" grande(s)).")
           :"Custo interno de caixas pendente de avaliação.",
         packaging.status==="review"?"Embalagem requer revisão manual.":null,
-        kitApplied?"Kit de outubro/2026: 2 cúpulas cônicas algodão bege 12x20x20 cm por R$ 99,90 o par, frete à parte.":null,
+        kitApplied?"Kit promocional: pares de cúpulas cônicas algodão bege 12x20x20 cm por R$ 99,90 cada kit, frete separado.":null,
         promoApplied?"Promoção outubro/2026: 10% na segunda cúpula de algodão, sem acúmulo com desconto por volume.":null,
-        unlocked&&!promoApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
+        unlocked&&!promoApplied&&!kitApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
         email?("E-mail: "+email):null,notes?("Cliente: "+notes):null
       ].filter(Boolean).join(" | ")
     }).select("id,code").single();
@@ -430,7 +434,7 @@ Deno.serve(async(req:Request)=>{
   }catch(error){
     console.error("public-cart-checkout",error);
     const msg=String((error as Error)?.message||"");
-    if(["unsupported_format","invalid_dimensions","invalid_quantity","low_confidence"].includes(msg)){
+    if(["unsupported_format","invalid_dimensions","invalid_quantity","invalid_kit_quantity","low_confidence"].includes(msg)){
       return json({error:msg,requires_review:true},422,origin);
     }
     return json({error:"checkout_unavailable"},500,origin);
