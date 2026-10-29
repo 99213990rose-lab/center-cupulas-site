@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465 178" role="img" aria-labelledby="titulo">
+  <title id="titulo">2 por R$ 99,90</title>
+  <defs>
+    <linearGradient id="bronze" x1="0" x2="0.5" y1="0" y2="1">
+      <stop offset="0" stop-color="#b96726"/>
+      <stop offset="0.23" stop-color="#a45521"/>
+      <stop offset="0.55" stop-color="#804017"/>
+      <stop offset="1" stop-color="#5a2c15"/>
+    </linearGradient>
+    <filter id="relief" x="-10%" y="-20%" width="120%" height="155%">
+      <feDropShadow dx="0" dy="2.3" stdDeviation="2.1" flood-color="#553017" flood-opacity="0.27"/>
+    </filter>
+  </defs>
+  <g fill="url(#bronze)" filter="url(#relief)">
+    <text x="14" y="43" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="800" letter-spacing="4.1">2 POR</text>
+    <text x="7" y="155" font-family="Georgia, 'Times New Roman', serif" font-size="112" font-weight="700" letter-spacing="-4.3">R$ 99,90</text>
+  </g>
+</svg>
