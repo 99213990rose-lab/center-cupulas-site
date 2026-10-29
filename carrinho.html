@@ -70,63 +70,72 @@
           <a class="cart-add-more" href="modelos.html#monte">+ Adicionar outra cúpula</a>
         </div>
 
-        <aside class="checkout-column">
+        <aside class="checkout-column" aria-label="Resumo do pedido">
           <section class="checkout-card" data-cart-summary>
-            <div class="checkout-card__head"><span>Resumo</span><small>Produtos</small></div>
+            <div class="checkout-card__head"><span>Resumo do pedido</span><small>Confira o valor</small></div>
             <dl class="cart-totals">
               <div><dt>Subtotal</dt><dd data-cart-subtotal>Calculando…</dd></div>
               <div data-cart-discount-row hidden><dt>Desconto</dt><dd data-cart-discount>—</dd></div>
               <div><dt>Total dos produtos</dt><dd data-cart-total>Calculando…</dd></div>
-              <div data-cart-freight-row><dt>Frete</dt><dd data-cart-freight>A confirmar</dd></div>
-              <div class="cart-totals__total"><dt data-cart-grand-label>Total (frete a confirmar)</dt><dd data-cart-grand-total>Calculando…</dd></div>
+              <div data-cart-freight-row><dt>Entrega</dt><dd data-cart-freight>A calcular</dd></div>
+              <div class="cart-totals__total"><dt data-cart-grand-label>Total (frete a calcular)</dt><dd data-cart-grand-total>Calculando…</dd></div>
             </dl>
             <p class="cart-progress" data-cart-progress></p>
-            <div class="packaging-preview" data-packaging-summary hidden><div data-packaging-body></div></div><p class="cart-freight-note" data-cart-freight-note>O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.</p>
+            <div class="packaging-preview" data-packaging-summary hidden><div data-packaging-body></div></div>
+            <p class="cart-freight-note" data-cart-freight-note>Digite o CEP para consultar a entrega.</p>
           </section>
-
           <div class="checkout-assurance" data-cart-assurance aria-label="Informações de compra" hidden>
-            <p>Produção sob encomenda. Pagamento protegido pelo Mercado Pago.</p>
+            <p>Pagamento seguro pelo Mercado Pago.</p>
             <nav aria-label="Saiba mais sobre sua compra"><a href="como-comprar.html">Como comprar</a><a href="entregas-e-trocas.html">Entregas e trocas</a><a href="privacidade.html">Seus dados</a></nav>
           </div>
+        </aside>
+
+        <section class="checkout-details" aria-label="Entrega e pagamento">
+          <div class="checkout-status" data-checkout-status aria-live="polite" hidden></div>
           <section class="checkout-card">
-            <div class="checkout-card__head"><span>Seus dados</span><small>Para confirmar o pedido</small></div>
+            <div class="checkout-card__head"><span>Entrega e pagamento</span><small>Preencha para finalizar</small></div>
             <form class="checkout-form" data-checkout-form>
-              <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
-              <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
-              <label><span>E-mail (opcional)</span><input name="email" type="email" autocomplete="email" maxlength="180"><small>Para acompanhar em <a href="meus-pedidos.html">Meus pedidos</a>. Sem cadastro obrigatório.</small></label>
-              <div class="shipping-quote-box" data-fulfillment-picker hidden>
-                <div class="shipping-quote-box__head"><span>Como deseja receber?</span><small>escolha uma opção</small></div>
-                <div class="shipping-options">
-                  <label class="shipping-option"><input type="radio" name="fulfillment" value="delivery" checked><span class="shipping-option__main"><b>Entrega no endereço</b><small>Frete calculado para seu CEP</small></span></label>
-                  <label class="shipping-option"><input type="radio" name="fulfillment" value="pickup"><span class="shipping-option__main"><b>Retirar no local</b><small>Rua Cachoeira Buriti, 44 — Itaquera, São Paulo/SP. Após a compra, combine o dia e horário da retirada.</small></span><strong>R$ 0,00</strong></label>
+              <fieldset class="checkout-step checkout-step--shipping">
+                <legend><span class="checkout-step__number">1</span> Calcule sua entrega</legend>
+                <p class="checkout-step__helper">Informe o CEP para consultar as opções de transporte antes de preencher seus dados.</p>
+                <div class="checkout-cep-group">
+                  <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status aria-live="polite"></small></label>
                 </div>
-                <p class="shipping-calibration-note">Retirada na Rua Cachoeira Buriti, 44, Itaquera, São Paulo/SP, com agendamento após a compra. Não é uma transportadora.</p>
-              </div>
-              <div data-delivery-address>
-              <label><span>CEP *</span><input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required><small class="field-inline-status" data-cep-status aria-live="polite"></small></label>
-              <label><span>Rua / Avenida *</span><input name="street" autocomplete="address-line1" maxlength="160" required></label>
-              <div class="checkout-form__row checkout-form__row--address">
-                <label><span>Número *</span><input name="number" autocomplete="address-line2" maxlength="30" required></label>
-                <label><span>Complemento</span><input name="complement" maxlength="120" placeholder="Apto, bloco..."></label>
-              </div>
-              <label><span>Bairro *</span><input name="neighborhood" maxlength="100" required></label>
-              <div class="checkout-form__row">
-                <label><span>Cidade *</span><input name="city" autocomplete="address-level2" maxlength="100" required></label>
-                <label><span>UF *</span><input name="state" autocomplete="address-level1" maxlength="2" placeholder="SP" required></label>
-              </div>
-              </div>
-              <div class="shipping-quote-box" data-shipping-box hidden>
-                <div class="shipping-quote-box__head"><span>Opções de frete</span><small data-shipping-provider>cotação automática</small></div>
-                <div class="shipping-options" data-shipping-options></div>
-              </div>
-              <label><span>Observações</span><textarea name="notes" rows="3" maxlength="600" placeholder="Detalhes de entrega, acabamento ou prazo."></textarea></label>
-              <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Enviar pedido para confirmação</button>
-              <p class="checkout-payment-lock" data-checkout-flow-note>Pagamento protegido pelo Mercado Pago. Você só paga após revisar o valor final.</p>
+                <div class="shipping-quote-box" data-shipping-box hidden>
+                  <div class="shipping-quote-box__head"><span>Opções de frete</span><small data-shipping-provider>cotação automática</small></div>
+                  <div class="shipping-options" data-shipping-options></div>
+                </div>
+              </fieldset>
+
+              <fieldset class="checkout-step">
+                <legend><span class="checkout-step__number">2</span> Seus dados</legend>
+                <div class="checkout-form__row checkout-form__row--contact">
+                  <label><span>Nome *</span><input name="name" autocomplete="name" maxlength="120" required></label>
+                  <label><span>WhatsApp *</span><input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(19) 99999-9999" required></label>
+                </div>
+                <label><span>E-mail (opcional)</span><input name="email" type="email" autocomplete="email" maxlength="180"><small>Para acompanhar em <a href="meus-pedidos.html">Meus pedidos</a>. Sem cadastro obrigatório.</small></label>
+              </fieldset>
+
+              <fieldset class="checkout-step" data-delivery-address>
+                <legend><span class="checkout-step__number">3</span> Endereço de entrega</legend>
+                <label><span>Rua / Avenida *</span><input name="street" autocomplete="address-line1" maxlength="160" required></label>
+                <div class="checkout-form__row checkout-form__row--address">
+                  <label><span>Número *</span><input name="number" autocomplete="address-line2" maxlength="30" required></label>
+                  <label><span>Complemento</span><input name="complement" maxlength="120" placeholder="Apto, bloco..."></label>
+                </div>
+                <label><span>Bairro *</span><input name="neighborhood" maxlength="100" required></label>
+                <div class="checkout-form__row">
+                  <label><span>Cidade *</span><input name="city" autocomplete="address-level2" maxlength="100" required></label>
+                  <label><span>UF *</span><input name="state" autocomplete="address-level1" maxlength="2" placeholder="SP" required></label>
+                </div>
+              </fieldset>
+
+              <label><span>Observações (opcional)</span><textarea name="notes" rows="2" maxlength="600" placeholder="Informação importante para a entrega."></textarea></label>
+              <button class="button button--dark checkout-submit" type="submit" data-checkout-submit disabled>Ir para pagamento seguro</button>
+              <p class="checkout-payment-lock" data-checkout-flow-note>O total será confirmado após escolher o frete.</p>
             </form>
           </section>
-
-          <div class="checkout-status" data-checkout-status aria-live="polite" hidden></div>
-        </aside>
+        </section>
       </div>
     </section>
   </main>
