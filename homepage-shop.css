@@ -294,3 +294,45 @@
   .home2-page .brand-heritage__seal strong { font-size: .47rem; }
   .home2-page .brand-heritage__seal small { font-size: .43rem; }
 }
+
+
+/* Refinamentos da home: tipografia do novo título e assinatura da marca no mobile. */
+.home2-page .home2-hero h1 {
+  max-width: 980px;
+  font-size: clamp(2.75rem, 4.3vw, 4.25rem);
+  line-height: 1.12;
+  letter-spacing: -.046em;
+  text-wrap: balance;
+}
+@media (max-width: 680px) {
+  .home2-page .home2-hero h1 {
+    max-width: 560px;
+    font-size: clamp(2.35rem, 9vw, 3.45rem);
+    line-height: 1.13;
+    letter-spacing: -.045em;
+  }
+  /* Aumento discreto sem comprometer menu, conta e carrinho. */
+  .home2-page .brand-heritage { gap: 3px; }
+  .home2-page .brand-heritage .brand { gap: 8px; }
+  .home2-page .brand__mark { width: 44px; height: 35px; flex-shrink: 0; }
+  .home2-page .brand strong { font-size: .98rem; }
+  .home2-page .brand small { font-size: .53rem; letter-spacing: .14em; margin-top: 5px; }
+  .home2-page .brand-heritage__seal {
+    margin-left: 52px;
+    padding: 4px 9px;
+    gap: 5px;
+  }
+  .home2-page .brand-heritage__seal strong { font-size: .57rem; }
+  .home2-page .brand-heritage__seal small { font-size: .5rem; }
+}
+@media (max-width: 370px) {
+  .home2-page .header__inner { gap: 4px; }
+  .home2-page .brand-heritage .brand { gap: 6px; }
+  .home2-page .brand__mark { width: 41px; height: 33px; }
+  .home2-page .brand strong { font-size: .91rem; }
+  .home2-page .brand small { font-size: .48rem; }
+  .home2-page .brand-heritage__seal { margin-left: 47px; padding: 3px 7px; gap: 4px; }
+  .home2-page .brand-heritage__seal strong { font-size: .52rem; }
+  .home2-page .brand-heritage__seal small { font-size: .46rem; }
+  .home2-page .home2-hero h1 { font-size: clamp(2.08rem, 8.8vw, 2.4rem); }
+}
