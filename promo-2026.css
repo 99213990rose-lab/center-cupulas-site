@@ -143,3 +143,25 @@
 @media(max-width:480px) {
   .home-kit-art__price-art {width:min(100%,248px);}
 }
+
+
+/* Mais presença para as duas fotos no celular, sem mudar as imagens originais. */
+@media (max-width: 480px) {
+  .home-kit-art__main {
+    grid-template-columns: minmax(0, 1fr) 116px;
+    column-gap: 8px;
+  }
+  .home-kit-art__photos img {
+    width: 72px;
+    height: 72px;
+  }
+  .home-kit-art__photos img + img {
+    margin-left: -28px;
+    transform: translateY(7px);
+  }
+}
+@media (max-width: 359px) {
+  .home-kit-art__main { grid-template-columns: minmax(0, 1fr) 104px; }
+  .home-kit-art__photos img { width: 66px; height: 66px; }
+  .home-kit-art__photos img + img { margin-left: -28px; }
+}
