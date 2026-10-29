@@ -57,3 +57,13 @@ test('produto normal e kit não são mesclados ao adicionar',()=>{
  cart.add({...kit(2),kind:null,reference:'35'});
  assert.equal(cart.read().length,2);
 });
+
+test('contador do cabeçalho conta kits e não cúpulas físicas',()=>{
+ const {cart}=setup();
+ cart.add(kit(2));
+ assert.equal(cart.count(),1);
+ cart.add(kit(2));
+ assert.equal(cart.count(),2);
+ cart.add(regular(1));
+ assert.equal(cart.count(),3);
+});
