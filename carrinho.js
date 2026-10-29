@@ -150,14 +150,20 @@
     const hasFreight = selectedShipping && Number.isFinite(Number(selectedShipping.price));
     const productTotal = Number(preview?.product_total);
     const freight = hasFreight ? Number(selectedShipping.price) : 0;
-    if (freightEl) freightEl.textContent = pickupSelected ? 'Retirada grátis' : hasFreight ? money(freight) : 'A confirmar';
-    if (grandTotalLabel) grandTotalLabel.textContent = pickupSelected ? 'Total para retirada' : hasFreight ? 'Total com frete' : 'Total (frete a confirmar)';
+    if (freightEl) freightEl.textContent = pickupSelected ? 'Retirada grátis' : hasFreight ? money(freight) : 'A calcular';
+    if (grandTotalLabel) grandTotalLabel.textContent = pickupSelected ? 'Total para retirada' : hasFreight ? 'Total com entrega' : 'Total (entrega a calcular)';
     if (grandTotalEl) grandTotalEl.textContent = !Number.isFinite(productTotal)
-      ? 'Calculando…' : hasFreight ? money(productTotal + freight) : money(productTotal) + ' + frete';
-    if (freightNote) freightNote.textContent = pickupSelected
-      ? 'Sem cobrança de frete. Retirada no local e horário informados pela fábrica.'
-      : hasFreight ? 'Frete da transportadora selecionada, incluído no total do pedido.'
-      : 'O valor exibido não inclui a entrega. Nossa equipe confirmará o frete quando não houver cotação automática.';
+      ? 'Calculando…' : hasFreight ? money(productTotal + freight) : money(productTotal) + ' + entrega';
+    if (freightNote) {
+      freightNote.hidden = Boolean(hasFreight);
+      freightNote.textContent = hasFreight
+        ? ''
+        : !onlyDigits(cepInput?.value).length
+          ? 'Digite seu CEP para consultar a entrega.'
+          : onlyDigits(cepInput?.value).length !== 8
+            ? 'Preencha os 8 dígitos do CEP para calcular a entrega.'
+            : 'Selecione uma opção de frete para conferir o total antes de pagar.';
+    }
   };
 
   const updateCheckoutAvailability = () => {
@@ -183,7 +189,7 @@
       freightProviderConfigured = false;
       selectedShipping = null;
       if (shippingProvider) shippingProvider.textContent = 'em ativação';
-      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Frete sob consulta.</strong> Nossa equipe confirmará as opções de transporte e o valor antes de finalizar o pedido.</p>';
+      shippingOptionsHost.innerHTML = '<p class="shipping-note"><strong>Não foi possível calcular o frete automaticamente.</strong> Tente novamente mais tarde.</p>';
       updateGrandTotal();
       updateCheckoutAvailability();
       return;
@@ -221,8 +227,8 @@
       selectedShipping = null;
       if (shippingProvider) shippingProvider.textContent = data?.provider || 'transportadoras';
       shippingOptionsHost.innerHTML = data?.error
-        ? '<p class="shipping-note">Não foi possível consultar a entrega agora. Nossa equipe poderá calcular o frete manualmente.</p>'
-        : '<p class="shipping-note">Nenhuma opção de entrega automática encontrada para este CEP. Nossa equipe poderá calcular o frete manualmente.</p>';
+        ? '<p class="shipping-note">Não foi possível consultar a entrega agora. Tente novamente mais tarde.</p>'
+        : '<p class="shipping-note">Nenhuma opção de entrega automática foi encontrada para este CEP.</p>';
       updateGrandTotal();
       updateCheckoutAvailability();
       return;
@@ -730,7 +736,7 @@
       if (!response.ok) return;
       const data = await response.json();
       checkoutProEnabled = data.checkout_enabled === true;
-      pickupEnabled = checkoutProEnabled && data.pickup_enabled === true;
+      pickupEnabled = false; // Checkout público oferece somente entrega.
       if (fulfillmentPicker) fulfillmentPicker.hidden = !pickupEnabled;
       if (!pickupEnabled) {
         const deliveryRadio = checkoutForm?.querySelector('input[name="fulfillment"][value="delivery"]');
@@ -738,13 +744,13 @@
       }
       updateFulfillmentMode();
       if (flowNote) flowNote.textContent = checkoutProEnabled
-        ? 'Pagamento seguro pelo Mercado Pago. O frete e os valores serão validados antes de cobrar. O pedido só é confirmado após a aprovação.'
+        ? 'Revise o total com frete e finalize pelo Mercado Pago.'
         : isPromoKitInCart()
-          ? 'O kit promocional é vendido apenas pelo checkout seguro no site. O pagamento automático está temporariamente indisponível.'
-          : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
+          ? 'Pagamento indisponível no momento. Tente novamente mais tarde.'
+          : 'Nenhum pagamento é cobrado nesta etapa. A equipe confirmará o pedido.';
       if (heroDescription) heroDescription.textContent = checkoutProEnabled
-        ? (pickupEnabled ? 'Escolha entrega ou retirada, confira os valores e pague com segurança pelo Mercado Pago.' : 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.')
-        : 'Ajuste quantidades e confira os dados. O preço é calculado automaticamente e a entrega é confirmada antes da produção.';
+        ? 'Confira seu kit, calcule a entrega pelo CEP e finalize com segurança.'
+        : 'Confira os produtos e calcule sua entrega.';
       if (checkoutButton) checkoutButton.textContent = checkoutProEnabled
         ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
       updateCheckoutAvailability();
@@ -807,7 +813,7 @@
           'Você não precisa pagar novamente.</p>' + paymentLinkHtml() +
           '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
       } else if(response.ok && result.state==='pending'){
-        setStatus('info','<strong>Aguardando confirmação do Mercado Pago.</strong><p>Se você pagou, '+
+        setStatus('info','<strong>Pagamento iniciado anteriormente.</strong><p>Se você já pagou, '+
           'a atualização pode levar alguns instantes. Não realize outro pagamento enquanto aguarda.</p>' +
           paymentLinkHtml() +
           '<button type="button" class="button" data-check-payment-status>Consultar situação</button>');
