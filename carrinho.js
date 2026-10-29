@@ -71,6 +71,14 @@
     cubo: 'Box reto / Quadrada'
   }[item.format] || item.format);
 
+
+  const isPromoKitInCart = () => Date.now() < Date.parse('2026-11-01T00:00:00-03:00') &&
+    cart.read().some(item => ['conica','conica_redonda'].includes(item.format) &&
+      String(item.material||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='algodao' &&
+      String(item.color||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='bege' &&
+      Number(item.top)===12 && Number(item.bottom)===20 && Number(item.height)===20 &&
+      Number(item.quantity)>=2 && !String(item.observations||'').trim());
+
   const apiItems = () => cart.read().map((item) => ({
     id: item.id,
     format: item.format,
@@ -157,9 +165,11 @@
       checkoutButton.disabled = true;
       return;
     }
-    checkoutButton.disabled = checkoutProEnabled
-      ? (!selectedShipping || preview?.packaging?.status !== 'estimated')
-      : Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
+    checkoutButton.disabled = isPromoKitInCart() && !checkoutProEnabled
+      ? true
+      : checkoutProEnabled
+        ? (!selectedShipping || preview?.packaging?.status !== 'estimated')
+        : Boolean(freightProviderConfigured && freightOptions.length && !selectedShipping);
   };
 
   const renderFreightState = (data) => {
@@ -343,7 +353,11 @@
     if (progressEl) {
       const discountPercent = Math.max(0, Math.min(99, Number(data.discount?.percent || 0)));
       const discountLabel = discountPercent.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%';
-      if (data.promotion?.applied) {
+      if (data.promotion?.type === 'kit_2_99_90' && data.promotion.applied) {
+        progressEl.hidden = false;
+        progressEl.textContent = 'Kit de 2 cúpulas cônicas por R$ 99,90 incluído. Frete calculado separadamente.';
+        progressEl.className = 'cart-progress cart-progress--ok';
+      } else if (data.promotion?.applied) {
         progressEl.hidden = false;
         progressEl.textContent = 'Desconto de ' + discountLabel + ' na segunda cúpula de algodão aplicado.';
         progressEl.className = 'cart-progress cart-progress--ok';
@@ -538,6 +552,10 @@
     const items = apiItems();
     if (isSubmitting || !items.length) return;
     if (!checkoutForm.reportValidity()) return;
+    if (isPromoKitInCart() && !checkoutProEnabled) {
+      setStatus('warning','<strong>Compra online temporariamente indisponível.</strong><p>O kit é vendido somente pelo pagamento seguro do site. Tente novamente mais tarde.</p>');
+      return;
+    }
     if (checkoutProEnabled && !selectedShipping) {
       setStatus('warning', '<strong>Escolha uma opção de entrega ou retirada.</strong>');
       return;
@@ -720,7 +738,9 @@
       updateFulfillmentMode();
       if (flowNote) flowNote.textContent = checkoutProEnabled
         ? 'Pagamento seguro pelo Mercado Pago. O frete e os valores serão validados antes de cobrar. O pedido só é confirmado após a aprovação.'
-        : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
+        : isPromoKitInCart()
+          ? 'O kit promocional é vendido apenas pelo checkout seguro no site. O pagamento automático está temporariamente indisponível.'
+          : 'Nenhum pagamento é cobrado nesta etapa. Nossa equipe confirma os detalhes e o frete antes da produção.';
       if (heroDescription) heroDescription.textContent = checkoutProEnabled
         ? (pickupEnabled ? 'Escolha entrega ou retirada, confira os valores e pague com segurança pelo Mercado Pago.' : 'Confira suas cúpulas e o endereço para calcular o frete. O pagamento será feito com segurança pelo Mercado Pago.')
         : 'Ajuste quantidades e confira os dados. O preço é calculado automaticamente e a entrega é confirmada antes da produção.';

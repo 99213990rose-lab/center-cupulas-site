@@ -143,14 +143,38 @@
     </div>
   </header>
 
-<aside class="home-kit-strip" aria-label="Oferta de duas cúpulas cônicas">
-  <div class="container home-kit-strip__inner">
-    <span class="home-kit-strip__label">OFERTA ESPECIAL</span>
-    <p class="home-kit-strip__offer"><strong>2 cúpulas cônicas</strong> por <b>R$ 99,90</b></p>
-    <span class="home-kit-strip__detail">12 × 20 × 20 cm <span aria-hidden="true">·</span> Frete à parte</span>
-    <a class="home-kit-strip__action" href="https://wa.me/5512983216069?text=Ol%C3%A1!%20Quero%20solicitar%20o%20kit%20de%202%20c%C3%BApulas%20c%C3%B4nicas%2012%20%C3%97%2020%20%C3%97%2020%20cm%20por%20R%24%2099%2C90.%20Poderiam%20confirmar%20o%20pedido%20e%20o%20frete%3F" target="_blank" rel="noopener noreferrer">Quero aproveitar <span aria-hidden="true">→</span></a>
+<section class="home-kit-art" data-home-kit-promo hidden aria-labelledby="home-kit-art-title">
+  <div class="container home-kit-art__main">
+    <div class="home-kit-art__headline">
+      <p class="home-kit-art__eyebrow"><span aria-hidden="true">✦</span> SÉRIE ESPECIAL · CENTER CÚPULAS</p>
+      <h2 id="home-kit-art-title">Duas cúpulas <em>cônicas</em></h2>
+      <p class="home-kit-art__details">Algodão bege <span aria-hidden="true">·</span> 12 × 20 × 20 cm cada</p>
+    </div>
+    <div class="home-kit-art__photos" aria-label="Duas cúpulas cônicas em tecido bege">
+      <img src="assets/catalogo/variants/conica-tricoline-bege.webp" width="132" height="132" alt="Cúpula cônica em algodão bege, referência visual" loading="eager" decoding="async">
+      <img src="assets/catalogo/variants/conica-tricoline-bege.webp" width="132" height="132" alt="" aria-hidden="true" loading="eager" decoding="async">
+    </div>
+    <div class="home-kit-art__offer">
+      <p class="home-kit-art__price-label">O PAR POR</p>
+      <strong class="home-kit-art__price">R$ 99,90</strong>
+      <span class="home-kit-art__freight">Frete calculado no carrinho</span>
+    </div>
+    <div class="home-kit-art__checkout">
+      <button type="button" class="home-kit-art__button" data-kit-buy aria-describedby="home-kit-art-end">
+        Calcular frete e comprar <span aria-hidden="true">→</span>
+      </button>
+      <span class="home-kit-art__payment">Pagamento seguro pelo Mercado Pago</span>
+    </div>
   </div>
-</aside>
+  <div class="home-kit-art__foot">
+    <div class="container home-kit-art__foot-inner">
+      <span class="home-kit-art__deadline" id="home-kit-art-end">Termina em 31/10/2026 às 23h59 (Brasília)</span>
+      <span class="home-kit-art__timer-label">Tempo restante:</span>
+      <time class="home-kit-art__timer" data-kit-countdown datetime="2026-10-31T23:59:59-03:00">Calculando…</time>
+      <span class="home-kit-art__assurance">Fabricação sob encomenda <span aria-hidden="true">·</span> Frete à parte</span>
+    </div>
+  </div>
+</section>
 
 
   <main id="conteudo">
@@ -228,6 +252,7 @@
   <script src="privacy-consent.js" defer></script>
   <script src="script.js" defer></script>
   <script src="cart.js" defer></script>
+  <script src="promo-kit.js" defer></script>
   <script src="loja.js" defer></script>
 </body>
 </html>
