@@ -30,10 +30,6 @@
 .home-kit-art__button:hover:not(:disabled) { background:linear-gradient(110deg,#693e24,#432818); transform:translateY(-1px);}
 .home-kit-art__button:focus-visible {outline:3px solid #267fba; outline-offset:3px;}
 .home-kit-art__button:disabled {opacity:.6; cursor:not-allowed; transform:none;}
-.home-kit-art__foot {position:relative; background:#39251b; color:#f6e9d6;}
-.home-kit-art__foot-inner {display:flex; gap:10px 18px; justify-content:center; align-items:center; min-height:30px; padding-block:5px; flex-wrap:wrap; }
-.home-kit-art__timer-label,.home-kit-art__session-note {font-size:.66rem; color:#e7d3bb; }
-.home-kit-art__timer {font-variant-numeric:tabular-nums; letter-spacing:.06em; font-weight:800; font-size:.77rem; color:#fff; }
 @media(max-width:1080px) {
   .home-kit-art__main {grid-template-columns:minmax(205px,1.2fr) 170px minmax(112px,.6fr) minmax(161px,.77fr); gap:12px;}
   .home-kit-art__photos img {height:87px;width:87px;}
@@ -50,7 +46,6 @@
  .home-kit-art__offer {grid-area:price;}
  .home-kit-art__checkout {grid-area:checkout; flex-direction:row; justify-content:space-between; align-items:center;}
  .home-kit-art__button {padding:9px 18px;}
-  .home-kit-art__foot-inner {gap:3px 9px; min-height:27px;}
 }
 @media(max-width:480px) {
  .home-kit-art__main {grid-template-columns:minmax(0,1fr) 95px; grid-template-areas:'heading photos' 'price price' 'checkout checkout';}
@@ -61,12 +56,5 @@
  .home-kit-art__price {font-size:1.8rem;}
   .home-kit-art__checkout {align-items:stretch;}
  .home-kit-art__checkout  .home-kit-art__button {width:100%; padding:10px;}
- .home-kit-art__timer-label,.home-kit-art__session-note {font-size:.6rem;}
- .home-kit-art__session-note {display:none;}
 }
 
-/* Timer de sessão é informativo: a promoção não tem encerramento anunciado. */
-.home-kit-art__session-note{font-size:.65rem;color:#e7d3bb;}
-.home-kit-art__foot-inner{justify-content:center;gap:8px 16px;}
-.home-kit-art__timer{font-size:.88rem;min-width:74px;text-align:center;}
-@media(max-width:760px){.home-kit-art__foot-inner{padding-block:7px;}}

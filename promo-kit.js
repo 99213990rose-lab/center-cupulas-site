@@ -1,51 +1,7 @@
-import {initialSessionStart,sessionPhase} from './promo-session.mjs';
 (() => {
   'use strict';
-  const KEY = 'centerCupulasKitSessionV1';
-  const area = document.querySelector('[data-home-kit-promo]');
   const button = document.querySelector('[data-kit-buy]');
-  const countdown = document.querySelector('[data-kit-countdown]');
-  const timerLabel = document.querySelector('[data-kit-timer-label]');
-  const note = document.querySelector('[data-kit-session-note]');
-  if (!area || !button || !countdown || !timerLabel || !note) return;
-  area.hidden = false; // Campanha sem prazo de encerramento.
-  let startedAt = null;
-  try {
-    const now=Date.now();
-    startedAt = initialSessionStart(localStorage.getItem(KEY),now);
-    localStorage.setItem(KEY,String(startedAt));
-  } catch { /* Sem armazenamento confiável, não exibir uma contagem potencialmente enganosa. */ }
-  const pair = value => String(value).padStart(2,'0');
-  const clock = () => {
-    if (startedAt === null) {
-      timerLabel.textContent='Oferta permanente';
-      countdown.hidden=true;
-      note.textContent='Aproveite o kit diretamente no site.';
-      return;
-    }
-    const data = sessionPhase(startedAt, Date.now());
-    if (data.phase === 'active') {
-      const h=Math.floor(data.seconds/3600),m=Math.floor((data.seconds%3600)/60),s=data.seconds%60;
-      timerLabel.textContent='Tempo desta sessão:';
-      countdown.textContent=pair(h)+':'+pair(m)+':'+pair(s);
-      note.textContent='A promoção continua disponível após a sessão.';
-    } else if (data.phase === 'cooldown') {
-      timerLabel.textContent='Sessão concluída:';
-      countdown.textContent='00:00:00';
-      note.textContent='Nova sessão somente após 3 horas. O kit continua disponível.';
-    } else {
-      timerLabel.textContent='Sessão concluída';
-      countdown.textContent='00:00:00';
-      note.textContent='Uma nova sessão estará disponível quando você voltar à página.';
-    }
-  };
-  clock();
-  window.setInterval(clock,1000);
-  window.addEventListener('storage',(event)=>{
-    if(event.key!==KEY)return;
-    const value=Number(event.newValue);
-    if(Number.isFinite(value)&&value>0){startedAt=value;clock();}
-  });
+  if (!button) return;
   button.addEventListener('click',()=>{
     const cart=window.CenterCupulasCart;
     if(!cart){window.location.assign('carrinho.html');return;}
