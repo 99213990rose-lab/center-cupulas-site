@@ -128,3 +128,18 @@
   .home-kit-art__button,
   .home-kit-art__button::after { transition:none; animation:none; }
 }
+
+/* Preço vetorial inspirado na arte da campanha: sem fundo retangular ou perda de nitidez. */
+.home-kit-art__offer { min-width:0; align-self:center; }
+.home-kit-art__price-art {
+  display:block;
+  width:min(100%,235px);
+  height:auto;
+  overflow:visible;
+}
+@media(max-width:1080px) {
+  .home-kit-art__price-art {width:min(100%,210px);}
+}
+@media(max-width:480px) {
+  .home-kit-art__price-art {width:min(100%,248px);}
+}
