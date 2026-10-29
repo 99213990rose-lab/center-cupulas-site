@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.mjs";
 import { addBoxesToPrices } from "./price-with-box.mjs";
 import { applySecondShadePromotion } from "./promo-second-shade.mjs";
+import { applyKitPrice } from "./kit-promo-9990.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -220,7 +221,9 @@ Deno.serve(async(req:Request)=>{
     // The manufacturing discount never discounts that embedded cost.
     const lineBoxes=priced.map(x=>estimateBoxCostForItem(x,data.packaging));
     const threshold=n(data.rules.discount_threshold),discountPct=n(data.rules.discount_pct);
-    const pricedQuote=applySecondShadePromotion(addBoxesToPrices(priced,lineBoxes,threshold,discountPct));
+    const baseQuote=addBoxesToPrices(priced,lineBoxes,threshold,discountPct);
+    const kitQuote=applyKitPrice(baseQuote);
+    const pricedQuote=kitQuote.promotion?.applied ? kitQuote : applySecondShadePromotion(baseQuote);
     if(pricedQuote.status!=="ok"){
       return json({error:"packaging_cost_needs_review",requires_review:true},422,origin);
     }
@@ -229,7 +232,8 @@ Deno.serve(async(req:Request)=>{
     const subtotalBefore=pricedQuote.subtotalBeforeDiscount;
     const productTotal=pricedQuote.productTotal;
     const unlocked=pricedQuote.discountUnlocked;
-    const promoApplied=pricedQuote.promotion?.applied===true;
+    const kitApplied=pricedQuote.promotion?.type==="kit_2_99_90" && pricedQuote.promotion.applied===true;
+    const promoApplied=pricedQuote.promotion?.applied===true && !kitApplied;
     const packaging=estimatePackaging(pricedFinal,data.packaging);
     const boxBudget=calculateBoxPurchaseBudget(packaging,pricedFinal,data.packaging);
     const expectedBoxCost=pricedQuote.totalBoxCost;
@@ -249,10 +253,10 @@ Deno.serve(async(req:Request)=>{
       packaging,
       discount:{
         unlocked,
-        percent:promoApplied?10:discountPct,
+        percent:kitApplied&&!unlocked?0:promoApplied?10:discountPct,
         threshold:round2(threshold),
         amount:pricedQuote.discountAmount,
-        amount_to_unlock:promoApplied?0:round2(Math.max(0,threshold-manufacturerSubtotal))
+        amount_to_unlock:kitApplied||promoApplied?0:round2(Math.max(0,threshold-manufacturerSubtotal))
       },
       promotion:pricedQuote.promotion,
       note:"Os valores das cúpulas já incluem os custos previstos das caixas. O frete é confirmado separadamente."
@@ -406,6 +410,7 @@ Deno.serve(async(req:Request)=>{
             boxBudget.counts.grande+" grande(s)).")
           :"Custo interno de caixas pendente de avaliação.",
         packaging.status==="review"?"Embalagem requer revisão manual.":null,
+        kitApplied?"Kit de outubro/2026: 2 cúpulas cônicas algodão bege 12x20x20 cm por R$ 99,90 o par, frete à parte.":null,
         promoApplied?"Promoção outubro/2026: 10% na segunda cúpula de algodão, sem acúmulo com desconto por volume.":null,
         unlocked&&!promoApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
         email?("E-mail: "+email):null,notes?("Cliente: "+notes):null
