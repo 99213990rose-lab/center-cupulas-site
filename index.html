@@ -154,14 +154,14 @@
     <div class="home-kit-art__headline">
       <p class="home-kit-art__eyebrow"><span aria-hidden="true">✦</span> SÉRIE ESPECIAL · CENTER CÚPULAS</p>
       <h2 id="home-kit-art-title">Duas cúpulas <em>cônicas</em></h2>
-      <p class="home-kit-art__details">Algodão bege <span aria-hidden="true">·</span> 12 × 20 × 20 cm cada</p>
+      <p class="home-kit-art__details">12 × 20 × 20 cm cada</p>
     </div>
     <div class="home-kit-art__photos" aria-label="Duas cúpulas cônicas em tecido bege">
       <img src="assets/catalogo/variants/conica-tricoline-bege.webp" width="132" height="132" alt="Cúpula cônica em algodão bege, referência visual" loading="eager" decoding="async">
       <img src="assets/catalogo/variants/conica-tricoline-bege.webp" width="132" height="132" alt="" aria-hidden="true" loading="eager" decoding="async">
     </div>
     <div class="home-kit-art__offer">
-      <p class="home-kit-art__price-label">O PAR POR</p>
+      <p class="home-kit-art__price-label">2 POR</p>
       <strong class="home-kit-art__price">R$ 99,90</strong>
     </div>
     <div class="home-kit-art__checkout">
@@ -172,6 +172,43 @@
   </div>
 </section>
 
+
+<dialog class="home-kit-options" data-kit-dialog aria-labelledby="home-kit-options-title" aria-describedby="home-kit-options-intro">
+  <form class="home-kit-options__form" data-kit-form>
+    <div class="home-kit-options__head">
+      <div>
+        <p class="home-kit-options__eyebrow">PERSONALIZE SEU KIT</p>
+        <h2 id="home-kit-options-title">Escolha o tecido</h2>
+        <p id="home-kit-options-intro">Kit com 2 cúpulas cônicas de 12 × 20 × 20 cm cada.</p>
+      </div>
+      <button type="button" class="home-kit-options__close" data-kit-close aria-label="Fechar">×</button>
+    </div>
+    <div class="home-kit-options__fields">
+      <label for="kit-material">Tecido</label>
+      <select id="kit-material" name="material" data-kit-material required>
+        <option value="algodao">Algodão — R$ 99,90 o kit</option>
+        <option value="linho">Linho natural — R$ 120,00 o kit</option>
+        <option value="juta">Juta natural — R$ 120,00 o kit</option>
+      </select>
+      <div class="home-kit-options__cotton" data-kit-cotton-color>
+        <label for="kit-cotton-color">Cor do algodão</label>
+        <select id="kit-cotton-color" name="cotton_color" data-kit-color>
+          <option value="Bege">Bege</option>
+          <option value="Off-white">Off-white</option>
+          <option value="Branco">Branco</option>
+          <option value="Preto">Preto</option>
+          <option value="Marrom">Marrom</option>
+        </select>
+      </div>
+      <p class="home-kit-options__natural" data-kit-natural-note hidden>Linho e juta estão disponíveis apenas na cor natural.</p>
+    </div>
+    <div class="home-kit-options__total">
+      <div><small>VALOR DO KIT SELECIONADO</small><strong data-kit-selected-price>R$ 99,90</strong></div>
+      <span>2 cúpulas por kit</span>
+    </div>
+    <button class="home-kit-options__submit" type="submit">Continuar para frete e pagamento</button>
+  </form>
+</dialog>
 
   <main id="conteudo">
     <section class="home2-hero" aria-labelledby="home2-hero-title">
