@@ -12,7 +12,24 @@
     }
   };
 
-  const read = () => safeParse(localStorage.getItem(KEY));
+  const isLegacyPromotion = item => !item.kind && !item.reference && !String(item.observations||'').trim() &&
+    ['conica','conica_redonda'].includes(String(item.format)) &&
+    String(item.material||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='algodao' &&
+    String(item.color||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()==='bege' &&
+    Number(item.top)===12 && Number(item.bottom)===20 && Number(item.height)===20;
+
+  const read = () => {
+    const current = safeParse(localStorage.getItem(KEY));
+    let needsMigration = false;
+    const normalized = current.map(item => {
+      if (!isLegacyPromotion(item)) return item;
+      needsMigration = true;
+      const units = Math.min(500,Math.max(2,Math.ceil(Number(item.quantity||2)/2)*2));
+      return {...item,kind:'promo_kit',quantity:units,quote_snapshot:null};
+    });
+    if (needsMigration) localStorage.setItem(KEY,JSON.stringify(normalized));
+    return normalized;
+  };
 
   const write = (items) => {
     const clean = Array.isArray(items) ? items.slice(0, 20) : [];
@@ -35,7 +52,10 @@
       top: Number(item.top),
       bottom: Number(item.bottom),
       height: Number(item.height),
-      quantity: Math.max(1, Math.floor(Number(item.quantity || 1))),
+      quantity: item.kind==='promo_kit'
+        ? Math.min(500,Math.max(2,Math.ceil(Number(item.quantity||2)/2)*2))
+        : Math.max(1,Math.floor(Number(item.quantity||1))),
+      kind: item.kind==='promo_kit'?'promo_kit':null,
       reference: item.reference || null,
       observations: String(item.observations || ''),
       quote_snapshot: item.quote_snapshot || null,
@@ -45,6 +65,7 @@
     };
 
     const same = items.find((x) =>
+      (x.kind||null) === normalized.kind &&
       x.format === normalized.format &&
       x.material === normalized.material &&
       x.color === normalized.color &&
@@ -66,8 +87,12 @@
   const remove = (id) => write(read().filter((item) => item.id !== id));
 
   const setQuantity = (id, quantity) => {
-    const q = Math.max(1, Math.min(500, Math.floor(Number(quantity || 1))));
-    return write(read().map((item) => item.id === id ? { ...item, quantity: q } : item));
+    return write(read().map(item => {
+      if (item.id !== id) return item;
+      const isKit = item.kind === 'promo_kit';
+      const count = Math.min(isKit?250:500,Math.max(1,Math.floor(Number(quantity)||1)));
+      return {...item,quantity:isKit?2*count:count,quote_snapshot:null};
+    }));
   };
 
   const clear = () => write([]);
