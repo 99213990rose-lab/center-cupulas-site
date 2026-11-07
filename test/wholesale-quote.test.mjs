@@ -14,7 +14,7 @@ test('prepares a clear wholesale WhatsApp inquiry without sending it',()=>{
   assert.equal(new URL(result.url).host,'wa.me');
   assert.equal(new URL(result.url).pathname,'/5512983216069');
   const message=new URL(result.url).searchParams.get('text');
-  for (const term of ['Ana Silva','Ateliê Luz','Cilíndricas / Drum','48 peça(s)','13421-548','20 × 40 × 30 cm','duas lojas'])
+  for (const term of ['Ana Silva','Ateliê Luz','Cilíndricas / Drum','48 peças','13421-548','20 × 40 × 30 cm','duas lojas'])
     assert.ok(message.includes(term),term);
   assert.ok(message.includes('prazo e entrega'));
 });

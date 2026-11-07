@@ -37,19 +37,19 @@ export function createWhatsAppInquiry(raw) {
   if (!checked.ok) return checked;
   const v=checked.value;
   const lines=[
-    'Olá! Gostaria de solicitar uma avaliação comercial de cúpulas em quantidade.',
+    'Olá! Vim pela página de atacado da Center Cúpulas e gostaria de solicitar um orçamento para compra em quantidade.',
     '',
     'Contato: '+v.contact,
     ...(v.business?['Empresa / projeto: '+v.business]:[]),
     'Área: '+SECTORS[v.sector],
     'Formato: '+FORMATS[v.format],
-    'Quantidade aproximada: '+v.quantity+' peça(s)',
+    'Quantidade aproximada: '+v.quantity+(v.quantity===1?' peça':' peças'),
     'Material: '+MATERIALS[v.material],
     'Medidas: '+(v.dimensions||'A confirmar com a equipe'),
     'CEP de destino: '+(v.cep?v.cep.slice(0,5)+'-'+v.cep.slice(5):'A informar'),
     ...(v.notes?['','Detalhes: '+v.notes]:[]),
     '',
-    'Se possível, orientem sobre viabilidade, condições comerciais, prazo e entrega. Obrigado!'
+    'Podem confirmar os valores, a viabilidade, o prazo e entrega? Obrigado!'
   ];
   const message=lines.join('\n');
   return {ok:true,message,url:'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(message)};

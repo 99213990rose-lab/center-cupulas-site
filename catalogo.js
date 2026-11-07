@@ -903,7 +903,7 @@
       }
 
       const lines = [
-        'Olá, vim pelo catálogo da Center Cúpulas e gostaria de solicitar a avaliação desta configuração.',
+        'Olá! Vim pelo configurador de cúpulas da Center Cúpulas e gostaria de um orçamento para o modelo abaixo.',
         '',
         'Formato: ' + configuration.format,
         'Material: ' + configuration.material,
@@ -914,7 +914,7 @@
       lines.push('Medida (Superior × Inferior × Altura): ' + configuration.upper + ' × ' + configuration.lower + ' × ' + configuration.height + ' cm');
       if (configuration.quantity) lines.push('Quantidade: ' + configuration.quantity + (configuration.quantity === '1' ? ' unidade' : ' unidades'));
       if (configuration.observations) lines.push('Observações: ' + configuration.observations);
-      lines.push('', 'A configuração precisa de confirmação da fábrica antes de receber um preço final.');
+      lines.push('', 'Podem confirmar a viabilidade, o valor e o prazo de produção? Obrigado!');
 
       const leadRef = window.CenterCupulas?.trackWhatsAppConversion?.({
         eventType: 'configurator_submit',

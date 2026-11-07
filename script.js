@@ -265,15 +265,31 @@
     return leadRef;
   };
 
+  const defaultWhatsAppMessage = () => {
+    const page = window.location.pathname.toLowerCase();
+    if (page.endsWith('/reformas.html')) {
+      return 'Olá! Vim pela página de reformas da Center Cúpulas. Gostaria de avaliar a reforma de uma cúpula e posso enviar fotos e medidas.';
+    }
+    if (page.endsWith('/cupulas-atacado.html')) {
+      return 'Olá! Vim pela página de atacado da Center Cúpulas e gostaria de solicitar uma cotação em quantidade. Posso enviar os modelos, medidas e quantidades?';
+    }
+    if (page.endsWith('/modelos.html') || /\/cupulas-(?:conicas|cilindricas|quadradas|retangulares)\.html$/.test(page)) {
+      return 'Olá! Vim pela página de cúpulas sob medida da Center Cúpulas e preciso de orientação sobre modelo, medidas e tecido.';
+    }
+    if (page.endsWith('/entregas-e-trocas.html') || page.endsWith('/meus-pedidos.html')) {
+      return 'Olá! Vim pelo site da Center Cúpulas e preciso de ajuda com um pedido ou entrega. Posso informar o código do pedido.';
+    }
+    return 'Olá! Vim pelo site da Center Cúpulas e gostaria de tirar uma dúvida sobre as cúpulas. Podem me ajudar?';
+  };
+
   const appendLeadRefToWhatsAppUrl = (href, leadRef) => {
     try {
       const url = new URL(href);
       if (url.hostname !== 'wa.me') return href;
-      const message = url.searchParams.get('text') || '';
-      if (!message.includes(leadRef)) {
-        const suffix = (message ? '\n\n' : '') + 'Código de atendimento: ' + leadRef;
-        url.searchParams.set('text', message + suffix);
-      }
+      const original = (url.searchParams.get('text') || '').trim();
+      const message = (original || defaultWhatsAppMessage())
+        .replace(/\n\nCódigo de atendimento: CC-[A-Z0-9]+$/i, '');
+      url.searchParams.set('text', message + '\n\nCódigo de atendimento: ' + leadRef);
       return url.toString();
     } catch {
       return href;

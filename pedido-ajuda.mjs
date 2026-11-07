@@ -16,10 +16,10 @@ export function createOrderSupportMessage(data) {
   }
   const code=rawCode?rawCode.toUpperCase():'ainda não tenho o código';
   const message=[
-    'Olá! Gostaria de consultar a Center Cúpulas sobre meu pedido.',
+    'Olá! Vim pelo site da Center Cúpulas e preciso de ajuda com um pedido.',
     'Assunto: '+TOPICS[topic],
     'Código do pedido ou orçamento: '+code,
-    'Podem me orientar sobre os próximos passos? Obrigado!'
+    'Podem verificar e me orientar sobre os próximos passos? Obrigado!'
   ].join('\n');
   return {ok:true,message,url:BASE+'?text='+encodeURIComponent(message)};
 }
