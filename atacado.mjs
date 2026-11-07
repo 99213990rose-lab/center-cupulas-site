@@ -49,7 +49,7 @@ export function createWhatsAppInquiry(raw) {
     'CEP de destino: '+(v.cep?v.cep.slice(0,5)+'-'+v.cep.slice(5):'A informar'),
     ...(v.notes?['','Detalhes: '+v.notes]:[]),
     '',
-    'Podem confirmar os valores, a viabilidade, o prazo e entrega? Obrigado!'
+    'Podem informar valores, viabilidade, prazo e entrega? Obrigado!'
   ];
   const message=lines.join('\n');
   return {ok:true,message,url:'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(message)};
