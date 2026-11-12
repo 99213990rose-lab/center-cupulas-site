@@ -1,7 +1,7 @@
 // Private, read-only daily health check for Center Cúpulas production orders.
 // Vercel Cron sends Authorization: Bearer $CRON_SECRET.
 // All cross-table counting runs inside Postgres, with no customer data exported.
-import { timingSafeEqual } from 'node:crypto';
+import { isInternalCronAuthorized } from '../../lib/cron-auth.mjs';
 
 const COUNT_KEYS = Object.freeze([
   'paid_quotes_without_orders',
@@ -19,20 +19,11 @@ const reply = (res, code, data) => res.status(code)
   .setHeader('X-Content-Type-Options', 'nosniff')
   .json(data);
 
-function authorized(req) {
-  const secret = String(process.env.CRON_SECRET || '');
-  const provided = String(req.headers?.authorization || '');
-  const expected = 'Bearer ' + secret;
-  return secret.length >= 20 &&
-    Buffer.byteLength(provided) === Buffer.byteLength(expected) &&
-    timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') return reply(res, 405, { error: 'method_not_allowed' });
   if (String(process.env.CRON_SECRET || '').length < 20)
     return reply(res, 503, { error: 'audit_not_configured' });
-  if (!authorized(req)) return reply(res, 401, { error: 'unauthorized' });
+  if (!isInternalCronAuthorized(req)) return reply(res, 401, { error: 'unauthorized' });
 
   const base = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
   const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
