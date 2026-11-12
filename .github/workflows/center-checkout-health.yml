@@ -9,6 +9,8 @@ on:
       - 'carrinho.js'
       - 'carrinho.html'
       - 'test/**'
+      - 'supabase/functions/**'
+      - 'vercel.json'
       - '.github/workflows/center-checkout-health.yml'
   pull_request:
     paths:
@@ -17,6 +19,8 @@ on:
       - 'carrinho.js'
       - 'carrinho.html'
       - 'test/**'
+      - 'supabase/functions/**'
+      - 'vercel.json'
       - '.github/workflows/center-checkout-health.yml'
   schedule:
     # 09:15 in Brasilia (UTC-3). Read-only; no checkout/payment is created.
@@ -37,7 +41,7 @@ jobs:
         with:
           node-version: '24'
       - name: Validate the checkout and site without real charges
-        run: node --test test/checkout.test.mjs test/site-integrity.test.mjs test/customer-account.test.mjs
+        run: node --test test/*.test.mjs
 
   production-readiness:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
