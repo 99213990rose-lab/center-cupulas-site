@@ -87,6 +87,12 @@
       "destination": "/cotador.html"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/internal/checkout-audit",
+      "schedule": "15 12 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/catalogo.pdf",
