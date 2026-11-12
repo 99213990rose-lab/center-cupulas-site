@@ -102,6 +102,65 @@ test('approved signed payment is atomically reconciled with apikey-only secret',
   });
 });
 
+test('webhook never acknowledges an unrecognized database reconciliation result', async (t) => {
+  t.after(reset); configure();
+  const uuid='11111111-1111-4111-8111-111111111111';
+  let calls=0;
+  globalThis.fetch=async()=>{
+    calls++;
+    if(calls===1)return Response.json({
+      id:1234,external_reference:'CENTER_CUPULAS:'+uuid,
+      status:'approved',currency_id:'BRL',transaction_amount:125.5
+    });
+    return Response.json({status:'unknown',idempotent:false});
+  };
+  const res=response();
+  await webhook(signedRequest(),res);
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'reconciliation_incomplete');
+  assert.equal(calls,2);
+});
+
+test('checkout bounds the quote and provider request times without changing payment totals',async(t)=>{
+  t.after(reset);configure();
+  let calls=0;
+  globalThis.fetch=async(url,options)=>{
+    calls++;
+    assert.ok(options.signal instanceof AbortSignal,'backend must enforce a request deadline');
+    if(calls===1)return Response.json({submitted:true,
+      quote_id:'11111111-1111-4111-8111-111111111111',
+      quote_code:'WEB-TEST',total:102.5,shipping:{status:'quoted',freight:12.5},
+      packaging:{status:'estimated'}});
+    return Response.json({init_point:'https://www.mercadopago.com.br/checkout/example'});
+  };
+  const res=response();
+  await createCheckout({method:'POST',headers:{origin:'https://www.centercupulas.com.br'},
+    body:{items:[{format:'drum',quantity:1,top:25,bottom:25,height:20}],
+      customer:{name:'Cliente de Teste'},
+      shippingSelection:{code:'FRENET-1',price:12.5,productTotal:90}}},res);
+  assert.equal(res.statusCode,200);
+  assert.equal(calls,2);
+});
+
+test('paid order status shares one deadline across all database reads',async(t)=>{
+  t.after(reset);configure();
+  const seen=[];
+  globalThis.fetch=async(url,options)=>{
+    seen.push(options.signal);
+    if(url.includes('/quotes?'))return Response.json([{id:quoteIdForReceipt,status:'paid',code:'WEB-TEST'}]);
+    if(url.includes('/orders?'))return Response.json([{id:'22222222-2222-4222-8222-222222222222',
+      code:'PED-WEB-TEST',payment_status:'paid'}]);
+    if(url.includes('/production_jobs?'))return Response.json([{id:'33333333-3333-4333-8333-333333333333',status:'queued'}]);
+    throw Error('unexpected_table');
+  };
+  const res=response();
+  await orderStatus(receiptRequest(),res);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.state,'confirmed');
+  assert.equal(seen.length,3);
+  assert.ok(seen.every(signal=>signal===seen[0] && signal instanceof AbortSignal));
+});
+
 test('payment preference uses server-repriced quote and explicit payable action', async (t) => {
   t.after(reset); configure();
   const calls=[];
