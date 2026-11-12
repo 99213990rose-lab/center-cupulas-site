@@ -44,22 +44,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [quotes, orders, jobs, emailQueue] = await Promise.all([
+    const [quotes, orders, jobs, emailQueue, payments] = await Promise.all([
       rows('quotes', { organization_id: 'eq.' + ORG, status: 'eq.paid' }, 'id'),
       rows('orders', { organization_id: 'eq.' + ORG, payment_status: 'eq.paid' }, 'id,quote_id'),
       rows('production_jobs', { organization_id: 'eq.' + ORG }, 'order_id'),
-      rows('center_order_email_outbox', { status: 'eq.pending' }, 'id')
+      rows('center_order_email_outbox', { status: 'eq.pending' }, 'order_id,created_at,attempts'),
+      rows('center_checkout_payments', {}, 'quote_id,reconciliation_status')
     ]);
+    const paidQuoteIds = new Set(quotes.map(q => q.id));
     const orderQuoteIds = new Set(orders.map(o => o.quote_id).filter(Boolean));
     const productionOrderIds = new Set(jobs.map(j => j.order_id).filter(Boolean));
     // Historical manually-entered orders need not have an online production job.
     const missingOrders = quotes.filter(q => !orderQuoteIds.has(q.id)).length;
     const missingJobs = orders.filter(o => o.quote_id && !productionOrderIds.has(o.id)).length;
     const pendingEmails = emailQueue.length;
+    const now = Date.now();
+    const staleEmails = emailQueue.filter(email => {
+      const created = Date.parse(String(email.created_at || ''));
+      return !Number.isFinite(created) || now - created >= 24 * 60 * 60 * 1000;
+    }).length;
+    const neverAttemptedEmails = emailQueue.filter(email => Number(email.attempts) === 0).length;
+    const duplicateCharges = payments.filter(payment => payment.reconciliation_status === 'duplicate_charge').length;
+    const orphanedPayments = payments.filter(payment => payment.reconciliation_status === 'applied' &&
+      (!paidQuoteIds.has(payment.quote_id) || !orderQuoteIds.has(payment.quote_id))).length;
     const counts = { paid_quotes_without_orders: missingOrders,
       paid_checkout_orders_without_jobs: missingJobs,
-      pending_email_notifications: pendingEmails };
-    const critical = missingOrders > 0 || missingJobs > 0;
+      applied_payments_without_paid_order: orphanedPayments,
+      duplicate_approved_charges: duplicateCharges,
+      pending_email_notifications: pendingEmails,
+      stale_email_notifications: staleEmails,
+      pending_emails_never_attempted: neverAttemptedEmails };
+    const critical = missingOrders > 0 || missingJobs > 0 || orphanedPayments > 0 || duplicateCharges > 0;
     if (critical) console.error('center-checkout-audit reconciliation_problem', counts);
     else if (pendingEmails) console.warn('center-checkout-audit email_delivery_pending', counts);
     return reply(res, critical ? 503 : 200, {

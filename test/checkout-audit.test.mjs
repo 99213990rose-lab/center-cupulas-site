@@ -51,7 +51,8 @@ test('daily audit detects pending emails without falsely flagging complete paid 
     if(url.includes('/orders?'))return Response.json([{id:'order-1',quote_id:'quote-1'},
       {id:'manual-1',quote_id:null}]);
     if(url.includes('/production_jobs?'))return Response.json([{order_id:'order-1'}]);
-    if(url.includes('/center_order_email_outbox?'))return Response.json([{id:'mail-1'}]);
+    if(url.includes('/center_order_email_outbox?'))return Response.json([{order_id:'mail-1',attempts:0,created_at:new Date(Date.now()-48*3600_000).toISOString()}]);
+    if(url.includes('/center_checkout_payments?'))return Response.json([{quote_id:'quote-1',reconciliation_status:'applied'}]);
     throw Error('unexpected table');
   };
   const res=response();
@@ -61,7 +62,11 @@ test('daily audit detects pending emails without falsely flagging complete paid 
   assert.equal(res.body.paid_quotes_without_orders,0);
   assert.equal(res.body.paid_checkout_orders_without_jobs,0);
   assert.equal(res.body.pending_email_notifications,1);
-  assert.equal(urls.length,4);
+  assert.equal(res.body.stale_email_notifications,1);
+  assert.equal(res.body.pending_emails_never_attempted,1);
+  assert.equal(res.body.applied_payments_without_paid_order,0);
+  assert.equal(res.body.duplicate_approved_charges,0);
+  assert.equal(urls.length,5);
 });
 test('daily audit fails closed when a paid quote has no corresponding order',async(t)=>{
   t.after(reset);configure();
@@ -85,6 +90,37 @@ test('daily audit does not present partial database results as healthy',async(t)
   await checkoutAudit(request(),res);
   assert.equal(res.statusCode,503);
   assert.equal(res.body.status,'unavailable');
+});
+test('daily audit detects a duplicate approved payment requiring financial review',async(t)=>{
+  t.after(reset);configure();
+  globalThis.fetch=async(url)=>{
+    if(url.includes('/quotes?'))return Response.json([{id:'quote-1'}]);
+    if(url.includes('/orders?'))return Response.json([{id:'order-1',quote_id:'quote-1'}]);
+    if(url.includes('/production_jobs?'))return Response.json([{order_id:'order-1'}]);
+    if(url.includes('/center_checkout_payments?'))return Response.json([
+      {quote_id:'quote-1',reconciliation_status:'applied'},
+      {quote_id:'quote-1',reconciliation_status:'duplicate_charge'}
+    ]);
+    return Response.json([]);
+  };
+  const res=response();
+  await checkoutAudit(request(),res);
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.duplicate_approved_charges,1);
+  assert.equal(res.body.status,'critical');
+});
+test('daily audit detects an applied payment missing a paid order',async(t)=>{
+  t.after(reset);configure();
+  globalThis.fetch=async(url)=>{
+    if(url.includes('/center_checkout_payments?'))return Response.json([
+      {quote_id:'quote-not-paid',reconciliation_status:'applied'}
+    ]);
+    return Response.json([]);
+  };
+  const res=response();
+  await checkoutAudit(request(),res);
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.applied_payments_without_paid_order,1);
 });
 test('daily checkout health is scheduled once per day using an authenticated route',()=>{
   const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
