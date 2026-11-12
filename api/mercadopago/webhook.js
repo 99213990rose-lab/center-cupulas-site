@@ -101,7 +101,13 @@ export default async function handler(req, res) {
       return respond(res, saved.status >= 500 ? 503 : 409, { error: 'reconciliation_failed' });
     }
     const result = await saved.json();
-    if (result?.status === 'duplicate_charge') {
+    // Never acknowledge an approved charge when the database cannot prove it was recorded.
+    // A non-2xx response lets Mercado Pago retry a transient incomplete reconciliation.
+    if (!result || !['applied', 'duplicate_charge'].includes(result.status)) {
+      console.error('center-webhook unexpected reconciliation response', id);
+      return respond(res, 503, { error: 'reconciliation_incomplete' });
+    }
+    if (result.status === 'duplicate_charge') {
       console.error('CENTER PAYMENT REQUIRES REVIEW: duplicate approved charge', id);
     }
     return respond(res, 200, {

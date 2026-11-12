@@ -21,13 +21,16 @@ export default async function handler(req,res) {
   if(provided.length!==expected.length||!timingSafeEqual(provided,expected)){
     return reply(res,403,{error:'invalid_receipt'});
   }
+  // Share one deadline across all database reads; a slow dependency must not leave
+  // the customer waiting through three consecutive timeouts.
+  const deadline = AbortSignal.timeout(9000);
   // Only send the service key from the server, never from the shopper's browser.
   const headers={apikey:secret};
   if(!secret.startsWith('sb_secret_'))headers.Authorization='Bearer '+secret;
   async function list(table,filters,columns){
     const query=new URLSearchParams({...filters,select:columns,limit:'1'});
     const response=await fetch(url+'/rest/v1/'+table+'?'+query.toString(),{
-      headers,signal:AbortSignal.timeout(7000)
+      headers,signal:deadline
     });
     if(!response.ok)throw Error('read_failed');
     const data=await response.json();

@@ -37,7 +37,8 @@ export default async function handler(req, res) {
     const quoteResponse = await fetch(QUOTE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: SITE },
-      body: JSON.stringify({ action: 'payment', items, customer, shippingSelection: { code: shippingSelection.code } })
+      body: JSON.stringify({ action: 'payment', items, customer, shippingSelection: { code: shippingSelection.code } }),
+      signal: AbortSignal.timeout(10000)
     });
     const quote = await quoteResponse.json();
     if (!quoteResponse.ok || !quote.submitted) return json(res, 422, { error: 'quote_unavailable' });
@@ -68,7 +69,9 @@ export default async function handler(req, res) {
     };
     let preferenceResponse;
     try {
-      preferenceResponse=await fetch('https://api.mercadopago.com/checkout/preferences',preferenceRequest);
+      preferenceResponse=await fetch('https://api.mercadopago.com/checkout/preferences',{
+        ...preferenceRequest, signal: AbortSignal.timeout(10000)
+      });
     } catch {
       // Native HTTPS fallback for recoverable Node fetch/Undici connection errors.
       console.warn('center-checkout using native HTTPS fallback for Mercado Pago');
