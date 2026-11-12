@@ -356,11 +356,15 @@ Deno.serve(async(req:Request)=>{
     const leadMetadata={checkout_address:shippingAddress,checkout_packaging:packaging};
     if(existing.data?.id){
       leadId=existing.data.id;
-      await sb.from("crm_leads").update({
-        display_name:name,email:email||null,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString(),
+      // A returning buyer may omit an email. Never erase a previous CRM email
+      // merely because this particular checkout did not include one.
+      const leadUpdate=await sb.from("crm_leads").update({
+        display_name:name,...(email?{email}:{}),last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString(),
         source_detail:"site_cart_checkout",
         metadata:{...(existing.data.metadata||{}),...leadMetadata}
-      }).eq("id",leadId);
+      }).eq("id",leadId).eq("organization_id",ORG_ID);
+      // A recoverable CRM enrichment failure must not prevent a paid checkout.
+      if(leadUpdate.error)console.warn("public-cart-checkout crm_lead_update_failed",leadUpdate.error.code||"unknown");
     }else{
       const inserted=await sb.from("crm_leads").insert({
         organization_id:ORG_ID,source_channel:"website",source_detail:"site_cart_checkout",
