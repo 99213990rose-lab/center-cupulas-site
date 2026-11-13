@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       shippingSelection:{code:shippingSelection.code}
     });
     const base=String(process.env.SUPABASE_URL||'').replace(/\/$/,'');
-    if(base!==new URL(QUOTE_API).origin)
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(base))
       return json(res,503,{error:'checkout_attestation_not_configured'});
     const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
     const digest=createHash('sha256').update(quotePayload,'utf8').digest('hex');
