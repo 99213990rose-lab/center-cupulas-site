@@ -3,7 +3,22 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import webhook from '../api/mercadopago/webhook.js';
-import createCheckout from '../api/mercadopago/create-checkout.js';
+import checkoutWithAttestation from '../api/mercadopago/create-checkout.js';
+
+// Existing payment-mock fixtures focus on the financial contract and never
+// contact a real database. The dedicated attestation tests exercise issuance,
+// cryptographic payload binding and replay resistance independently.
+async function createCheckout(req,res) {
+  const priorFetch=globalThis.fetch;
+  globalThis.fetch=(url,options)=>{
+    if(String(url).endsWith('/rest/v1/rpc/center_issue_checkout_attestation'))
+      return Promise.resolve(Response.json('33333333-3333-4333-8333-333333333333'));
+    return priorFetch(url,options);
+  };
+  try{return await checkoutWithAttestation(req,res);}
+  finally{globalThis.fetch=priorFetch;}
+}
+
 import orderStatus from '../api/mercadopago/order-status.js';
 import status from '../api/mercadopago/status.js';
 import mpTransport from '../api/mercadopago/transport.cjs';
