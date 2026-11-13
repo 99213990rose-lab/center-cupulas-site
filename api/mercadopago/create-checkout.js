@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       action:'payment',items,customer,checkout_attempt_id:checkoutAttempt,
       shippingSelection:{code:shippingSelection.code}
     });
-    const base=String(process.env.SUPABASE_URL||'').replace(/\\/$/,'');
+    const base=String(process.env.SUPABASE_URL||'').replace(/\/$/,'');
     if(base!==new URL(QUOTE_API).origin)
       return json(res,503,{error:'checkout_attestation_not_configured'});
     const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
