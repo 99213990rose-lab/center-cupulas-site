@@ -17,7 +17,7 @@ const respond = (res, status, data) => res.status(status)
   .setHeader('X-Robots-Tag', 'noindex, nofollow').json(data);
 
 export default async function handler(req, res) {
-  if (req.query?.operation === 'production_fittings')
+  if (['production_fittings', 'operations_health'].includes(req.query?.operation))
     return handleFittings(req, res);
   if (req.method !== 'POST') return respond(res, 405, {error:'method_not_allowed'});
   if (![SITE,'https://centercupulas.com.br'].includes(req.headers?.origin))
