@@ -21,6 +21,6 @@ test('fitting review is still routed through the authenticated operations handle
   const source=readFileSync(join(root,'api/operations/record-tracking.js'),'utf8');
   assert.ok(existsSync(join(root,'lib/production-fittings.mjs')));
   assert.match(source,/import handleFittings from '\.\.\/\.\.\/lib\/production-fittings\.mjs'/);
-  assert.match(source,/req\.query\?\.operation === 'production_fittings'/);
+  assert.match(source,/\['production_fittings', 'operations_health'\]\.includes\(req\.query\?\.operation\)/);
   assert.match(source,/return handleFittings\(req, res\)/);
 });
