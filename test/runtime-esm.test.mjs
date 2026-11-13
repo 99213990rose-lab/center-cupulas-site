@@ -16,7 +16,9 @@ test('critical serverless entrypoints and their ESM dependencies import cleanly'
     '../api/internal/order-email-cron.js',
     '../api/operations/record-tracking.js',
     '../api/mercadopago/create-checkout.js',
-    '../api/mercadopago/webhook.js'
+    '../api/mercadopago/webhook.js',
+    '../api/catalogo.js',
+    '../api/salesops-meta.js'
   ];
   for(const path of paths){
     const handler=(await import(path)).default;
