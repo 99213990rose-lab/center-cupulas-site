@@ -34,6 +34,18 @@ Depois de confirmar tecnicamente o encaixe de **cada item**, o responsável pode
 
 A alteração atômica atualiza somente `production_jobs.specs.line_items[].encaixe` e registra o operador/timestamp em `center_production_fitting_reviews`; **não modifica a cotação paga, os valores ou a situação da entrega**. Uma segunda tentativa idêntica retorna `reused`; uma diferente é recusada e requer análise individual. A revisão de encaixe não marca automaticamente `review_required=false`, pois outras etapas técnicas podem estar pendentes. O indicador de encaixe na auditoria passa a consultar a ficha de produção, preservando o pedido original.
 
+### Histórico de ocorrências (sem dados pessoais)
+
+O cron privado `GET /api/internal/checkout-audit` chama uma transação com a auditoria financeira existente e salva o resultado do dia em `center_ops_audit_runs`. O registro contém somente contagens e status; execuções repetidas no mesmo dia incrementam `scan_count` e atualizam o último resultado.
+
+A tabela restrita `center_ops_incidents` acompanha três condições independentes: `payment_integrity` (crítico), `unconfirmed_fittings` (atenção) e `email_delivery` (atenção). A ocorrência permanece aberta enquanto a pendência existir e só passa a resolvida após nova auditoria confirmar contagem zero. Reaberturas preservam observações para diagnóstico.
+
+O indicador de e-mails agora considera também os estados `retry`, `skipped` e `sending` há mais de 20 minutos; nenhuma mensagem é enviada ou marcada como entregue por esta auditoria.
+
+O proprietário ou administrador autenticado pode consultar o resumo em `GET /api/operations/record-tracking?operation=operations_health` usando seu token de sessão Supabase. A rota não expõe contatos, valores, endereços, IDs de pagamento ou segredo de acesso. Esta operação compartilha a função de servidor existente para não ultrapassar o limite da Vercel Hobby.
+
+**Limite atual:** o histórico não substitui um serviço de alerta por e-mail/WhatsApp: as ocorrências ficam registradas no banco e nos logs até que um canal de notificação oficialmente autenticado seja ativado.
+
 O endpoint **não** compara diretamente a conta Mercado Pago com o banco. A conciliação bancária completa requer uma integração de leitura autenticada separada e controles de acesso.
 
 Se retornar `503`, verificar logs e integridade antes de intervir. Se retornar `attention`, investigar notificações.
