@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import productionReview from '../api/operations/production-fittings.js';
+import productionReview from '../api/operations/record-tracking.js';
 
 const existingFetch=globalThis.fetch;
 const envs=['SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'];
@@ -10,7 +10,7 @@ const sessionToken='t'.repeat(48);
 const operatorId='11111111-1111-4111-8111-111111111111';
 const orderCode='PED-WEB-010';
 const request=(method='GET',overrides={})=>({
-  method,headers:{origin:'https://www.centercupulas.com.br',
+  method,query:{operation:'production_fittings'},headers:{origin:'https://www.centercupulas.com.br',
     authorization:'Bearer '+sessionToken},
   ...(method==='POST'?{body:{order_code:orderCode,fittings:['nacional','lira']}}:{}),
   ...overrides
