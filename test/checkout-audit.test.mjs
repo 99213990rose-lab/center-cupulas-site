@@ -39,6 +39,9 @@ function snapshot(overrides = {}) {
     stale_email_notifications: 0,
     pending_emails_never_attempted: 0,
     active_online_orders_missing_fitting: 0,
+    email_retry_notifications: 0,
+    email_failed_notifications: 0,
+    email_stuck_sending_notifications: 0,
     ...overrides
   };
 }
@@ -59,7 +62,7 @@ test('cron requests exactly one database aggregation with service-role key', asy
   let calls = 0;
   globalThis.fetch = async (url, options) => {
     calls++;
-    assert.equal(url, 'https://example.supabase.co/rest/v1/rpc/center_checkout_integrity_snapshot');
+    assert.equal(url, 'https://example.supabase.co/rest/v1/rpc/center_record_operational_audit');
     assert.equal(options.method, 'POST');
     assert.equal(options.headers.apikey, 'sb_secret_example_placeholder');
     assert.equal(options.headers.Authorization, undefined);
@@ -84,6 +87,17 @@ test('unconfirmed lamp fitting makes operations need attention, not failed payme
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.status, 'attention');
   assert.equal(response.body.active_online_orders_missing_fitting, 8);
+});
+
+test('retry, skipped and abandoned sending email states all require operational attention', async t => {
+  setup(t);
+  for (const field of ['email_retry_notifications', 'email_failed_notifications', 'email_stuck_sending_notifications']) {
+    globalThis.fetch = async () => Response.json(snapshot({[field]: 1}));
+    const response = res();
+    await audit(req(), response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.status, 'attention');
+  }
 });
 
 test('financial mismatch is critical, even when other metrics are healthy', async t => {
