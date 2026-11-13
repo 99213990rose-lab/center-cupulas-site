@@ -376,7 +376,6 @@ Deno.serve(async(req:Request)=>{
       leadId=inserted.data.id;
     }
 
-    const code="WEB-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,6).toUpperCase();
     const lineItems=pricedFinal.map(x=>({
       description:(x.format_label||x.format)+" "+x.top+"×"+x.bottom+"×"+x.height+" cm",
       format:x.format,material:x.material,color:x.color,reference:x.reference,
@@ -404,8 +403,8 @@ Deno.serve(async(req:Request)=>{
     };
     // Procurement costs are internal: they are NOT added to the client's total
     // and NEVER substituted for a carrier's freight tariff.
-    const insertedQuote=await sb.from("quotes").insert({
-      organization_id:ORG_ID,lead_id:leadId,code,status:"draft",line_items:lineItems,
+    const quotePayload={
+      lead_id:leadId,line_items:lineItems,
       subtotal:productTotal,freight:freightValue,total:finalTotal,currency:"BRL",
       customer_name:name,customer_phone:phone,shipping:{...shipping,customer_email:email||null,box_purchase_budget:{...boxBudget,included_in_products:true}},
       notes:[
@@ -425,16 +424,44 @@ Deno.serve(async(req:Request)=>{
         unlocked&&!promoApplied&&!kitApplied?("Desconto de "+discountPct+"% aplicado por volume."):null,
         email?("E-mail: "+email):null,notes?("Cliente: "+notes):null
       ].filter(Boolean).join(" | ")
-    }).select("id,code").single();
-    if(insertedQuote.error)throw new Error(insertedQuote.error.message);
+    };
+    let createdQuote:{id:string;code:string}|null=null;
+    if(action==="payment"){
+      // The browser reuses a 128-bit attempt ID for identical checkout input.
+      // Server-controlled totals, freight and items are hashed inside the
+      // transaction; a changed payload cannot reuse a previous quote.
+      const rawAttempt=String(body.checkout_attempt_id||"");
+      const attemptId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawAttempt)
+        ?rawAttempt:crypto.randomUUID();
+      const attempt=await sb.rpc("center_create_checkout_quote_once",{
+        p_attempt_id:attemptId,p_quote_payload:quotePayload
+      });
+      if(attempt.error){
+        if(String(attempt.error.message||"").includes("checkout_attempt_conflict"))
+          return json({error:"checkout_attempt_conflict"},409,origin);
+        throw new Error("checkout_quote_write_failed");
+      }
+      const result=attempt.data;
+      if(!result?.id||!result?.code)throw new Error("checkout_quote_write_failed");
+      if(result.status!=="draft")return json({error:"checkout_already_paid"},409,origin);
+      createdQuote={id:result.id,code:result.code};
+    }else{
+      // Manual WhatsApp quotes preserve their original workflow.
+      const code="WEB-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,6).toUpperCase();
+      const inserted=await sb.from("quotes").insert({
+        ...quotePayload,organization_id:ORG_ID,code,status:"draft"
+      }).select("id,code").single();
+      if(inserted.error)throw new Error("checkout_quote_write_failed");
+      createdQuote=inserted.data;
+    }
 
     return json({
       ...preview,
       freight:verifiedFreight?freightValue:null,
       total:finalTotal,
       submitted:true,
-      quote_id:insertedQuote.data.id,
-      quote_code:insertedQuote.data.code,
+      quote_id:createdQuote.id,
+      quote_code:createdQuote.code,
       shipping
     },200,origin);
   }catch(error){
