@@ -94,7 +94,7 @@ test('an already-paid retry cannot generate another payment preference',async t=
 });
 test('fallback UUID generation uses the imported crypto primitive',()=>{
   const source=readFileSync(new URL('../api/mercadopago/create-checkout.js',import.meta.url),'utf8');
-  assert.match(source,/import \{createHmac,randomUUID\} from 'node:crypto'/);
+  assert.match(source,/import \{createHmac,createHash,randomUUID\} from 'node:crypto'/);
   assert.match(source,/\?clientAttempt:randomUUID\(\)/);
   assert.doesNotMatch(source,/crypto\.randomUUID\(\)/);
 });
