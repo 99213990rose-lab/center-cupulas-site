@@ -74,6 +74,11 @@ export default async function handler(req,res) {
           freight:price(ship.freight),
           carrier:str(ship.carrier,80),service:str(ship.service,80),
           tracking_code:str(ship.tracking_code,110),
+          tracking_codes:Array.isArray(ship.tracking_codes)
+            ?ship.tracking_codes.filter(code=>typeof code==='string')
+              .slice(0,8).map(code=>str(code,80))
+            :ship.tracking_code?[str(ship.tracking_code,80)]:[],
+          tracking_registered_at:str(ship.tracking_registered_at,45),
           delivery_days:Number.isFinite(Number(ship.delivery_days))?Number(ship.delivery_days):null,
           address:allow(ship,'address')?{
             street:str(ship.address.street,160),number:str(ship.address.number,35),
