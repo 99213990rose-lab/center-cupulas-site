@@ -76,8 +76,11 @@ export default async function handler(req, res) {
     if (!quoteResponse.ok || !quote.submitted) {
       const conflict=quote?.error==='checkout_attempt_conflict';
       const completed=quote?.error==='checkout_already_paid';
-      return json(res, conflict?409:completed?409:422, {
-        error: conflict?'checkout_attempt_conflict':completed?'checkout_already_paid':'quote_unavailable'
+      const forbidden=quote?.error==='payment_request_unauthorized';
+      return json(res, forbidden?503:conflict||completed?409:422, {
+        error: forbidden?'payment_service_unavailable':
+          conflict?'checkout_attempt_conflict':
+          completed?'checkout_already_paid':'quote_unavailable'
       });
     }
     if ((pickup ? quote.shipping?.status !== 'pickup' || Number(quote.shipping?.freight) !== 0
