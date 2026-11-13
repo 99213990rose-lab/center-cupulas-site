@@ -1,5 +1,5 @@
 import mpTransport from './transport.cjs';
-import {createHmac} from 'node:crypto';
+import {createHmac,randomUUID} from 'node:crypto';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
   .replace(/^Bearer\s+/i, '')
@@ -27,6 +27,11 @@ export default async function handler(req, res) {
   if (![SITE, 'https://centercupulas.com.br'].includes(origin)) return json(res, 403, { error: 'invalid_origin' });
   try {
     const { items, customer, shippingSelection } = req.body || {};
+    const clientAttempt=String(req.body?.checkout_attempt_id||"");
+    // Remain backward-compatible with older tabs while new browsers send a
+    // stable, randomly generated checkout_attempt_id on transport retries.
+    const checkoutAttempt=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientAttempt)
+      ?clientAttempt:crypto.randomUUID();
     if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code ||
         typeof shippingSelection?.price !== 'number' || !Number.isFinite(shippingSelection.price) || shippingSelection.price < 0 ||
         typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0 ||
@@ -37,11 +42,18 @@ export default async function handler(req, res) {
     const quoteResponse = await fetch(QUOTE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: SITE },
-      body: JSON.stringify({ action: 'payment', items, customer, shippingSelection: { code: shippingSelection.code } }),
+      body: JSON.stringify({ action: 'payment', items, customer,
+        checkout_attempt_id: checkoutAttempt, shippingSelection: { code: shippingSelection.code } }),
       signal: AbortSignal.timeout(10000)
     });
     const quote = await quoteResponse.json();
-    if (!quoteResponse.ok || !quote.submitted) return json(res, 422, { error: 'quote_unavailable' });
+    if (!quoteResponse.ok || !quote.submitted) {
+      const conflict=quote?.error==='checkout_attempt_conflict';
+      const completed=quote?.error==='checkout_already_paid';
+      return json(res, conflict?409:completed?409:422, {
+        error: conflict?'checkout_attempt_conflict':completed?'checkout_already_paid':'quote_unavailable'
+      });
+    }
     if ((pickup ? quote.shipping?.status !== 'pickup' || Number(quote.shipping?.freight) !== 0
         : quote.shipping?.status !== 'quoted') || quote.packaging?.status !== 'estimated' ||
         !Number.isFinite(Number(quote.total)) || Number(quote.total) <= 0 || !quote.quote_id) {
