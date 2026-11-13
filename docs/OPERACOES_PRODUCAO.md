@@ -32,7 +32,9 @@ Se retornar `503`, verificar logs e integridade antes de intervir. Se retornar `
 
 ## E-mails e privacidade
 
-`center_order_email_outbox` armazena a fila, mas **a fila sozinha não envia e-mails**. Um serviço de entrega com autenticação, política de repetição segura e confirmação do provedor ainda precisa ser configurado.
+`center_order_email_outbox` armazena a fila. O worker privado de confirmação por e-mail foi preparado em `api/internal/order-email-cron.js`, porém **não envia mensagens sem configuração explícita**, remetente verificado e integração com o provedor. Exige `CENTER_ORDER_EMAIL_ENABLED=true`, `RESEND_API_KEY`, `CENTER_ORDER_EMAIL_FROM` e `CENTER_ORDER_EMAIL_NOT_BEFORE` na Vercel Production.
+
+Mensagens antigas, inclusive as quatro notificações já pendentes, não devem ser enviadas tardiamente por acidente. O worker não reprocessa automaticamente tentativas cujo prazo de idempotência já passou. Consultar `docs/CONFIRMACAO_EMAIL.md` antes de ativar. O cron é diário e não significa confirmação imediata após a compra.
 
 E-mail de pedido é um dado fornecido no checkout. Não preencher retroativamente com o e-mail de um lead encontrado apenas pelo telefone: pessoas diferentes podem compartilhar ou reutilizar o número.
 
