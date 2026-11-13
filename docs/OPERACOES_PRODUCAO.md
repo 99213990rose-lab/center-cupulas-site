@@ -28,9 +28,9 @@ Os resultados contêm somente contagens. A auditoria é **somente leitura** e id
 
 ### Confirmação técnica por item (API restrita)
 
-A partir desta revisão, `GET /api/operations/production-fittings` fornece uma lista de até 40 pedidos online pagos com pelo menos um item sem encaixe confirmado **na ficha de produção**. Exige sessão Supabase com e-mail verificado e vínculo `owner` ou `admin` na organização Center Cúpulas. A resposta não inclui telefone, e-mail, endereço, preços ou observações particulares do cliente.
+A partir desta revisão, `GET /api/operations/record-tracking?operation=production_fittings` fornece uma lista de até 40 pedidos online pagos com pelo menos um item sem encaixe confirmado **na ficha de produção**. Exige sessão Supabase com e-mail verificado e vínculo `owner` ou `admin` na organização Center Cúpulas. A resposta não inclui telefone, e-mail, endereço, preços ou observações particulares do cliente.
 
-Depois de confirmar tecnicamente o encaixe de **cada item**, o responsável pode registrar o resultado via `POST /api/operations/production-fittings`, usando os campos `order_code` e `fittings` (na mesma ordem dos itens). Valores permitidos: `nacional`, `importado`, `colonial`, `lira`, `sem_encaixe` (este último somente quando realmente não existe encaixe). Não fazer chamadas sem as informações verificadas.
+Depois de confirmar tecnicamente o encaixe de **cada item**, o responsável pode registrar o resultado via `POST /api/operations/record-tracking?operation=production_fittings`, usando os campos `order_code` e `fittings` (na mesma ordem dos itens). Valores permitidos: `nacional`, `importado`, `colonial`, `lira`, `sem_encaixe` (este último somente quando realmente não existe encaixe). Não fazer chamadas sem as informações verificadas.
 
 A alteração atômica atualiza somente `production_jobs.specs.line_items[].encaixe` e registra o operador/timestamp em `center_production_fitting_reviews`; **não modifica a cotação paga, os valores ou a situação da entrega**. Uma segunda tentativa idêntica retorna `reused`; uma diferente é recusada e requer análise individual. A revisão de encaixe não marca automaticamente `review_required=false`, pois outras etapas técnicas podem estar pendentes. O indicador de encaixe na auditoria passa a consultar a ficha de produção, preservando o pedido original.
 
