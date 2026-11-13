@@ -38,6 +38,7 @@ function snapshot(overrides = {}) {
     pending_email_notifications: 0,
     stale_email_notifications: 0,
     pending_emails_never_attempted: 0,
+    active_online_orders_missing_fitting: 0,
     ...overrides
   };
 }
@@ -72,8 +73,19 @@ test('cron requests exactly one database aggregation with service-role key', asy
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.status, 'attention');
   assert.equal(response.body.pending_email_notifications, 4);
+  assert.equal(response.body.active_online_orders_missing_fitting, 0);
   assert.equal(response.body.paid_quotes_without_orders, 0);
 });
+test('unconfirmed lamp fitting makes operations need attention, not failed payments', async t => {
+  setup(t);
+  globalThis.fetch = async () => Response.json(snapshot({active_online_orders_missing_fitting: 8}));
+  const response = res();
+  await audit(req(), response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.status, 'attention');
+  assert.equal(response.body.active_online_orders_missing_fitting, 8);
+});
+
 test('financial mismatch is critical, even when other metrics are healthy', async t => {
   setup(t);
   globalThis.fetch = async () => Response.json(snapshot({applied_payments_without_paid_order: 1}));
