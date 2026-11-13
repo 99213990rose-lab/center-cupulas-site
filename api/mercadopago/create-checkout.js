@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     // Remain backward-compatible with older tabs while new browsers send a
     // stable, randomly generated checkout_attempt_id on transport retries.
     const checkoutAttempt=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientAttempt)
-      ?clientAttempt:crypto.randomUUID();
+      ?clientAttempt:randomUUID();
     if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code ||
         typeof shippingSelection?.price !== 'number' || !Number.isFinite(shippingSelection.price) || shippingSelection.price < 0 ||
         typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0 ||
