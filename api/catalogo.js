@@ -1,6 +1,6 @@
 // Redirect to the published catalogue without tracking visitors who have not
 // opted into analytics. Optional measurement is handled by the consent-aware UI.
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   if (req.method !== 'GET' && req.method !== 'HEAD') {

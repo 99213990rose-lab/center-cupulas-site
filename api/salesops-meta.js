@@ -7,7 +7,7 @@ const ACTIONS = Object.freeze({
   appWebhooks: 'meta-app-webhooks'
 });
 const fail = (res, status, code) => res.status(status).json({ error: code });
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
