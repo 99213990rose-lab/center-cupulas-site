@@ -24,7 +24,6 @@ as $fn$
 declare
   v_org constant uuid := 'e3cb8002-ebaa-4d3a-acd3-46a678815e7b';
   v_job public.production_jobs%rowtype;
-  v_order_code text;
   v_existing public.center_production_fitting_reviews%rowtype;
   v_items jsonb;
   v_new jsonb := '[]'::jsonb;
@@ -50,7 +49,7 @@ begin
   then raise exception 'invalid_fitting_input'; end if;
 
   -- Lock the production record. Paid orders remain immutable.
-  select j.*, o.code into v_job, v_order_code
+  select j.* into v_job
   from public.production_jobs j
   join public.orders o on o.id = j.order_id
   where o.organization_id = v_org and j.organization_id = v_org
