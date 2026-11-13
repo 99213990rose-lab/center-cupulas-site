@@ -1,6 +1,7 @@
 // Private, read-only daily health check for Center Cúpulas production orders.
 // Vercel Cron sends Authorization: Bearer $CRON_SECRET.
-// All cross-table counting runs inside Postgres, with no customer data exported.
+// SQL aggregates counts and records historical incidents in one transaction.
+// No customer data is exported or sent to external alert providers.
 import { isInternalCronAuthorized } from '../../lib/cron-auth.mjs';
 
 const COUNT_KEYS = Object.freeze([
@@ -11,7 +12,10 @@ const COUNT_KEYS = Object.freeze([
   'pending_email_notifications',
   'stale_email_notifications',
   'pending_emails_never_attempted',
-  'active_online_orders_missing_fitting'
+  'active_online_orders_missing_fitting',
+  'email_retry_notifications',
+  'email_failed_notifications',
+  'email_stuck_sending_notifications'
 ]);
 
 const reply = (res, code, data) => res.status(code)
@@ -34,7 +38,7 @@ export default async function handler(req, res) {
   const headers = { apikey: key, 'Content-Type': 'application/json' };
   if (!key.startsWith('sb_secret_')) headers.Authorization = 'Bearer ' + key;
   try {
-    const upstream = await fetch(base + '/rest/v1/rpc/center_checkout_integrity_snapshot', {
+    const upstream = await fetch(base + '/rest/v1/rpc/center_record_operational_audit', {
       method: 'POST',
       headers,
       body: '{}',
@@ -52,6 +56,9 @@ export default async function handler(req, res) {
       counts.applied_payments_without_paid_order > 0 ||
       counts.duplicate_approved_charges > 0;
     const attention = counts.pending_email_notifications > 0 ||
+      counts.email_retry_notifications > 0 ||
+      counts.email_failed_notifications > 0 ||
+      counts.email_stuck_sending_notifications > 0 ||
       counts.active_online_orders_missing_fitting > 0;
     if (critical) console.error('center-checkout-audit reconciliation_problem', counts);
     else if (attention) console.warn('center-checkout-audit operational_review_pending', counts);
