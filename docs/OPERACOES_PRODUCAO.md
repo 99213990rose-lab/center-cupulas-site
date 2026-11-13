@@ -21,7 +21,10 @@ Os resultados contêm somente contagens. A auditoria é **somente leitura** e id
 - pedido online pago sem ficha de produção;
 - pagamento registrado no Supabase sem cotação/pedido pago;
 - registro de cobrança duplicada;
-- notificações de e-mail pendentes, antigas e nunca tentadas.
+- notificações de e-mail pendentes, antigas e nunca tentadas;
+- pedidos online pagos em produção ainda sem encaixe documentado de forma estruturada.
+
+**Encaixe não pode ser presumido:** a sinalização exige conferência humana com a ficha/cliente. Não atribuir automaticamente "nacional" ou outro tipo de encaixe a vendas existentes.
 
 O endpoint **não** compara diretamente a conta Mercado Pago com o banco. A conciliação bancária completa requer uma integração de leitura autenticada separada e controles de acesso.
 

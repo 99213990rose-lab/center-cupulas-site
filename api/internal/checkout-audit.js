@@ -10,7 +10,8 @@ const COUNT_KEYS = Object.freeze([
   'duplicate_approved_charges',
   'pending_email_notifications',
   'stale_email_notifications',
-  'pending_emails_never_attempted'
+  'pending_emails_never_attempted',
+  'active_online_orders_missing_fitting'
 ]);
 
 const reply = (res, code, data) => res.status(code)
@@ -50,9 +51,10 @@ export default async function handler(req, res) {
       counts.paid_checkout_orders_without_jobs > 0 ||
       counts.applied_payments_without_paid_order > 0 ||
       counts.duplicate_approved_charges > 0;
-    const attention = counts.pending_email_notifications > 0;
+    const attention = counts.pending_email_notifications > 0 ||
+      counts.active_online_orders_missing_fitting > 0;
     if (critical) console.error('center-checkout-audit reconciliation_problem', counts);
-    else if (attention) console.warn('center-checkout-audit email_delivery_pending', counts);
+    else if (attention) console.warn('center-checkout-audit operational_review_pending', counts);
 
     return reply(res, critical ? 503 : 200, {
       ok: !critical,
