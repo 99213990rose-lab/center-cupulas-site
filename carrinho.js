@@ -4,6 +4,7 @@
   const ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
   const CEP_ENDPOINT = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cep-lookup';
   const WHATSAPP_NUMBER = '5512983216069';
+  const CHECKOUT_ATTEMPT_KEY = 'center-cupulas-checkout-attempt-v1';
   const cart = window.CenterCupulasCart;
 
   const itemsHost = document.querySelector('[data-cart-items]');
@@ -555,6 +556,26 @@
   });
   cepInput?.addEventListener('blur', lookupCep);
 
+  // Preserve a retry identifier for this exact checkout payload, without
+  // storing addresses or customer names in sessionStorage.
+  async function checkoutAttemptFor(payload) {
+    const uuid = window.crypto?.randomUUID?.();
+    if (!uuid) return null; // Legacy browsers keep the current safe server flow.
+    try {
+      const digest=await window.crypto.subtle.digest('SHA-256',
+        new TextEncoder().encode(JSON.stringify(payload)));
+      const fingerprint=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+      const current=JSON.parse(sessionStorage.getItem(CHECKOUT_ATTEMPT_KEY)||'null');
+      if(current?.fingerprint===fingerprint &&
+         typeof current.id==='string' &&
+         /^[0-9a-f-]{36}$/i.test(current.id) &&
+         Date.now()-Number(current.at)<30*60*1000) return current.id;
+      sessionStorage.setItem(CHECKOUT_ATTEMPT_KEY,
+        JSON.stringify({id:uuid,fingerprint,at:Date.now()}));
+    }catch{ /* Storage/crypto unavailable; the provider still verifies all payments. */ }
+    return uuid;
+  }
+
   checkoutForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const items = apiItems();
@@ -614,11 +635,17 @@
     try {
       if (checkoutProEnabled) {
         if (!selectedShipping) throw new Error('shipping_required');
+        const checkoutPayload = {
+          items,customer,
+          shippingSelection:{code:selectedShipping.code,price:Number(selectedShipping.price),
+            productTotal:Number(preview.product_total)}
+        };
+        const checkout_attempt_id=await checkoutAttemptFor(checkoutPayload);
         const response = await fetch('/api/mercadopago/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ items, customer, shippingSelection: { code: selectedShipping.code, price: Number(selectedShipping.price), productTotal: Number(preview.product_total) } })
+          body: JSON.stringify({...checkoutPayload,checkout_attempt_id})
         });
         const data = await response.json();
         if (!response.ok || !data.checkout_url) throw new Error(data.error || 'payment_unavailable');
@@ -716,12 +743,19 @@
         ? 'Não foi possível concluir a preparação do pedido. Tente novamente.'
         : error?.message === 'receipt_unavailable'
         ? 'O pedido não pôde ser acompanhado com segurança. Nenhuma nova cobrança deve ser tentada antes de confirmar o status do pedido.'
+        : error?.message === 'checkout_already_paid'
+        ? 'Esta tentativa já foi paga. Consulte seu pedido antes de iniciar outro pagamento.'
+        : error?.message === 'checkout_attempt_conflict'
+        ? 'As condições do pedido mudaram. Confira o valor atualizado antes de tentar novamente.'
         : error?.message === 'price_changed' ? 'O valor foi atualizado. Confira novamente o frete e o total antes de pagar.'
         : error?.message === 'shipping_required' ? 'Escolha um frete válido antes de pagar.'
         : error?.message === 'Escolha uma opção de frete antes de continuar.'
         ? 'Escolha uma opção de frete para enviar o pedido.'
         : 'Revise os dados e tente novamente. Se continuar, fale com a equipe pelo WhatsApp.';
-      if (error?.message === 'price_changed') refreshPreview();
+      if (['price_changed','checkout_attempt_conflict'].includes(error?.message)) {
+        try { sessionStorage.removeItem(CHECKOUT_ATTEMPT_KEY); } catch {}
+        refreshPreview();
+      }
       setStatus('error', '<strong>Confira os dados do pedido.</strong><p>' + escapeHtml(message) + '</p>');
       isSubmitting = false;
       checkoutButton.textContent = checkoutProEnabled ? 'Ir para pagamento seguro' : 'Enviar pedido para confirmação';
@@ -793,7 +827,10 @@
       if(response.ok && result.state==='confirmed'){
         if(statusTimer)window.clearTimeout(statusTimer);
         const receiptFulfillment = receipt?.fulfillment;
-        try{sessionStorage.removeItem(receiptKey)}catch{}
+        try{
+          sessionStorage.removeItem(receiptKey);
+          sessionStorage.removeItem(CHECKOUT_ATTEMPT_KEY);
+        }catch{}
         receipt=null;
         paymentCheckoutUrl=null;
         document.querySelector('[data-checkout-layout]')?.classList.add('is-complete');
