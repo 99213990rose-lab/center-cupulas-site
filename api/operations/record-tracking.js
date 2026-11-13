@@ -1,3 +1,9 @@
+import handleFittings from '../../lib/production-fittings.mjs';
+
+export const config = {maxDuration:30};
+
+// Keep one serverless entrypoint for internal factory operations on Vercel Hobby.
+// Existing shipment tracking requests still use the same URL unchanged.
 // Owner-only operation to register carrier tracking after the parcel is shipped.
 // Existing customer account pages already read orders.shipping.tracking_code.
 // Never changes amounts, payment status, production specifications or customers.
@@ -11,6 +17,8 @@ const respond = (res, status, data) => res.status(status)
   .setHeader('X-Robots-Tag', 'noindex, nofollow').json(data);
 
 export default async function handler(req, res) {
+  if (req.query?.operation === 'production_fittings')
+    return handleFittings(req, res);
   if (req.method !== 'POST') return respond(res, 405, {error:'method_not_allowed'});
   if (![SITE,'https://centercupulas.com.br'].includes(req.headers?.origin))
     return respond(res,403,{error:'invalid_origin'});
