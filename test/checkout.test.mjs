@@ -10,7 +10,7 @@ import mpTransport from '../api/mercadopago/transport.cjs';
 
 const keys = [
   'CENTER_CHECKOUT_ENABLED','MERCADO_PAGO_ACCESS_TOKEN','MERCADO_PAGO_WEBHOOK_SECRET',
-  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_USE_LIVE_FRENET_RATES','CENTER_PICKUP_ENABLED'
+  'SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','FRENET_TOKEN','CENTER_CUPULAS_ORIGIN_CEP','CENTER_USE_LIVE_FRENET_RATES','CENTER_PICKUP_ENABLED','CRON_SECRET'
 ];
 const baseline = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 const originalFetch = globalThis.fetch;
@@ -39,6 +39,7 @@ function configure() {
   process.env.FRENET_TOKEN = 'frenet_test';
   process.env.CENTER_USE_LIVE_FRENET_RATES = 'true';
   process.env.CENTER_CUPULAS_ORIGIN_CEP = '13421548';
+  process.env.CRON_SECRET = 'testing-cron-secret-123456789';
 }
 function signedRequest(id='1234') {
   const ts = '1760583600';
@@ -227,6 +228,19 @@ test('the legacy shipping flag is not required after the seller enables live Fre
  const disabled=response();status({method:'GET'},disabled);assert.equal(disabled.body.checkout_enabled,false);
 });
 
+test('public Mercado Pago status cannot trigger an upstream credential probe', async t => {
+  t.after(reset); configure();
+  globalThis.fetch = () => { throw Error('provider probe must remain private'); };
+  const publicResult = response();
+  await status({method:'GET'},publicResult);
+  assert.equal(publicResult.statusCode,200);
+  assert.equal(publicResult.body.checkout_enabled,true);
+  const unauthorized = response();
+  await status({method:'GET',query:{diagnose:'connection'},headers:{}},unauthorized);
+  assert.equal(unauthorized.statusCode,401);
+  assert.equal(unauthorized.body.error,'unauthorized');
+});
+
 test('read-only Mercado Pago connection probe distinguishes authorized and unauthorized credentials',async(t)=>{
  t.after(reset);configure();
  let calls=0;
@@ -237,10 +251,10 @@ test('read-only Mercado Pago connection probe distinguishes authorized and unaut
    return {ok:calls===1,status:calls===1?200:401};
  };
  let res=response();
- await status({method:'GET',query:{diagnose:'connection'}},res);
+ await status({method:'GET',query:{diagnose:'connection'},headers:{authorization:'Bearer '+process.env.CRON_SECRET}},res);
  assert.equal(res.body.provider_connection,'authorized');
  assert.equal(Object.hasOwn(res.body,'token'),false);
- res=response();await status({method:'GET',query:{diagnose:'connection'}},res);
+ res=response();await status({method:'GET',query:{diagnose:'connection'},headers:{authorization:'Bearer '+process.env.CRON_SECRET}},res);
  assert.equal(res.body.provider_connection,'unauthorized');
 });
 
@@ -296,7 +310,7 @@ test('diagnostic classification distinguishes a network timeout without disclosi
  mpTransport.requestJson=async()=>{const failure=new TypeError('native_https_failed');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure;};
  globalThis.fetch=async()=>{const failure=new TypeError('secret-network-message');failure.cause={code:'UND_ERR_CONNECT_TIMEOUT'};throw failure};
  const res=response();
- await status({method:'GET',query:{diagnose:'connection'}},res);
+ await status({method:'GET',query:{diagnose:'connection'},headers:{authorization:'Bearer '+process.env.CRON_SECRET}},res);
  assert.equal(res.body.provider_connection,'unavailable');
  assert.equal(res.body.connection_issue,'connect_timeout');
  assert.equal(JSON.stringify(res.body).includes('secret-network-message'),false);
@@ -314,7 +328,7 @@ test('read-only native HTTPS probe succeeds when Undici is failing',async(t)=>{
    return {ok:true,status:200};
  };
  const res=response();
- await status({method:'GET',query:{diagnose:'native'}},res);
+ await status({method:'GET',query:{diagnose:'native'},headers:{authorization:'Bearer '+process.env.CRON_SECRET}},res);
  assert.equal(res.body.provider_connection,'authorized');
  assert.equal(res.body.transport,'node_https');
 });
@@ -361,7 +375,7 @@ test('provider access token copied with whitespace uses a valid Authorization he
    return {ok:true,status:200};
  };
  const statusResult=response();
- await status({method:'GET',query:{diagnose:'native'}},statusResult);
+ await status({method:'GET',query:{diagnose:'native'},headers:{authorization:'Bearer '+process.env.CRON_SECRET}},statusResult);
  assert.equal(statusResult.body.provider_connection,'authorized');
 });
 

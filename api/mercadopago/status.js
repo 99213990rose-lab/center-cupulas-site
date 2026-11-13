@@ -1,4 +1,5 @@
 import mpTransport from './transport.cjs';
+import { isInternalCronAuthorized } from '../../lib/cron-auth.mjs';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
   .replace(/^Bearer\s+/i, '')
@@ -18,6 +19,12 @@ export default async function handler(req, res) {
     /^\d{8}$/.test(originCep);
   const pickupEnabled = false; // Retirada desativada no checkout público.
   if (req.query?.diagnose === 'connection' || req.query?.diagnose === 'native') {
+    // The public status route stays available for the cart, but an anonymous
+    // browser must not be able to trigger external credential checks.
+    if (String(process.env.CRON_SECRET || '').length < 20)
+      return res.status(503).json({ error: 'diagnostics_not_configured' });
+    if (!isInternalCronAuthorized(req))
+      return res.status(401).json({ error: 'unauthorized' });
     // Read-only credential probe; never return token, account data or method details.
     if (!cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)) {
       return res.status(200).json({ checkout_enabled: enabled, provider_connection: 'not_configured' });

@@ -305,7 +305,8 @@ Deno.serve(async(req:Request)=>{
           recipientCep:cep,
           shipmentValue:productTotal,
           packages:packaging.packages
-        })
+        }),
+        signal:AbortSignal.timeout(10000)
       });
       if(freightResponse.ok){
         const freightData=await freightResponse.json();
@@ -437,7 +438,7 @@ Deno.serve(async(req:Request)=>{
       shipping
     },200,origin);
   }catch(error){
-    console.error("public-cart-checkout",error);
+    console.error("public-cart-checkout failure",(error as Error)?.name||"request_error");
     const msg=String((error as Error)?.message||"");
     if(["unsupported_format","invalid_dimensions","invalid_quantity","invalid_kit_quantity","low_confidence"].includes(msg)){
       return json({error:msg,requires_review:true},422,origin);

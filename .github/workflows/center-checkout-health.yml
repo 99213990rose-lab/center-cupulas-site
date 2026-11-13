@@ -55,7 +55,9 @@ jobs:
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          const endpoint = 'https://www.centercupulas.com.br/api/mercadopago/status?diagnose=connection';
+          // Public status is intentionally minimal. Credential/provider checks
+          // run privately through Vercel cron at /api/internal/provider-audit.
+          const endpoint = 'https://www.centercupulas.com.br/api/mercadopago/status';
           const res = await fetch(endpoint, {
             headers: { accept: 'application/json' },
             signal: AbortSignal.timeout(20000)
@@ -63,10 +65,8 @@ jobs:
           if (!res.ok) throw new Error('Checkout status endpoint unavailable: HTTP ' + res.status);
           const status = await res.json();
           const enabled = status.checkout_enabled === true;
-          const authorized = status.provider_connection === 'authorized';
           console.log('Checkout enabled:', enabled);
-          console.log('Mercado Pago connection:', authorized ? 'authorized' : (status.provider_connection || 'unknown'));
-          if (!enabled || !authorized) {
+          if (!enabled) {
             throw new Error('Online checkout needs attention; no charge or order was created.');
           }
           NODE

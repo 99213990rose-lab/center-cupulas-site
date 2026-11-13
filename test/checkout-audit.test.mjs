@@ -1,130 +1,118 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import checkoutAudit from '../api/internal/checkout-audit.js';
+import { readFileSync } from 'node:fs';
+import audit from '../api/internal/checkout-audit.js';
 
-const originalFetch=globalThis.fetch;
-const vars=['CRON_SECRET','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY'];
-const originalEnv=Object.fromEntries(vars.map(k=>[k,process.env[k]]));
-const reset=()=>{
-  globalThis.fetch=originalFetch;
-  for(const key of vars){
-    if(originalEnv[key]===undefined)delete process.env[key];
-    else process.env[key]=originalEnv[key];
-  }
-};
-const configure=()=>{
-  process.env.CRON_SECRET='only-for-test-a-long-random-secret-012345';
-  process.env.SUPABASE_URL='https://example.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY='sb_secret_test_placeholder';
-};
-function response(){
-  return {statusCode:200,headers:{},body:null,
-    status(code){this.statusCode=code;return this;},
-    setHeader(name,value){this.headers[name]=value;return this;},
-    json(data){this.body=data;return this;}};
+const savedFetch = globalThis.fetch;
+const keys = ['CRON_SECRET', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const savedEnv = Object.fromEntries(keys.map(k => [k, process.env[k]]));
+function setup(t) {
+  t.after(() => {
+    globalThis.fetch = savedFetch;
+    for (const key of keys) {
+      if (savedEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = savedEnv[key];
+    }
+  });
+  process.env.CRON_SECRET = 'test-only-private-secret-more-than-twenty-chars';
+  process.env.SUPABASE_URL = 'https://example.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_example_placeholder';
 }
-function request(authorized=true){
-  return {method:'GET',headers:authorized
-    ?{authorization:'Bearer '+process.env.CRON_SECRET}
-    :{authorization:'Bearer invalid'}};
+function res() {
+  return {
+    statusCode: 200, headers: {}, body: null,
+    status(code) { this.statusCode = code; return this; },
+    setHeader(k, v) { this.headers[k] = v; return this; },
+    json(value) { this.body = value; return this; }
+  };
 }
-test('audit cron rejects unauthenticated callers and does not query the database',async(t)=>{
-  t.after(reset);configure();
-  globalThis.fetch=()=>{throw Error('no database call expected')};
-  let res=response();
-  await checkoutAudit(request(false),res);
-  assert.equal(res.statusCode,401);
-  assert.equal(res.body.error,'unauthorized');
-  res=response();
-  await checkoutAudit({method:'POST',headers:{}},res);
-  assert.equal(res.statusCode,405);
+function req(authorization = 'Bearer ' + process.env.CRON_SECRET) {
+  return { method: 'GET', headers: { authorization } };
+}
+function snapshot(overrides = {}) {
+  return {
+    paid_quotes_without_orders: 0,
+    paid_checkout_orders_without_jobs: 0,
+    applied_payments_without_paid_order: 0,
+    duplicate_approved_charges: 0,
+    pending_email_notifications: 0,
+    stale_email_notifications: 0,
+    pending_emails_never_attempted: 0,
+    ...overrides
+  };
+}
+
+test('cron rejects unauthenticated callers before accessing credentials or database', async t => {
+  setup(t);
+  globalThis.fetch = () => { throw Error('must not fetch'); };
+  const unauthorized = res();
+  await audit(req('Bearer wrong'), unauthorized);
+  assert.equal(unauthorized.statusCode, 401);
+  const wrongMethod = res();
+  await audit({ ...req(), method: 'POST' }, wrongMethod);
+  assert.equal(wrongMethod.statusCode, 405);
+  assert.equal(unauthorized.headers['Cache-Control'], 'private, no-store');
 });
-test('daily audit detects pending emails without falsely flagging complete paid orders',async(t)=>{
-  t.after(reset);configure();
-  const urls=[];
-  globalThis.fetch=async(url,options)=>{
-    urls.push(url);
+test('cron requests exactly one database aggregation with service-role key', async t => {
+  setup(t);
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url, 'https://example.supabase.co/rest/v1/rpc/center_checkout_integrity_snapshot');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers.apikey, 'sb_secret_example_placeholder');
+    assert.equal(options.headers.Authorization, undefined);
     assert.ok(options.signal instanceof AbortSignal);
-    assert.ok(options.headers.apikey);
-    if(url.includes('/quotes?'))return Response.json([{id:'quote-1'}]);
-    if(url.includes('/orders?'))return Response.json([{id:'order-1',quote_id:'quote-1'},
-      {id:'manual-1',quote_id:null}]);
-    if(url.includes('/production_jobs?'))return Response.json([{order_id:'order-1'}]);
-    if(url.includes('/center_order_email_outbox?'))return Response.json([{order_id:'mail-1',attempts:0,created_at:new Date(Date.now()-48*3600_000).toISOString()}]);
-    if(url.includes('/center_checkout_payments?'))return Response.json([{quote_id:'quote-1',reconciliation_status:'applied'}]);
-    throw Error('unexpected table');
+    assert.equal(options.body, '{}');
+    return Response.json(snapshot({pending_email_notifications: 4, stale_email_notifications: 4, pending_emails_never_attempted: 4}));
   };
-  const res=response();
-  await checkoutAudit(request(),res);
-  assert.equal(res.statusCode,200);
-  assert.equal(res.body.status,'attention');
-  assert.equal(res.body.paid_quotes_without_orders,0);
-  assert.equal(res.body.paid_checkout_orders_without_jobs,0);
-  assert.equal(res.body.pending_email_notifications,1);
-  assert.equal(res.body.stale_email_notifications,1);
-  assert.equal(res.body.pending_emails_never_attempted,1);
-  assert.equal(res.body.applied_payments_without_paid_order,0);
-  assert.equal(res.body.duplicate_approved_charges,0);
-  assert.equal(urls.length,5);
+  const response = res();
+  await audit(req(), response);
+  assert.equal(calls, 1);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.status, 'attention');
+  assert.equal(response.body.pending_email_notifications, 4);
+  assert.equal(response.body.paid_quotes_without_orders, 0);
 });
-test('daily audit fails closed when a paid quote has no corresponding order',async(t)=>{
-  t.after(reset);configure();
-  globalThis.fetch=async(url)=>{
-    if(url.includes('/quotes?'))return Response.json([{id:'quote-orphan'}]);
-    return Response.json([]);
-  };
-  const res=response();
-  await checkoutAudit(request(),res);
-  assert.equal(res.statusCode,503);
-  assert.equal(res.body.status,'critical');
-  assert.equal(res.body.paid_quotes_without_orders,1);
+test('financial mismatch is critical, even when other metrics are healthy', async t => {
+  setup(t);
+  globalThis.fetch = async () => Response.json(snapshot({applied_payments_without_paid_order: 1}));
+  const response = res();
+  await audit(req(), response);
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.body.status, 'critical');
 });
-test('daily audit does not present partial database results as healthy',async(t)=>{
-  t.after(reset);configure();
-  globalThis.fetch=async(url)=>{
-    if(url.includes('/quotes?'))return Response.json({error:'partial response'});
-    return Response.json([]);
-  };
-  const res=response();
-  await checkoutAudit(request(),res);
-  assert.equal(res.statusCode,503);
-  assert.equal(res.body.status,'unavailable');
+test('duplicate approved payment is critical', async t => {
+  setup(t);
+  globalThis.fetch = async () => Response.json(snapshot({duplicate_approved_charges: 1}));
+  const response = res();
+  await audit(req(), response);
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.body.duplicate_approved_charges, 1);
 });
-test('daily audit detects a duplicate approved payment requiring financial review',async(t)=>{
-  t.after(reset);configure();
-  globalThis.fetch=async(url)=>{
-    if(url.includes('/quotes?'))return Response.json([{id:'quote-1'}]);
-    if(url.includes('/orders?'))return Response.json([{id:'order-1',quote_id:'quote-1'}]);
-    if(url.includes('/production_jobs?'))return Response.json([{order_id:'order-1'}]);
-    if(url.includes('/center_checkout_payments?'))return Response.json([
-      {quote_id:'quote-1',reconciliation_status:'applied'},
-      {quote_id:'quote-1',reconciliation_status:'duplicate_charge'}
-    ]);
-    return Response.json([]);
-  };
-  const res=response();
-  await checkoutAudit(request(),res);
-  assert.equal(res.statusCode,503);
-  assert.equal(res.body.duplicate_approved_charges,1);
-  assert.equal(res.body.status,'critical');
+test('database failures and incomplete snapshots must fail closed', async t => {
+  setup(t);
+  for (const data of [null, [], { pending_email_notifications: 0 }, snapshot({stale_email_notifications: -1}), snapshot({stale_email_notifications: '0'})]) {
+    globalThis.fetch = async () => Response.json(data);
+    const response = res();
+    await audit(req(), response);
+    assert.equal(response.statusCode, 503);
+    assert.equal(response.body.status, 'unavailable');
+  }
+  globalThis.fetch = async () => Response.json({error:'unavailable'}, {status:503});
+  const failure = res();
+  await audit(req(), failure);
+  assert.equal(failure.statusCode, 503);
 });
-test('daily audit detects an applied payment missing a paid order',async(t)=>{
-  t.after(reset);configure();
-  globalThis.fetch=async(url)=>{
-    if(url.includes('/center_checkout_payments?'))return Response.json([
-      {quote_id:'quote-not-paid',reconciliation_status:'applied'}
-    ]);
-    return Response.json([]);
-  };
-  const res=response();
-  await checkoutAudit(request(),res);
-  assert.equal(res.statusCode,503);
-  assert.equal(res.body.applied_payments_without_paid_order,1);
+test('SQL migration grants only service_role permission', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/20261112_center_checkout_integrity_snapshot.sql', import.meta.url), 'utf8');
+  assert.match(sql, /security invoker/);
+  assert.match(sql, /revoke all on function public\.center_checkout_integrity_snapshot\(\)/);
+  assert.match(sql, /from public, anon, authenticated/);
+  assert.match(sql, /to service_role/);
+  assert.match(sql, /not exists/);
 });
-test('daily checkout health is scheduled once per day using an authenticated route',()=>{
-  const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
-  assert.deepEqual(config.crons,[{
-    path:'/api/internal/checkout-audit',schedule:'15 12 * * *'
-  }]);
+test('daily checkout health remains on private cron route', () => {
+  const cfg = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  assert.ok(cfg.crons.some(x => x.path === '/api/internal/checkout-audit' && x.schedule === '15 12 * * *'));
 });
