@@ -7,7 +7,26 @@ const cleanToken = (raw) => String(raw || '').trim()
 // Checkout Pro: server-only endpoint. Disabled until production credentials and shipping are validated.
 const SITE = 'https://www.centercupulas.com.br';
 const QUOTE_API = 'https://nygjkojgvbdhemvfsqug.supabase.co/functions/v1/public-cart-checkout';
-const json = (res, status, body) => res.status(status).setHeader('Cache-Control', 'no-store').json(body);
+const json = (res, status, body) => res.status(status)
+  .setHeader('Cache-Control', 'private, no-store')
+  .setHeader('X-Content-Type-Options', 'nosniff')
+  .setHeader('Referrer-Policy', 'no-referrer')
+  .json(body);
+
+// The returned payment link is a redirect target visible to the buyer.
+// A 200 response from the upstream API is not enough to trust an arbitrary URL.
+const TRUSTED_MERCADO_PAGO_HOSTS = new Set([
+  'www.mercadopago.com.br', 'mercadopago.com.br', 'sandbox.mercadopago.com.br'
+]);
+function trustedMercadoPagoCheckoutUrl(value) {
+  if(typeof value!=='string' || value.length>2048) return false;
+  try {
+    const url=new URL(value);
+    return url.protocol==='https:' && !url.username && !url.password &&
+      !url.port && TRUSTED_MERCADO_PAGO_HOSTS.has(url.hostname) &&
+      /^\\/checkout(?:\\/|$)/.test(url.pathname);
+  }catch{return false;}
+}
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
@@ -26,13 +45,27 @@ export default async function handler(req, res) {
   const origin = req.headers.origin;
   if (![SITE, 'https://centercupulas.com.br'].includes(origin)) return json(res, 403, { error: 'invalid_origin' });
   try {
-    const { items, customer, shippingSelection } = req.body || {};
+    // Reject malformed or oversized bodies before calling pricing, freight
+    // or payment providers. Edge's authorization protocol limits raw data to
+    // 64,000 characters, so keep this boundary below that budget.
+    if(!req.body || typeof req.body!=='object' || Array.isArray(req.body))
+      return json(res,400,{error:'invalid_order_body'});
+    let payloadBytes;
+    try{payloadBytes=Buffer.byteLength(JSON.stringify(req.body),'utf8');}
+    catch{return json(res,400,{error:'invalid_order_body'});}
+    if(payloadBytes>60000)return json(res,413,{error:'order_payload_too_large'});
+
+    const { items, customer, shippingSelection } = req.body;
     const clientAttempt=String(req.body?.checkout_attempt_id||"");
     // Remain backward-compatible with older tabs while new browsers send a
     // stable, randomly generated checkout_attempt_id on transport retries.
     const checkoutAttempt=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientAttempt)
       ?clientAttempt:randomUUID();
-    if (!Array.isArray(items) || !items.length || items.length > 20 || !customer || !shippingSelection?.code ||
+    if (!Array.isArray(items) || !items.length || items.length > 20 ||
+        !items.every(item=>item && typeof item==='object' && !Array.isArray(item)) ||
+        !customer || typeof customer!=='object' || Array.isArray(customer) ||
+        typeof shippingSelection?.code!=='string' ||
+        shippingSelection.code.length<1 || shippingSelection.code.length>120 ||
         typeof shippingSelection?.price !== 'number' || !Number.isFinite(shippingSelection.price) || shippingSelection.price < 0 ||
         typeof shippingSelection?.productTotal !== 'number' || !Number.isFinite(shippingSelection.productTotal) || shippingSelection.productTotal <= 0 ||
         (pickup && shippingSelection.price !== 0)) {
@@ -95,7 +128,7 @@ export default async function handler(req, res) {
     }
     let preference = {};
     try { preference = await preferenceResponse.json(); } catch {}
-    if (!preferenceResponse.ok || typeof preference.init_point !== 'string' || !preference.init_point.startsWith('https://')) {
+    if (!preferenceResponse.ok || typeof preference.init_point !== 'string' || !trustedMercadoPagoCheckoutUrl(preference.init_point)) {
       // Mercado Pago returns distinct codes for credential/identity checks and
       // invalid preference fields. Whitelist, never echo arbitrary upstream data.
       const causes = Array.isArray(preference.cause) ? preference.cause : [];
