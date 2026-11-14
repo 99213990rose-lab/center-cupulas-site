@@ -16,7 +16,7 @@ const json = (res, status, body) => res.status(status)
 // The returned payment link is a redirect target visible to the buyer.
 // A 200 response from the upstream API is not enough to trust an arbitrary URL.
 const TRUSTED_MERCADO_PAGO_HOSTS = new Set([
-  'www.mercadopago.com.br', 'mercadopago.com.br', 'sandbox.mercadopago.com.br'
+  'www.mercadopago.com.br', 'mercadopago.com.br'
 ]);
 function trustedMercadoPagoCheckoutUrl(value) {
   if(typeof value!=='string' || value.length>2048) return false;

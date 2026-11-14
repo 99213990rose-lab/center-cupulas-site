@@ -229,6 +229,7 @@ test('unrelated signed provider payments never create Center orders',async t=>{
 test('a provider HTTP 200 may not inject a phishing checkout destination',async t=>{
   setup(t);
   for(const redirect of [
+    'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=test-not-live',
     'https://checkout.example.invalid/checkout/pref',
     'https://www.mercadopago.com.br.evil.invalid/checkout/pref',
     'https://www.mercadopago.com.br@evil.invalid/checkout/pref',
