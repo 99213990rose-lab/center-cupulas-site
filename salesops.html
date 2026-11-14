@@ -85,7 +85,14 @@
 <div class="card">
   <h3>Meta + WhatsApp</h3>
   <p id="metaStatus">Carregando status...</p>
-  <button class="btn primary full" id="metaConnectBtn" onclick="startMetaConnection()">Conectar / reautorizar Meta + WhatsApp</button>
+  <div class="hint" style="border:1px solid #d0a44d;border-radius:8px;padding:12px;margin-bottom:12px">
+    <b>Avisos de novas vendas no WhatsApp:</b> a Center Cúpulas usa o WhatsApp Business
+    no número comercial. Para manter as conversas no aplicativo, é necessária a
+    <b>Coexistência (Embedded Signup)</b>. A autorização padrão abaixo
+    <b>não ativa a coexistência</b>. Não migre nem desconecte o número comercial
+    por esse botão.
+  </div>
+  <button class="btn primary full" id="metaConnectBtn" onclick="startMetaConnection()">Autorizar Meta (fluxo padrão; não coexistência)</button>
   <div class="hint">Depois da configuração inicial, este botão abre a Meta para você apenas autorizar a conta. Tokens e segredos ficam protegidos no Supabase Vault.</div>
   <div id="metaOauthMsg"></div>
 
