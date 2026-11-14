@@ -1,7 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import createCheckout from '../api/mercadopago/create-checkout.js';
+import checkoutWithAttestation from '../api/mercadopago/create-checkout.js';
+
+// Existing payment-mock fixtures focus on the financial contract and never
+// contact a real database. The dedicated attestation tests exercise issuance,
+// cryptographic payload binding and replay resistance independently.
+async function createCheckout(req,res) {
+  const priorFetch=globalThis.fetch;
+  globalThis.fetch=(url,options)=>{
+    if(String(url).endsWith('/rest/v1/rpc/center_issue_checkout_attestation'))
+      return Promise.resolve(Response.json('33333333-3333-4333-8333-333333333333'));
+    return priorFetch(url,options);
+  };
+  try{return await checkoutWithAttestation(req,res);}
+  finally{globalThis.fetch=priorFetch;}
+}
+
 
 const edge = readFileSync(new URL('../supabase/functions/public-cart-checkout/index.ts',import.meta.url),'utf8');
 const cart = readFileSync(new URL('../carrinho.js',import.meta.url),'utf8');
@@ -79,7 +94,7 @@ test('an already-paid retry cannot generate another payment preference',async t=
 });
 test('fallback UUID generation uses the imported crypto primitive',()=>{
   const source=readFileSync(new URL('../api/mercadopago/create-checkout.js',import.meta.url),'utf8');
-  assert.match(source,/import \{createHmac,randomUUID\} from 'node:crypto'/);
+  assert.match(source,/import \{createHmac,createHash,randomUUID\} from 'node:crypto'/);
   assert.match(source,/\?clientAttempt:randomUUID\(\)/);
   assert.doesNotMatch(source,/crypto\.randomUUID\(\)/);
 });

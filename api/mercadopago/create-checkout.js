@@ -1,5 +1,5 @@
 import mpTransport from './transport.cjs';
-import {createHmac,randomUUID} from 'node:crypto';
+import {createHmac,createHash,randomUUID} from 'node:crypto';
 const cleanToken = (raw) => String(raw || '').trim()
   .replace(/^['"]|['"]$/g, '')
   .replace(/^Bearer\s+/i, '')
@@ -71,20 +71,49 @@ export default async function handler(req, res) {
         (pickup && shippingSelection.price !== 0)) {
       return json(res, 400, { error: 'complete_order_and_shipping_required' });
     }
-    // Current Center backend recalculates each item and verifies selected freight on submission.
+    // Mint a single-use proof in the same Center database used by the Edge
+    // function. A direct public call cannot mint it with an anonymous key.
+    const quotePayload=JSON.stringify({
+      action:'payment',items,customer,checkout_attempt_id:checkoutAttempt,
+      shippingSelection:{code:shippingSelection.code}
+    });
+    const base=String(process.env.SUPABASE_URL||'').replace(/\/$/,'');
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(base))
+      return json(res,503,{error:'checkout_attestation_not_configured'});
+    const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const digest=createHash('sha256').update(quotePayload,'utf8').digest('hex');
+    const headers={apikey:key,'Content-Type':'application/json'};
+    if(!key.startsWith('sb_secret_'))headers.Authorization='Bearer '+key;
+    const proofResponse=await fetch(base+'/rest/v1/rpc/center_issue_checkout_attestation',{
+      method:'POST',headers,body:JSON.stringify({p_payload_sha256:digest}),
+      signal:AbortSignal.timeout(7000)
+    });
+    if(!proofResponse.ok)return json(res,503,{error:'checkout_attestation_unavailable'});
+    const proofToken=await proofResponse.json();
+    if(typeof proofToken!=='string'||
+       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(proofToken))
+      return json(res,503,{error:'checkout_attestation_unavailable'});
+
+    // The Edge function consumes the proof atomically *before* writing CRM
+    // leads or draft quotes. Price and freight are still recalculated there.
     const quoteResponse = await fetch(QUOTE_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: SITE },
-      body: JSON.stringify({ action: 'payment', items, customer,
-        checkout_attempt_id: checkoutAttempt, shippingSelection: { code: shippingSelection.code } }),
-      signal: AbortSignal.timeout(10000)
+      headers: {
+        'Content-Type':'application/json',Origin:SITE,
+        'x-center-checkout-attestation':proofToken
+      },
+      body:quotePayload,
+      signal:AbortSignal.timeout(10000)
     });
     const quote = await quoteResponse.json();
     if (!quoteResponse.ok || !quote.submitted) {
       const conflict=quote?.error==='checkout_attempt_conflict';
       const completed=quote?.error==='checkout_already_paid';
-      return json(res, conflict?409:completed?409:422, {
-        error: conflict?'checkout_attempt_conflict':completed?'checkout_already_paid':'quote_unavailable'
+      const forbidden=quote?.error==='payment_request_unauthorized';
+      return json(res, forbidden?503:conflict||completed?409:422, {
+        error: forbidden?'payment_service_unavailable':
+          conflict?'checkout_attempt_conflict':
+          completed?'checkout_already_paid':'quote_unavailable'
       });
     }
     if ((pickup ? quote.shipping?.status !== 'pickup' || Number(quote.shipping?.freight) !== 0

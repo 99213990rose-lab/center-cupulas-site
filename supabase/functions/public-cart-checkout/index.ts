@@ -5,6 +5,7 @@ import { calculateBoxPurchaseBudget, estimateBoxCostForItem } from "./box-costs.
 import { addBoxesToPrices } from "./price-with-box.mjs";
 import { applySecondShadePromotion } from "./promo-second-shade.mjs";
 import { applyKitPrice, validateKitRequest } from "./kit-promo-9990.mjs";
+import { verifyCheckoutAttestation } from "./checkout-attestation.mjs";
 
 const ORG_ID = "e3cb8002-ebaa-4d3a-acd3-46a678815e7b";
 const ALLOWED_ORIGINS = new Set([
@@ -212,8 +213,29 @@ Deno.serve(async(req:Request)=>{
   if(origin&&!ALLOWED_ORIGINS.has(origin)&&!origin.startsWith("http://localhost:"))return json({error:"origin_not_allowed"},403,origin);
 
   try{
-    const body=await req.json();
+    // The public function serves price previews and assisted quotes.
+    // Preparing a payable quote requires a short-lived, single-use proof
+    // minted by the Vercel server. Validate before pricing/CRM writes.
+    const rawBody=await req.text();
+    if(rawBody.length>64000)return json({error:"payload_too_large"},413,origin);
+    const body=JSON.parse(rawBody);
     const action=body.action==="payment"?"payment":body.action==="submit"?"submit":"preview";
+    if(action==="payment"){
+      const authClient=createClient(
+        Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const authorized=await verifyCheckoutAttestation({
+        rawBody,
+        token:req.headers.get("x-center-checkout-attestation"),
+        consume:async(token:string,digest:string)=>{
+          const proof=await authClient.rpc("center_consume_checkout_attestation",{
+            p_token:token,p_payload_sha256:digest
+          });
+          return !proof.error && proof.data===true;
+        }
+      });
+      if(!authorized)return json({error:"payment_request_unauthorized"},401,origin);
+    }
     const items=Array.isArray(body.items)?body.items:[];
     if(!items.length||items.length>20)return json({error:"invalid_cart"},400,origin);
 
