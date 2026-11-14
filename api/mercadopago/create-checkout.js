@@ -24,7 +24,7 @@ function trustedMercadoPagoCheckoutUrl(value) {
     const url=new URL(value);
     return url.protocol==='https:' && !url.username && !url.password &&
       !url.port && TRUSTED_MERCADO_PAGO_HOSTS.has(url.hostname) &&
-      /^\\/checkout(?:\\/|$)/.test(url.pathname);
+      /^\/checkout(?:\/|$)/.test(url.pathname);
   }catch{return false;}
 }
 export default async function handler(req, res) {
