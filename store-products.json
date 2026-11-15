@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "currency": "BRL",
+  "note": "Cadastre apenas SKUs com preço final de varejo confirmado. Nunca use valores históricos de pedidos como tabela automática.",
+  "products": []
+}
