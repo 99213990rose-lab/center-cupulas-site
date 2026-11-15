@@ -7,6 +7,15 @@ const CHECKS = Object.freeze([
   {path:'/', kind:'html', expected:200},
   {path:'/carrinho.html', kind:'html', expected:200},
   {path:'/meus-pedidos.html', kind:'html', expected:200},
+  // The pages can return HTTP 200 while essential storefront scripts or CSS
+  // are missing. Verify actual public assets without creating any orders.
+  {path:'/styles.css', kind:'css', expected:200},
+  {path:'/homepage-shop.css', kind:'css', expected:200},
+  {path:'/minimal-ui.css', kind:'css', expected:200},
+  {path:'/cart.js', kind:'javascript', expected:200},
+  {path:'/loja.js', kind:'javascript', expected:200},
+  {path:'/carrinho.js', kind:'javascript', expected:200},
+  {path:'/minha-conta.js', kind:'javascript', expected:200},
   {path:'/api/mercadopago/status', kind:'payment_status', expected:200},
   {path:'/api/internal/checkout-audit', kind:'blocked', expected:401},
   {path:'/api/internal/provider-audit', kind:'blocked', expected:401},
@@ -32,7 +41,9 @@ async function checkOne(base, spec, request, timeoutMs){
   const target=new URL(spec.path,base);
   const response=await request(target.toString(),{
     method:'GET',
-    headers:{accept:spec.kind==='html'?'text/html':'application/json'},
+    headers:{accept:spec.kind==='html'?'text/html':
+      spec.kind==='css'?'text/css':
+      spec.kind==='javascript'?'text/javascript':'application/json'},
     cache:'no-store',
     redirect:'follow',
     signal:AbortSignal.timeout(timeoutMs)
@@ -49,6 +60,18 @@ async function checkOne(base, spec, request, timeoutMs){
     if(!/<!doctype html>/i.test(html)||!/<html[\s>]/i.test(html)||
       !/center c[úu]pulas/i.test(html))
       throw Error('unexpected page contents');
+  }else if(spec.kind==='css' || spec.kind==='javascript'){
+    const validType=spec.kind==='css'
+      ? /^text\/css(?:;|$)/.test(type)
+      : /^(?:text|application)\/(?:javascript|ecmascript)(?:;|$)/.test(type);
+    if(!validType)throw Error('unexpected static asset content-type');
+    const declaredLength=Number(response.headers.get('content-length')||0);
+    if(!Number.isFinite(declaredLength)||declaredLength>2_000_000)
+      throw Error('oversize static asset');
+    const source=await response.text();
+    if(!source.trim()||source.length>2_000_000||
+      /<!doctype html>|<html[\s>]/i.test(source.slice(0,300)))
+      throw Error('broken static asset');
   }else if(spec.kind==='payment_status'){
     if(!type.includes('application/json'))throw Error('unexpected json content-type');
     const data=await response.json();
