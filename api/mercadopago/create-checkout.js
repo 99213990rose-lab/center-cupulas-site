@@ -29,6 +29,10 @@ function trustedMercadoPagoCheckoutUrl(value) {
 }
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
+  // Preview deployments are not an isolated payment environment. They must
+  // never create live payment preferences, even if preview secrets are present.
+  if (['preview','development'].includes(process.env.VERCEL_ENV))
+    return json(res,503,{error:'checkout_not_enabled'});
   if (process.env.CENTER_CHECKOUT_ENABLED !== 'true') return json(res, 503, { error: 'checkout_not_enabled' });
   // The pickup option is strictly seller-enabled; never trust a zero freight value from the browser.
   const pickup = req.body?.shippingSelection?.code === 'STORE_PICKUP';
