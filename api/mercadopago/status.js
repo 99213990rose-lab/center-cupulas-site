@@ -9,7 +9,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
   const originCep = String(process.env.CENTER_CUPULAS_ORIGIN_CEP || '').replace(/\D/g, '');
-  const enabled = process.env.CENTER_CHECKOUT_ENABLED === 'true' &&
+  const enabled = !['preview','development'].includes(process.env.VERCEL_ENV) &&
+    process.env.CENTER_CHECKOUT_ENABLED === 'true' &&
     Boolean(cleanToken(process.env.MERCADO_PAGO_ACCESS_TOKEN)) &&
     Boolean(process.env.MERCADO_PAGO_WEBHOOK_SECRET) &&
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) &&
